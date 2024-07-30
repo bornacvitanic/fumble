@@ -25,7 +25,11 @@ fn main() -> Result<(), WinDivertError> {
     let log_interval = Duration::from_secs(5);
     let mut last_log_time = Instant::now();
 
-    let wd = WinDivert::<NetworkLayer>::network(traffic_filter, 0, WinDivertFlags::new())?;
+    let wd = WinDivert::<NetworkLayer>::network(traffic_filter, 0, WinDivertFlags::new())
+        .map_err(|e| {
+            eprintln!("Failed to initialize WinDiver: {}", e);
+            e
+        })?;
     let mut buffer = vec![0u8; 1500];
 
     let mut total_packets = 0;
