@@ -10,16 +10,17 @@ use clap::Parser;
 use clumsy::network::capture::PacketData;
 use clumsy::network::drop::drop_packets;
 use clumsy::utils::log_statistics;
-
-
+use log::info;
+use env_logger;
 
 fn main() -> Result<(), WinDivertError> {
+    env_logger::init();
     let cli = Cli::parse();
 
     let traffic_filter = cli.filter.unwrap_or_else(|| String::new());
-    println!("Traffic filer: {}", traffic_filter);
+    info!("Traffic filer: {}", traffic_filter);
     if let Some(drop_probability) = &cli.drop {
-        println!("Dropping packets with probability: {}", drop_probability);
+        info!("Dropping packets with probability: {}", drop_probability);
     }
 
     let log_interval = Duration::from_secs(5);
@@ -35,7 +36,7 @@ fn main() -> Result<(), WinDivertError> {
     let mut total_packets = 0;
     let mut sent_packets = 0;
 
-    println!("Starting packet interception.");
+    info!("Starting packet interception.");
     loop {
         let mut packets = Vec::new();
 

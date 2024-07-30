@@ -10,3 +10,5 @@ windivert = { version = "0.6", features = ["vendored"] }
 rand = "0.9.0-alpha.2"
 # CLI argument parsing library
 clap = { version = "4.5.11", features = ["derive"]}
+env_logger = "0.11.5"
+log = "0.4.22"
