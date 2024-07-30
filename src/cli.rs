@@ -1,16 +1,13 @@
-use clap::{Parser, Subcommand};
+use clap::{Parser};
 
 #[derive(Parser)]
-#[command(name = "clumsy", about="")]
+#[command(name = "clumsy", about="A network manipulation tool")]
 pub struct Cli {
-    #[command(subcommand)]
-    pub command: Option<Commands>
-}
+    /// Filter expression for capturing packets
+    #[arg(short, long)]
+    pub filter: Option<String>,
 
-#[derive(Subcommand)]
-pub enum Commands {
-    Drop {
-        #[arg(short, long)]
-        probability: f64
-    },
+    /// Probability of dropping packets
+    #[arg(short, long)]
+    pub drop: Option<f64>,
 }
