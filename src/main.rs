@@ -42,10 +42,7 @@ fn main() -> Result<(), WinDivertError> {
 
         if let Ok(packet) = wd.recv(Some(&mut buffer)) {
             total_packets += 1;
-            packets.push(PacketData {
-                packet,
-                arrival_time: Instant::now()
-            })
+            packets.push(PacketData::from(packet));
         }
 
         if let Some(drop_probability) = &cli.drop{
