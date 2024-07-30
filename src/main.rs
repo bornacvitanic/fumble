@@ -9,9 +9,9 @@ use std::time::{Duration, Instant};
 use clap::Parser;
 use clumsy::network::capture::PacketData;
 use clumsy::network::drop::drop_packets;
+use clumsy::network::duplicate::duplicate_packets;
 use clumsy::utils::log_statistics;
 use log::info;
-use env_logger;
 
 fn main() -> Result<(), WinDivertError> {
     env_logger::init();
@@ -21,6 +21,9 @@ fn main() -> Result<(), WinDivertError> {
     info!("Traffic filer: {}", traffic_filter);
     if let Some(drop_probability) = &cli.drop {
         info!("Dropping packets with probability: {}", drop_probability);
+    }
+    if cli.duplicate_count > 1usize && cli.duplicate_probability.unwrap_or(0.0) > 0.0 {
+        info!("Duplicating packets {} times with probability: {}", &cli.duplicate_count, &cli.duplicate_probability.unwrap());
     }
 
     let log_interval = Duration::from_secs(5);
@@ -47,6 +50,10 @@ fn main() -> Result<(), WinDivertError> {
 
         if let Some(drop_probability) = &cli.drop{
             drop_packets(&mut packets, *drop_probability);
+        }
+
+        if cli.duplicate_count > 1usize && cli.duplicate_probability.unwrap_or(0.0) > 0.0 {
+            duplicate_packets(&mut packets, cli.duplicate_count, cli.duplicate_probability.unwrap_or(0.0));
         }
 
         for packet_data in packets {
