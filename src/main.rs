@@ -1,8 +1,12 @@
+mod cli;
+
 use windivert::error::WinDivertError;
 use windivert::layer::NetworkLayer;
 use windivert::prelude::{WinDivertFlags, WinDivertPacket};
 use windivert::WinDivert;
 use std::time::{Duration, Instant};
+use clap::Parser;
+use crate::cli::{Cli, Commands};
 
 pub struct PacketData<'a> {
     pub packet: WinDivertPacket<'a, NetworkLayer>,
@@ -10,15 +14,22 @@ pub struct PacketData<'a> {
 }
 
 fn main() -> Result<(), WinDivertError> {
+    let cli = Cli::parse();
     let log_interval = Duration::from_secs(5);
-    let drop_probability = 1.0;
+    let mut last_log_time = Instant::now();
 
     let wd = WinDivert::<NetworkLayer>::network("inbound", 0, WinDivertFlags::new())?;
     let mut buffer = vec![0u8; 1500];
 
     let mut total_packets = 0;
     let mut sent_packets = 0;
-    let mut last_log_time = Instant::now();
+
+    match &cli.command {
+        Some(Commands::Drop { probability}) => {
+            println!("Dropping packets with probability: {}", probability);
+        }
+        None => {}
+    }
 
     loop {
         let mut packets = Vec::new();
@@ -31,7 +42,12 @@ fn main() -> Result<(), WinDivertError> {
             })
         }
 
-        drop_packets(&mut packets, drop_probability);
+        match &cli.command {
+            Some(Commands::Drop { probability}) => {
+                drop_packets(&mut packets, *probability);
+            }
+            None => {}
+        }
 
         for packet_data in packets {
             wd.send(&packet_data.packet)?;

@@ -8,3 +8,5 @@ edition = "2021"
 windivert = { version = "0.6", features = ["vendored"] }
 # Library for generating random numbers, used for probabilistic operations.
 rand = "0.9.0-alpha.2"
+# CLI argument parsing library
+clap = { version = "4.5.11", features = ["derive"]}
