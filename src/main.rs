@@ -1,25 +1,23 @@
 mod cli;
 
+use crate::cli::Cli;
 use windivert::error::WinDivertError;
 use windivert::layer::NetworkLayer;
-use windivert::prelude::{WinDivertFlags, WinDivertPacket};
+use windivert::prelude::{WinDivertFlags};
 use windivert::WinDivert;
 use std::time::{Duration, Instant};
 use clap::Parser;
-use crate::cli::{Cli};
+use clumsy::network::capture::PacketData;
+use clumsy::network::drop::drop_packets;
+use clumsy::utils::log_statistics;
 
-pub struct PacketData<'a> {
-    pub packet: WinDivertPacket<'a, NetworkLayer>,
-    pub arrival_time: Instant,
-}
+
 
 fn main() -> Result<(), WinDivertError> {
     let cli = Cli::parse();
-    let mut traffic_filter = String::new();
 
-    if let Some(filter) = &cli.filter {
-        traffic_filter = filter.to_string();
-    }
+    let traffic_filter = cli.filter.unwrap_or_else(|| String::new());
+    println!("Traffic filer: {}", traffic_filter);
     if let Some(drop_probability) = &cli.drop {
         println!("Dropping packets with probability: {}", drop_probability);
     }
@@ -33,7 +31,7 @@ fn main() -> Result<(), WinDivertError> {
     let mut total_packets = 0;
     let mut sent_packets = 0;
 
-
+    println!("Starting packet interception.");
     loop {
         let mut packets = Vec::new();
 
@@ -59,22 +57,5 @@ fn main() -> Result<(), WinDivertError> {
             log_statistics(total_packets, sent_packets);
             last_log_time = Instant::now(); // Reset the timer
         }
-    }
-
-    pub fn drop_packets(packets: &mut Vec<PacketData>, drop_probability: f64){
-        packets.retain(|_| rand::random::<f64>() >= drop_probability)
-    }
-
-    fn log_statistics(total: usize, sent: usize) {
-        let dropped = total.saturating_sub(sent); // Number of dropped packets
-        let dropped_percentage = if total > 0 {
-            (dropped as f64 / total as f64) * 100.0
-        } else {
-            0.0
-        };
-        println!(
-            "Total Packets: {}, Sent Packets: {}, Dropped Packets: {}, Dropped Percentage: {:.2}%",
-            total, sent, dropped, dropped_percentage
-        );
     }
 }
