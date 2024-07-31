@@ -1,13 +1,15 @@
-use clap::{Parser};
+use clap::Parser;
 
 #[derive(Parser, Debug)]
-#[command(name = "clumsy",
-    about="A network manipulation tool",
+#[command(
+    name = "clumsy",
+    about = "A network manipulation tool",
     long_about = "clumsy is a network manipulation tool that can drop, duplicate, and delay packets.\n\n\
     ## Logging\n\
     The tool uses the `env_logger` crate for logging. By default, info messages are shown.\n\n\
     To see more or less detailed logs, set the `RUST_LOG` environment variable before running `clumsy`.\n\n\
-    ")]
+    "
+)]
 pub struct Cli {
     /// Filter expression for capturing packets
     #[arg(short, long)]
@@ -31,7 +33,9 @@ pub struct Cli {
 }
 
 fn parse_probability(s: &str) -> Result<f64, String> {
-    let value: f64 = s.parse().map_err(|_| format!("`{}` isn't a valid number", s))?;
+    let value: f64 = s
+        .parse()
+        .map_err(|_| format!("`{}` isn't a valid number", s))?;
     if (0.0..=1.0).contains(&value) {
         Ok(value)
     } else {

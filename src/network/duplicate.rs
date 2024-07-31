@@ -17,16 +17,18 @@ pub fn duplicate_packets(packets: &mut Vec<PacketData>, count: usize, probabilit
 }
 
 #[cfg(test)]
-mod tests{
-    use windivert::layer::NetworkLayer;
-    use windivert::packet::WinDivertPacket;
+mod tests {
     use crate::network::capture::PacketData;
     use crate::network::duplicate::duplicate_packets;
+    use windivert::layer::NetworkLayer;
+    use windivert::packet::WinDivertPacket;
 
     #[test]
     fn test_packet_duplication() {
         unsafe {
-            let original_packets = vec![PacketData::from(WinDivertPacket::<NetworkLayer>::new(vec![1, 2, 3]))];
+            let original_packets = vec![PacketData::from(WinDivertPacket::<NetworkLayer>::new(
+                vec![1, 2, 3],
+            ))];
             let original_len = original_packets.len();
             let mut packets = original_packets.clone();
 

@@ -1,7 +1,11 @@
-use std::time::Duration;
 use crate::network::capture::PacketData;
+use std::time::Duration;
 
-pub fn delay_packets<'a>(packets: &mut Vec<PacketData<'a>>, storage: &mut Vec<PacketData<'a>>, delay: Duration){
+pub fn delay_packets<'a>(
+    packets: &mut Vec<PacketData<'a>>,
+    storage: &mut Vec<PacketData<'a>>,
+    delay: Duration,
+) {
     storage.append(packets);
 
     storage.retain(|packet_data| {

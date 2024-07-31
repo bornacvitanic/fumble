@@ -1,11 +1,6 @@
 mod cli;
 
 use crate::cli::Cli;
-use windivert::error::WinDivertError;
-use windivert::layer::NetworkLayer;
-use windivert::prelude::{WinDivertFlags};
-use windivert::WinDivert;
-use std::time::{Duration, Instant};
 use clap::Parser;
 use env_logger::Env;
 use fumble::network::capture::PacketData;
@@ -14,6 +9,11 @@ use fumble::network::drop::drop_packets;
 use fumble::network::duplicate::duplicate_packets;
 use fumble::utils::log_statistics;
 use log::{debug, error, info};
+use std::time::{Duration, Instant};
+use windivert::error::WinDivertError;
+use windivert::layer::NetworkLayer;
+use windivert::prelude::WinDivertFlags;
+use windivert::WinDivert;
 
 fn main() -> Result<(), WinDivertError> {
     env_logger::Builder::from_env(Env::default().default_filter_or("info")).init();
@@ -29,17 +29,22 @@ fn main() -> Result<(), WinDivertError> {
         info!("Delaying packets for: {} ms", delay)
     }
     if cli.duplicate_count > 1usize && cli.duplicate_probability.unwrap_or(0.0) > 0.0 {
-        info!("Duplicating packets {} times with probability: {}", &cli.duplicate_count, &cli.duplicate_probability.unwrap());
+        info!(
+            "Duplicating packets {} times with probability: {}",
+            &cli.duplicate_count,
+            &cli.duplicate_probability.unwrap()
+        );
     }
 
     let log_interval = Duration::from_secs(5);
     let mut last_log_time = Instant::now();
 
-    let wd = WinDivert::<NetworkLayer>::network(traffic_filter, 0, WinDivertFlags::new())
-        .map_err(|e| {
+    let wd = WinDivert::<NetworkLayer>::network(traffic_filter, 0, WinDivertFlags::new()).map_err(
+        |e| {
             error!("Failed to initialize WinDiver: {}", e);
             e
-        })?;
+        },
+    )?;
 
     let mut total_packets = 0;
     let mut sent_packets = 0;
@@ -59,11 +64,19 @@ fn main() -> Result<(), WinDivertError> {
             }
 
             if let Some(delay) = cli.delay {
-                delay_packets(&mut packets, &mut delay_storage, Duration::from_millis(delay));
+                delay_packets(
+                    &mut packets,
+                    &mut delay_storage,
+                    Duration::from_millis(delay),
+                );
             }
 
             if cli.duplicate_count > 1 && cli.duplicate_probability.unwrap_or(0.0) > 0.0 {
-                duplicate_packets(&mut packets, cli.duplicate_count, cli.duplicate_probability.unwrap_or(0.0));
+                duplicate_packets(
+                    &mut packets,
+                    cli.duplicate_count,
+                    cli.duplicate_probability.unwrap_or(0.0),
+                );
             }
 
             for packet_data in packets {

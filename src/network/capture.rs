@@ -8,7 +8,7 @@ pub struct PacketData<'a> {
     pub arrival_time: Instant,
 }
 
-impl<'a> From<WinDivertPacket<'a, NetworkLayer>> for PacketData<'a>{
+impl<'a> From<WinDivertPacket<'a, NetworkLayer>> for PacketData<'a> {
     fn from(packet: WinDivertPacket<'a, NetworkLayer>) -> Self {
         PacketData {
             packet,
@@ -19,9 +19,9 @@ impl<'a> From<WinDivertPacket<'a, NetworkLayer>> for PacketData<'a>{
 
 #[cfg(test)]
 mod tests {
-    use windivert::packet::WinDivertPacket;
-    use windivert::layer::NetworkLayer;
     use crate::network::capture::PacketData;
+    use windivert::layer::NetworkLayer;
+    use windivert::packet::WinDivertPacket;
 
     #[test]
     fn test_packet_data_creation() {
