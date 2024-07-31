@@ -9,6 +9,7 @@ use std::time::{Duration, Instant};
 use clap::Parser;
 use clumsy::network::capture::PacketData;
 use clumsy::network::drop::drop_packets;
+use clumsy::network::delay::delay_packets;
 use clumsy::network::duplicate::duplicate_packets;
 use clumsy::utils::log_statistics;
 use log::info;
@@ -22,6 +23,9 @@ fn main() -> Result<(), WinDivertError> {
     if let Some(drop_probability) = &cli.drop {
         info!("Dropping packets with probability: {}", drop_probability);
     }
+    if let Some(delay) = &cli.delay {
+        info!("Delaying packets for: {} ms", delay)
+    }
     if cli.duplicate_count > 1usize && cli.duplicate_probability.unwrap_or(0.0) > 0.0 {
         info!("Duplicating packets {} times with probability: {}", &cli.duplicate_count, &cli.duplicate_probability.unwrap());
     }
@@ -34,31 +38,36 @@ fn main() -> Result<(), WinDivertError> {
             eprintln!("Failed to initialize WinDiver: {}", e);
             e
         })?;
-    let mut buffer = vec![0u8; 1500];
 
     let mut total_packets = 0;
     let mut sent_packets = 0;
+    let mut delay_storage = Vec::new();
+    let mut buffer = vec![0u8; 1500];
 
     info!("Starting packet interception.");
     loop {
-        let mut packets = Vec::new();
-
         if let Ok(packet) = wd.recv(Some(&mut buffer)) {
             total_packets += 1;
-            packets.push(PacketData::from(packet));
-        }
 
-        if let Some(drop_probability) = &cli.drop{
-            drop_packets(&mut packets, *drop_probability);
-        }
+            let packet_data = PacketData::from(packet.into_owned());
+            let mut packets = vec![packet_data];
 
-        if cli.duplicate_count > 1usize && cli.duplicate_probability.unwrap_or(0.0) > 0.0 {
-            duplicate_packets(&mut packets, cli.duplicate_count, cli.duplicate_probability.unwrap_or(0.0));
-        }
+            if let Some(drop_probability) = cli.drop {
+                drop_packets(&mut packets, drop_probability);
+            }
 
-        for packet_data in packets {
-            wd.send(&packet_data.packet)?;
-            sent_packets += 1;
+            if let Some(delay) = cli.delay {
+                delay_packets(&mut packets, &mut delay_storage, Duration::from_millis(delay));
+            }
+
+            if cli.duplicate_count > 1 && cli.duplicate_probability.unwrap_or(0.0) > 0.0 {
+                duplicate_packets(&mut packets, cli.duplicate_count, cli.duplicate_probability.unwrap_or(0.0));
+            }
+
+            for packet_data in packets {
+                wd.send(&packet_data.packet)?; // Send the packet data
+                sent_packets += 1;
+            }
         }
 
         // Periodically log the statistics

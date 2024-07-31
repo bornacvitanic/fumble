@@ -11,6 +11,10 @@ pub struct Cli {
     #[arg(long, value_parser = parse_probability)]
     pub drop: Option<f64>,
 
+    /// Delay to introduce for each packet in milliseconds
+    #[arg(long)]
+    pub delay: Option<u64>,
+
     /// Number of times to duplicate packets
     #[arg(long, default_value_t = 1)]
     pub duplicate_count: usize,
