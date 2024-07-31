@@ -1,0 +1,72 @@
+# configuration for https://github.com/orhun/git-cliff
+
+[changelog]
+# changelog header
+header = """
+# Changelog\n
+All notable changes to this project will be documented in this file.\n
+"""
+# template for the changelog body
+# https://keats.github.io/tera/docs/#introduction
+body = """
+{% if version %}\
+    ## [{{ version | trim_start_matches(pat="v") }}] - {{ timestamp | date(format="%Y-%m-%d") }}
+{% else %}\
+    ## [unreleased]
+{% endif %}\
+{% for group, commits in commits | group_by(attribute="group") %}
+    ### {{ group | striptags | trim | upper_first }}
+    {% for commit in commits %}
+        - {% if commit.scope %}*({{ commit.scope }})* {% endif %}\
+            {% if commit.breaking %}[**breaking**] {% endif %}\
+            {{ commit.message | upper_first }}\
+    {% endfor %}
+{% endfor %}\n
+"""
+# remove the leading and trailing whitespace from the template
+trim = true
+# postprocessors
+postprocessors = [
+  { pattern = '<REPO>', replace = "https://github.com/bornacvitanic/dev_environment_launcher" },
+]
+
+[git]
+# parse the commits based on your custom prefixes
+conventional_commits = false
+# filter out the commits that are not conventional
+filter_unconventional = false
+# process each line of a commit as an individual commit
+split_commits = false
+# regex for preprocessing the commit messages
+commit_preprocessors = [
+  { pattern = '\((\w+\s)?#([0-9]+)\)', replace = "([#${2}](<REPO>/issues/${2}))" },
+]
+# regex for parsing and grouping commits
+commit_parsers = [
+  { message = "(?i)\\bdocs?|documentation|\\.md\\b", group = "Documentation" },
+  { message = "(?i)\\bfix(ed|es|ing|s)?\\b", group = "Bug Fixes" },
+  { message = "(?i)test(s?)\\b", group = "Testing" },
+  { message = "(?i)^revert", group = "Revert" },
+  { message = "(?i)\\badd(ed|s)?\\b|(?i)\\bimplement(ed|s)?\\b", group = "Features" },
+  { message = "(?i)^remove", group = "Removals" },
+  { message = "(?i)\\brefactor(ed|s)?\\b", group = "Refactors" },
+  { message = "(?i)\\bmove(d|s)?\\b", group = "Moves" },
+  { message = "(?i)\\brename(d|s)?\\b", group = "Renames" },
+  { message = "(?i)^style|(?i)\\b(clean|clippy|fmt)\\b", group = "Styling" },
+  { message = "(?i)^chore|(?i)^ci", group = "Miscellaneous Tasks" },
+  { message = "(?i)^update", group = "Updates" },
+]
+# protect breaking changes from being skipped due to matching a skipping commit_parser
+protect_breaking_commits = false
+# filter out the commits that are not matched by commit parsers
+filter_commits = true
+# glob pattern for matching git tags
+tag_pattern = "v[0-9]*"
+# regex for skipping tags
+skip_tags = "beta|alpha"
+# regex for ignoring tags
+ignore_tags = "rc|lib"
+# sort the tags topologically
+topo_order = false
+# sort the commits inside sections by oldest/newest order
+sort_commits = "newest"

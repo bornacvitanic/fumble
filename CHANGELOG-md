@@ -1,0 +1,45 @@
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+## [unreleased]
+
+### Features
+
+- Implement improved logging with env_logger setup and detailed CLI help
+
+- Add packet delay feature with CLI support for delay duration
+
+- Add packet duplication feature with CLI support for count and probability
+
+- Update capture.ts to add Clone implementation
+
+- Add drop probability value validation
+
+- Implement From trait for PacketData
+
+- Add better logging
+
+- Add better error handling for WinDivert initialization
+
+- Add library interface
+
+- Add CLI network filter specification support
+
+- Add CLI support using Clap
+
+- Add RustRover meta files
+
+- Add dependencies and implement basic packet dropping functionality with logging
+
+
+### Refactors
+
+- Refactor project structure to modularize network and utility functions
+
+
+### Testing
+
+- Add Unit tests for capture and dropping logic
+
+
