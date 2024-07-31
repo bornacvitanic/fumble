@@ -27,10 +27,14 @@ jobs:
           Invoke-WebRequest -Uri "https://reqrypt.org/download/WinDivert-2.2.2-A.zip" -OutFile "WinDivert.zip"
           Expand-Archive -Path "WinDivert.zip" -DestinationPath "WinDivert"
 
+      - name: List extracted files (Debug)
+        run: |
+          Get-ChildItem -Recurse "WinDivert"
+
       - name: Copy WinDivert Files
         run: |
-          $dllPath = (Get-Item -Path "WinDivert/x64/WinDivert.dll").FullName
-          $libPath = (Get-Item -Path "WinDivert/x64/WinDivert.lib").FullName
+          $dllPath = (Get-ChildItem -Path "WinDivert" -Recurse -Filter "WinDivert.dll").FullName
+          $libPath = (Get-ChildItem -Path "WinDivert" -Recurse -Filter "WinDivert.lib").FullName
           Copy-Item $dllPath "$env:USERPROFILE\.cargo\bin\WinDivert.dll"
           Copy-Item $libPath "$env:USERPROFILE\.cargo\bin\WinDivert.lib"
 
