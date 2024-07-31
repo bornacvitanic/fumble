@@ -8,11 +8,11 @@ use windivert::WinDivert;
 use std::time::{Duration, Instant};
 use clap::Parser;
 use env_logger::Env;
-use clumsy::network::capture::PacketData;
-use clumsy::network::drop::drop_packets;
-use clumsy::network::delay::delay_packets;
-use clumsy::network::duplicate::duplicate_packets;
-use clumsy::utils::log_statistics;
+use fumble::network::capture::PacketData;
+use fumble::network::delay::delay_packets;
+use fumble::network::drop::drop_packets;
+use fumble::network::duplicate::duplicate_packets;
+use fumble::utils::log_statistics;
 use log::{debug, error, info};
 
 fn main() -> Result<(), WinDivertError> {

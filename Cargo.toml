@@ -1,7 +1,17 @@
 [package]
-name = "clumsy"
+name = "fumble"
 version = "0.1.0"
+authors = ["Borna Cvitanić borna.cvitanic@gmail.com"]
+description = "an oxidized implementation of the original clumsy tool, designed to simulate adverse network conditions on Windows systems."
+repository = "https://github.com/bornacvitanic/fumble"
+license-file = "LICENSE.md"
 edition = "2021"
+keywords = ["clumsy", "network", "packet", "manipulation", "simulation"]
+categories = ["command-line-utilities", "development-tools::testing", "simulation", "network-programming"]
+
+[[bin]]
+name = "fumble"
+path = "src/main.rs"
 
 [dependencies]
 # Rust bindings for the WinDivert library, enabling packet capture and modification on Windows.
@@ -10,5 +20,6 @@ windivert = { version = "0.6", features = ["vendored"] }
 rand = "0.9.0-alpha.2"
 # CLI argument parsing library
 clap = { version = "4.5.11", features = ["derive"]}
+# Libraries for better logging
 env_logger = "0.11.5"
 log = "0.4.22"
