@@ -1,7 +1,13 @@
 use clap::{Parser};
 
-#[derive(Parser)]
-#[command(name = "clumsy", about="A network manipulation tool")]
+#[derive(Parser, Debug)]
+#[command(name = "clumsy",
+    about="A network manipulation tool",
+    long_about = "clumsy is a network manipulation tool that can drop, duplicate, and delay packets.\n\n\
+    ## Logging\n\
+    The tool uses the `env_logger` crate for logging. By default, info messages are shown.\n\n\
+    To see more or less detailed logs, set the `RUST_LOG` environment variable before running `clumsy`.\n\n\
+    ")]
 pub struct Cli {
     /// Filter expression for capturing packets
     #[arg(short, long)]

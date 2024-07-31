@@ -7,16 +7,18 @@ use windivert::prelude::{WinDivertFlags};
 use windivert::WinDivert;
 use std::time::{Duration, Instant};
 use clap::Parser;
+use env_logger::Env;
 use clumsy::network::capture::PacketData;
 use clumsy::network::drop::drop_packets;
 use clumsy::network::delay::delay_packets;
 use clumsy::network::duplicate::duplicate_packets;
 use clumsy::utils::log_statistics;
-use log::info;
+use log::{debug, error, info};
 
 fn main() -> Result<(), WinDivertError> {
-    env_logger::init();
+    env_logger::Builder::from_env(Env::default().default_filter_or("info")).init();
     let cli = Cli::parse();
+    debug!("Parsed CLI arguments: {:?}", cli);
 
     let traffic_filter = cli.filter.unwrap_or_else(|| String::new());
     info!("Traffic filer: {}", traffic_filter);
@@ -35,7 +37,7 @@ fn main() -> Result<(), WinDivertError> {
 
     let wd = WinDivert::<NetworkLayer>::network(traffic_filter, 0, WinDivertFlags::new())
         .map_err(|e| {
-            eprintln!("Failed to initialize WinDiver: {}", e);
+            error!("Failed to initialize WinDiver: {}", e);
             e
         })?;
 
