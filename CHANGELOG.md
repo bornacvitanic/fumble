@@ -2,9 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
-## [unreleased]
+## [0.1.0] - 2024-07-31
+
+### Documentation
+
+- Add README.md
+
+- Add LICENSE.md
+
 
 ### Features
+
+- Add github workflow for automatic building and testing when pushing to main
+
+- Implement automatic changelog generation using cliff config
 
 - Implement improved logging with env_logger setup and detailed CLI help
 
@@ -36,6 +47,11 @@ All notable changes to this project will be documented in this file.
 ### Refactors
 
 - Refactor project structure to modularize network and utility functions
+
+
+### Renames
+
+- Rename the project to fumble
 
 
 ### Testing
