@@ -1,6 +1,6 @@
 mod cli;
 
-use std::collections::VecDeque;
+use std::collections::{BinaryHeap, VecDeque};
 use crate::cli::Cli;
 use clap::Parser;
 use env_logger::Env;
@@ -15,6 +15,7 @@ use windivert::error::WinDivertError;
 use windivert::layer::NetworkLayer;
 use windivert::prelude::WinDivertFlags;
 use windivert::WinDivert;
+use fumble::network::reorder::{reorder_packets};
 
 fn main() -> Result<(), WinDivertError> {
     env_logger::Builder::from_env(Env::default().default_filter_or("info")).init();
@@ -28,6 +29,9 @@ fn main() -> Result<(), WinDivertError> {
     }
     if let Some(delay) = &cli.delay {
         info!("Delaying packets for: {} ms", delay)
+    }
+    if let Some(delay) = &cli.reorder {
+        info!("Reordering packets with maximum random delay of: {} ms", delay)
     }
     if cli.duplicate_count > 1usize && cli.duplicate_probability.unwrap_or(0.0) > 0.0 {
         info!(
@@ -50,6 +54,7 @@ fn main() -> Result<(), WinDivertError> {
     let mut total_packets = 0;
     let mut sent_packets = 0;
     let mut delay_storage = VecDeque::new();
+    let mut reorder_storage= BinaryHeap::new();
     let mut buffer = vec![0u8; 1500];
 
     info!("Starting packet interception.");
@@ -70,6 +75,10 @@ fn main() -> Result<(), WinDivertError> {
                     &mut delay_storage,
                     Duration::from_millis(delay),
                 );
+            }
+
+            if let Some(delay) = cli.reorder {
+                reorder_packets(&mut packets, &mut reorder_storage, Duration::from_millis(delay));
             }
 
             if cli.duplicate_count > 1 && cli.duplicate_probability.unwrap_or(0.0) > 0.0 {

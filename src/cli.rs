@@ -23,6 +23,10 @@ pub struct Cli {
     #[arg(long)]
     pub delay: Option<u64>,
 
+    /// Reorder packets by applying random delay in milliseconds
+    #[arg(short, long)]
+    pub reorder: Option<u64>,
+
     /// Number of times to duplicate packets
     #[arg(long, default_value_t = 1)]
     pub duplicate_count: usize,
