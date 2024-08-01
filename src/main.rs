@@ -1,5 +1,6 @@
 mod cli;
 
+use std::collections::VecDeque;
 use crate::cli::Cli;
 use clap::Parser;
 use env_logger::Env;
@@ -48,7 +49,7 @@ fn main() -> Result<(), WinDivertError> {
 
     let mut total_packets = 0;
     let mut sent_packets = 0;
-    let mut delay_storage = Vec::new();
+    let mut delay_storage = VecDeque::new();
     let mut buffer = vec![0u8; 1500];
 
     info!("Starting packet interception.");
