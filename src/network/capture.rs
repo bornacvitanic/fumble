@@ -13,6 +13,7 @@ use crate::network::delay::delay_packets;
 use crate::network::drop::drop_packets;
 use crate::network::duplicate::duplicate_packets;
 use crate::network::reorder::{DelayedPacket, reorder_packets};
+use crate::network::throttle::throttle_packages;
 use crate::utils::log_statistics;
 
 #[derive(Clone)]
@@ -75,7 +76,9 @@ pub fn start_packet_processing(cli: Cli, packet_receiver: Receiver<PacketData>) 
     let mut total_packets = 0;
     let mut sent_packets = 0;
     let mut last_sent_package_time = Instant::now();
+    let mut throttled_start_time = Instant::now();
     let mut delay_storage = VecDeque::new();
+    let mut throttle_storage = VecDeque::new();
     let mut bandwidth_limit_storage = VecDeque::new();
     let mut reorder_storage= BinaryHeap::new();
 
@@ -88,7 +91,7 @@ pub fn start_packet_processing(cli: Cli, packet_receiver: Receiver<PacketData>) 
             total_packets += 1;
         }
 
-        process_packets(&cli, &mut packets, &mut delay_storage, &mut reorder_storage, &mut bandwidth_limit_storage, &mut last_sent_package_time);
+        process_packets(&cli, &mut packets, &mut delay_storage, &mut reorder_storage, &mut bandwidth_limit_storage, &mut throttle_storage, &mut throttled_start_time, &mut last_sent_package_time);
 
         for packet_data in packets {
             wd.send(&packet_data.packet)?; // Send the packet data
@@ -109,6 +112,8 @@ fn process_packets<'a>(
     mut delay_storage: &mut VecDeque<PacketData<'a>>,
     mut reorder_storage: &mut BinaryHeap<DelayedPacket<'a>>,
     mut bandwidth_limit_storage: &mut VecDeque<PacketData<'a>>,
+    mut throttle_storage: &mut VecDeque<PacketData<'a>>,
+    mut throttled_start_time: &mut Instant,
     mut last_sent_package_time: &mut Instant) {
     if let Some(drop_probability) = cli.drop {
         drop_packets(&mut packets, drop_probability);
@@ -120,6 +125,10 @@ fn process_packets<'a>(
             &mut delay_storage,
             Duration::from_millis(delay),
         );
+    }
+
+    if let Some(throttle_probability) = cli.throttle_probability {
+        throttle_packages(&mut packets, &mut throttle_storage, throttle_probability, Duration::from_millis(cli.throttle_duration), cli.throttle_drop, &mut throttled_start_time);
     }
 
     if let Some(delay) = cli.reorder {

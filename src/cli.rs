@@ -23,6 +23,18 @@ pub struct Cli {
     #[arg(long)]
     pub delay: Option<u64>,
 
+    /// Probability of triggering a throttle event
+    #[arg(long, value_parser = parse_probability)]
+    pub throttle_probability: Option<f64>,
+
+    /// Throttle duration in milliseconds
+    #[arg(long, default_value_t = 30)]
+    pub throttle_duration: u64,
+
+    /// Makes throttled packets be dropped
+    #[arg(long, default_value_t = false)]
+    pub throttle_drop: bool,
+
     /// Reorder packets by applying random delay in milliseconds
     #[arg(short, long)]
     pub reorder: Option<u64>,

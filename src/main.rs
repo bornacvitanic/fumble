@@ -36,6 +36,10 @@ fn log_initialization_info(cli: &Cli){
     if let Some(delay) = &cli.delay {
         info!("Delaying packets for: {} ms", delay)
     }
+    if let Some(throttle_probability) = &cli.throttle_probability {
+        info!("Throttling packets with probability of {} ms with a throttle duration of {}. \
+        Throttle packet dropping: {}", throttle_probability, &cli.throttle_duration, &cli.throttle_drop)
+    }
     if let Some(delay) = &cli.reorder {
         info!("Reordering packets with maximum random delay of: {} ms", delay)
     }
