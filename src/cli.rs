@@ -23,6 +23,22 @@ pub struct Cli {
     #[arg(long)]
     pub delay: Option<u64>,
 
+    /// Probability of triggering a throttle event
+    #[arg(long, value_parser = parse_probability)]
+    pub throttle_probability: Option<f64>,
+
+    /// Throttle duration in milliseconds
+    #[arg(long, default_value_t = 30)]
+    pub throttle_duration: u64,
+
+    /// Makes throttled packets be dropped
+    #[arg(long, default_value_t = false)]
+    pub throttle_drop: bool,
+
+    /// Reorder packets by applying random delay in milliseconds
+    #[arg(short, long)]
+    pub reorder: Option<u64>,
+
     /// Number of times to duplicate packets
     #[arg(long, default_value_t = 1)]
     pub duplicate_count: usize,
@@ -30,6 +46,10 @@ pub struct Cli {
     /// Probability of duplicating packets, must be between 0.0 and 1.0
     #[arg(long, value_parser = parse_probability)]
     pub duplicate_probability: Option<f64>,
+
+    /// Set bandwidth limit in KB/s
+    #[arg(short, long)]
+    pub bandwidth_limit: Option<usize>
 }
 
 fn parse_probability(s: &str) -> Result<f64, String> {

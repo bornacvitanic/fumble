@@ -15,7 +15,10 @@ Just like its predecessor, fumble offers a user-friendly and interactive way to 
 - **Packet Filtering**: Use filter expressions to capture specific packets.
 - **Packet Dropping**: Drop packets with a specified probability.
 - **Packet Delay**: Introduce delays to simulate latency.
+- **Packet Throttling**: Temporarily hold or drop packets to simulate sporadic network throttling.
+- **Packet Reordering**: Reorder packets by applying a random delay to simulate out-of-order delivery.
 - **Packet Duplication**: Duplicate packets to simulate packet duplication issues.
+- **Bandwidth Limiting**: Limit the bandwidth to simulate a constrained network environment.
 
 ## Requirements
 
@@ -82,8 +85,13 @@ To see more detailed logs, set the `RUST_LOG` environment variable before runnin
 - `-f, --filter <FILTER>`: Filter expression for capturing packets.
 - `--drop <DROP>`: Probability of dropping packets in the range 0.0 to 1.0.
 - `--delay <DELAY>`: Delay to introduce for each packet in milliseconds.
+- `--throttle-probability <PROBABILITY>`: Probability of triggering a throttle event, must be between 0.0 and 1.0.
+- `--throttle-duration <DURATION>`: Duration in milliseconds for which throttling is applied during a throttle event.
+- `--throttle-drop`: Makes throttled packets be dropped instead of delayed.
+- `--reorder <DELAY>`: Apply a random delay to reorder packets, simulating out-of-order delivery.
 - `--duplicate-count <COUNT>`: Number of times to duplicate packets.
 - `--duplicate-probability <PROBABILITY>`: Probability of duplicating packets, must be between 0.0 and 1.0.
+- `--bandwidth-limit <KB/s>`: Limit the bandwidth in KB/s to simulate a constrained network environment.
 
 ## Examples
 
@@ -99,10 +107,34 @@ To see more detailed logs, set the `RUST_LOG` environment variable before runnin
   fumble --filter "inbound and tcp" --delay 500
   ```
 
+- Throttle packets with a 10% probability for 30 milliseconds and drop them:
+
+  ```sh
+  fumble --filter "inbound and tcp" --throttle-probability 0.1 --throttle-duration 30 --throttle-drop
+  ```
+
+- Throttle packets with a 20% probability for 50 milliseconds and delay them:
+
+  ```sh
+  fumble --filter "inbound and tcp" --throttle-probability 0.2 --throttle-duration 50
+  ```
+
+- Reorder packets with a maximum delay of 100 milliseconds:
+
+  ```sh
+  fumble --filter "inbound and tcp" --reorder 100
+  ```
+
 - Duplicate packets with a 50% chance:
 
   ```sh
   fumble --filter "inbound and tcp" --duplicate-count 2 --duplicate-probability 0.5
+  ```
+
+- Limit bandwidth to 100 KB/s:
+
+  ```sh
+  fumble --filter "inbound and tcp" --bandwidth-limit 100
   ```
 
 ## Contributing
@@ -116,10 +148,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE.md) f
 ## Acknowledgements
 
 - [clap](https://crates.io/crates/clap) - A command-line argument parser for Rust that provides a simple and powerful API for defining complex CLI interfaces.
-- [env_logger](https://crates.io/crates/env_logger) - A simple logger for Rust applications that can be configured via environment variables.
-- [log](https://crates.io/crates/log) - A logging facade that provides a common interface for various log implementations.
 - [windivert](https://crates.io/crates/windivert) - A Rust binding for the WinDivert library, used for network packet interception and manipulation.
 - [rand](https://crates.io/crates/rand) - A Rust library for generating random numbers, used for implementing random packet dropping and duplication.
+- [env_logger](https://crates.io/crates/env_logger) - A simple logger for Rust applications that can be configured via environment variables.
+- [log](https://crates.io/crates/log) - A logging facade that provides a common interface for various log implementations.
 
 ## Contact
 

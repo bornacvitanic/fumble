@@ -1,19 +1,20 @@
+use std::collections::VecDeque;
 use crate::network::capture::PacketData;
 use std::time::Duration;
 
 pub fn delay_packets<'a>(
     packets: &mut Vec<PacketData<'a>>,
-    storage: &mut Vec<PacketData<'a>>,
+    storage: &mut VecDeque<PacketData<'a>>,
     delay: Duration,
 ) {
-    storage.append(packets);
+    storage.extend(packets.drain(..));
 
-    storage.retain(|packet_data| {
+    while let Some(packet_data) = storage.pop_front() {
         if packet_data.arrival_time.elapsed() >= delay {
-            packets.push(packet_data.clone());
-            false
+            packets.push(packet_data);
         } else {
-            true
+            storage.push_front(packet_data);
+            break;
         }
-    });
+    }
 }

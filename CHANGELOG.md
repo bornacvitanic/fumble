@@ -2,6 +2,52 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.0] - 2024-08-02
+
+### Bug Fixes
+
+- Update github workflow action to try and fix WinDivert download
+
+
+### Documentation
+
+- Update README.md to mention new throttling feature
+
+- Update README.md to mention new reorder and bandwidth limitin functionalities
+
+- Update CHANGELOG.md with changes for v0.1.0
+
+
+### Features
+
+- Add throttling feature to temporarily hold or drop packets to simulate sporadic network throttling
+
+- Add bandwidth limiting feature to control package transmission rate
+
+- Implement package capture on a separate thread as to not block processing of delayed packets while there are no new packets
+
+- Add packet reordering feature with CLI support
+
+
+### Refactors
+
+- Refactor main.rs to extract logic into methods and move them into the right files
+
+- Refactor delay packet storage to use VecDeque for FIFO order
+
+
+### Styling
+
+- Style files using fmt
+
+
+### Updates
+
+- Update github workflow action to set WinDivert download source and to remove linux build
+
+- Update github workflow action to handle windows builds
+
+
 ## [0.1.0] - 2024-07-31
 
 ### Documentation
