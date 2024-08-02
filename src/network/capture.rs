@@ -8,6 +8,7 @@ use windivert::packet::WinDivertPacket;
 use windivert::prelude::WinDivertFlags;
 use windivert::WinDivert;
 use crate::cli::Cli;
+use crate::network::bandwidth::bandwidth_limiter;
 use crate::network::delay::delay_packets;
 use crate::network::drop::drop_packets;
 use crate::network::duplicate::duplicate_packets;
@@ -73,7 +74,9 @@ pub fn start_packet_processing(cli: Cli, packet_receiver: Receiver<PacketData>) 
 
     let mut total_packets = 0;
     let mut sent_packets = 0;
+    let mut last_sent_package_time = Instant::now();
     let mut delay_storage = VecDeque::new();
+    let mut bandwidth_limit_storage = VecDeque::new();
     let mut reorder_storage= BinaryHeap::new();
 
     info!("Starting packet interception.");
@@ -85,7 +88,7 @@ pub fn start_packet_processing(cli: Cli, packet_receiver: Receiver<PacketData>) 
             total_packets += 1;
         }
 
-        process_packets(&cli, &mut packets, &mut delay_storage, &mut reorder_storage);
+        process_packets(&cli, &mut packets, &mut delay_storage, &mut reorder_storage, &mut bandwidth_limit_storage, &mut last_sent_package_time);
 
         for packet_data in packets {
             wd.send(&packet_data.packet)?; // Send the packet data
@@ -100,7 +103,13 @@ pub fn start_packet_processing(cli: Cli, packet_receiver: Receiver<PacketData>) 
     }
 }
 
-fn process_packets<'a>(cli: &Cli, mut packets: &mut Vec<PacketData<'a>>, mut delay_storage: &mut VecDeque<PacketData<'a>>, mut reorder_storage: &mut BinaryHeap<DelayedPacket<'a>>) {
+fn process_packets<'a>(
+    cli: &Cli,
+    mut packets: &mut Vec<PacketData<'a>>,
+    mut delay_storage: &mut VecDeque<PacketData<'a>>,
+    mut reorder_storage: &mut BinaryHeap<DelayedPacket<'a>>,
+    mut bandwidth_limit_storage: &mut VecDeque<PacketData<'a>>,
+    mut last_sent_package_time: &mut Instant) {
     if let Some(drop_probability) = cli.drop {
         drop_packets(&mut packets, drop_probability);
     }
@@ -123,6 +132,10 @@ fn process_packets<'a>(cli: &Cli, mut packets: &mut Vec<PacketData<'a>>, mut del
             cli.duplicate_count,
             cli.duplicate_probability.unwrap_or(0.0),
         );
+    }
+
+    if let Some(bandwidth_limit) = cli.bandwidth_limit {
+        bandwidth_limiter(&mut packets, &mut bandwidth_limit_storage, bandwidth_limit, &mut last_sent_package_time);
     }
 }
 

@@ -34,6 +34,10 @@ pub struct Cli {
     /// Probability of duplicating packets, must be between 0.0 and 1.0
     #[arg(long, value_parser = parse_probability)]
     pub duplicate_probability: Option<f64>,
+
+    /// Set bandwidth limit in KB/s
+    #[arg(short, long)]
+    pub bandwidth_limit: Option<usize>
 }
 
 fn parse_probability(s: &str) -> Result<f64, String> {

@@ -46,4 +46,7 @@ fn log_initialization_info(cli: &Cli){
             &cli.duplicate_probability.unwrap()
         );
     }
+    if let Some(bandwidth_limit) = &cli.bandwidth_limit {
+        info!("Limiting bandwidth to: {} KB/s", bandwidth_limit)
+    }
 }
