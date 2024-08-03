@@ -18,17 +18,14 @@ fn main() -> Result<(), WinDivertError> {
     log_initialization_info(&cli);
 
     let running = Arc::new(AtomicBool::new(true));
-    let r = running.clone();
-    ctrlc::set_handler(move || {
-        info!("Ctrl+C pressed; initiating shutdown...");
-        r.store(false, Ordering::SeqCst);
-    }).expect("Error setting Ctrl-C handler");
+    setup_ctrlc_handler(running.clone());
 
     let (packet_sender, packet_receiver) = channel();
-    let traffic_filter_clone = cli.filter.clone().unwrap_or_default();
+    let traffic_filter = cli.filter.clone().unwrap_or_default();
+
     let handle = thread::spawn({
         let running = running.clone();
-        move || packet_receiving_thread(traffic_filter_clone, packet_sender, running)
+        move || packet_receiving_thread(traffic_filter, packet_sender, running)
     });
 
     start_packet_processing(cli, packet_receiver, running)?;
@@ -38,6 +35,13 @@ fn main() -> Result<(), WinDivertError> {
     info!("Application shutdown complete.");
 
     Ok(())
+}
+
+fn setup_ctrlc_handler(running: Arc<AtomicBool>) {
+    ctrlc::set_handler(move || {
+        info!("Ctrl+C pressed; initiating shutdown...");
+        running.store(false, Ordering::SeqCst);
+    }).expect("Error setting Ctrl-C handler");
 }
 
 fn initialize_logging() {
