@@ -153,11 +153,11 @@ fn process_packets<'a>(
     packets: &mut Vec<PacketData<'a>>,
     state: &mut PacketProcessingState<'a>,
 ) {
-    if let Some(drop_probability) = cli.drop {
+    if let Some(drop_probability) = cli.drop.probability {
         drop_packets(packets, drop_probability);
     }
 
-    if let Some(delay) = cli.delay {
+    if let Some(delay) = cli.delay.duration {
         delay_packets(
             packets,
             &mut state.delay_storage,
@@ -165,18 +165,18 @@ fn process_packets<'a>(
         );
     }
 
-    if let Some(throttle_probability) = cli.throttle_probability {
+    if let Some(throttle_probability) = cli.throttle.probability {
         throttle_packages(
             packets,
             &mut state.throttle_storage,
             &mut state.throttled_start_time,
             throttle_probability,
-            Duration::from_millis(cli.throttle_duration),
-            cli.throttle_drop,
+            Duration::from_millis(cli.throttle.duration),
+            cli.throttle.drop,
         );
     }
 
-    if let Some(delay) = cli.reorder {
+    if let Some(delay) = cli.reorder.max_delay {
         reorder_packets(
             packets,
             &mut state.reorder_storage,
@@ -184,15 +184,15 @@ fn process_packets<'a>(
         );
     }
 
-    if cli.duplicate_count > 1 && cli.duplicate_probability.unwrap_or(0.0) > 0.0 {
+    if cli.duplicate.count > 1 && cli.duplicate.probability.unwrap_or(0.0) > 0.0 {
         duplicate_packets(
             packets,
-            cli.duplicate_count,
-            cli.duplicate_probability.unwrap_or(0.0),
+            cli.duplicate.count,
+            cli.duplicate.probability.unwrap_or(0.0),
         );
     }
 
-    if let Some(bandwidth_limit) = cli.bandwidth_limit {
+    if let Some(bandwidth_limit) = cli.bandwidth.limit {
         bandwidth_limiter(
             packets,
             &mut state.bandwidth_limit_storage,

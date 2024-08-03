@@ -53,33 +53,33 @@ fn log_initialization_info(cli: &Cli) {
     if let Some(traffic_filter) = &cli.filter {
         info!("Traffic filer: {}", traffic_filter);
     }
-    if let Some(drop_probability) = &cli.drop {
+    if let Some(drop_probability) = &cli.drop.probability {
         info!("Dropping packets with probability: {}", drop_probability);
     }
-    if let Some(delay) = &cli.delay {
+    if let Some(delay) = &cli.delay.duration {
         info!("Delaying packets for: {} ms", delay)
     }
-    if let Some(throttle_probability) = &cli.throttle_probability {
+    if let Some(throttle_probability) = &cli.throttle.probability {
         info!(
             "Throttling packets with probability of {} ms with a throttle duration of {}. \
         Throttle packet dropping: {}",
-            throttle_probability, &cli.throttle_duration, &cli.throttle_drop
+            throttle_probability, &cli.throttle.duration, &cli.throttle.drop
         )
     }
-    if let Some(delay) = &cli.reorder {
+    if let Some(max_delay) = &cli.reorder.max_delay {
         info!(
             "Reordering packets with maximum random delay of: {} ms",
-            delay
+            max_delay
         )
     }
-    if cli.duplicate_count > 1usize && cli.duplicate_probability.unwrap_or(0.0) > 0.0 {
+    if cli.duplicate.count > 1usize && cli.duplicate.probability.unwrap_or(0.0) > 0.0 {
         info!(
             "Duplicating packets {} times with probability: {}",
-            &cli.duplicate_count,
-            &cli.duplicate_probability.unwrap()
+            &cli.duplicate.count,
+            &cli.duplicate.probability.unwrap()
         );
     }
-    if let Some(bandwidth_limit) = &cli.bandwidth_limit {
+    if let Some(bandwidth_limit) = &cli.bandwidth.limit {
         info!("Limiting bandwidth to: {} KB/s", bandwidth_limit)
     }
 }

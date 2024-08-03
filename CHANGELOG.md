@@ -2,6 +2,50 @@
 
 All notable changes to this project will be documented in this file.
 
+## [unreleased]
+
+### Bug Fixes
+
+- Fix capture not clearing packets vector in between loop iterations
+
+- Fix start_packet_processing method usign the wrong packets vector
+
+
+### Documentation
+
+- Update README.md to increment version number in installation example
+
+- Update CHANGELOG.md with changes for v0.2.0
+
+
+### Features
+
+- Add graceful shutdown and improved loggin with Ctrl-C signal handling
+
+- Refactor capture.rs to add a PacketProcessingState structs for easier state passing between methods
+
+
+### Styling
+
+- Clean up scripts using fmt
+
+- Clean up scripts using clippy
+
+
+### Testing
+
+- Add unit tests for bandwidth limiting functionality
+
+
+### Updates
+
+- Update main method to extract Ctrl-C handing logic to submethod
+
+- Update bandwidth limiter to define the max buffer size using memory size and not package count to better handle high amounts of small packets
+
+- Update Cargo.toml package version to 0.2.0
+
+
 ## [0.2.0] - 2024-08-02
 
 ### Bug Fixes
