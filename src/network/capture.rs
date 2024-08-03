@@ -49,7 +49,7 @@ pub fn packet_receiving_thread(
     running: Arc<AtomicBool>
 ) -> Result<(), WinDivertError> {
 
-    let wd = WinDivert::<NetworkLayer>::network(&traffic_filter, 0, WinDivertFlags::new()).map_err(
+    let wd = WinDivert::<NetworkLayer>::network(traffic_filter, 0, WinDivertFlags::new()).map_err(
         |e| {
             error!("Failed to initialize WinDiver: {}", e);
             e
@@ -86,7 +86,7 @@ fn should_shutdown(running: &Arc<AtomicBool>) -> bool {
 }
 
 pub fn start_packet_processing(cli: Cli, packet_receiver: Receiver<PacketData>, running: Arc<AtomicBool>) -> Result<(), WinDivertError>{
-    let wd = WinDivert::<NetworkLayer>::network(&cli.filter.clone().unwrap_or_default(), 0, WinDivertFlags::new()).map_err(
+    let wd = WinDivert::<NetworkLayer>::network(cli.filter.clone().unwrap_or_default(), 0, WinDivertFlags::new()).map_err(
     |e| {
         error!("Failed to initialize WinDiver: {}", e);
         e
@@ -140,39 +140,39 @@ pub fn start_packet_processing(cli: Cli, packet_receiver: Receiver<PacketData>, 
 
 fn process_packets<'a>(
     cli: &Cli,
-    mut packets: &mut Vec<PacketData<'a>>,
+    packets: &mut Vec<PacketData<'a>>,
     state: &mut PacketProcessingState<'a>) {
 
     if let Some(drop_probability) = cli.drop {
-        drop_packets(&mut packets, drop_probability);
+        drop_packets(packets, drop_probability);
     }
 
     if let Some(delay) = cli.delay {
         delay_packets(
-            &mut packets,
+            packets,
             &mut state.delay_storage,
             Duration::from_millis(delay),
         );
     }
 
     if let Some(throttle_probability) = cli.throttle_probability {
-        throttle_packages(&mut packets, &mut state.throttle_storage, &mut state.throttled_start_time, throttle_probability, Duration::from_millis(cli.throttle_duration), cli.throttle_drop);
+        throttle_packages(packets, &mut state.throttle_storage, &mut state.throttled_start_time, throttle_probability, Duration::from_millis(cli.throttle_duration), cli.throttle_drop);
     }
 
     if let Some(delay) = cli.reorder {
-        reorder_packets(&mut packets, &mut state.reorder_storage, Duration::from_millis(delay));
+        reorder_packets(packets, &mut state.reorder_storage, Duration::from_millis(delay));
     }
 
     if cli.duplicate_count > 1 && cli.duplicate_probability.unwrap_or(0.0) > 0.0 {
         duplicate_packets(
-            &mut packets,
+            packets,
             cli.duplicate_count,
             cli.duplicate_probability.unwrap_or(0.0),
         );
     }
 
     if let Some(bandwidth_limit) = cli.bandwidth_limit {
-        bandwidth_limiter(&mut packets, &mut state.bandwidth_limit_storage, &mut state.bandwidth_storage_total_size,  &mut state.last_sent_package_time, bandwidth_limit);
+        bandwidth_limiter(packets, &mut state.bandwidth_limit_storage, &mut state.bandwidth_storage_total_size,  &mut state.last_sent_package_time, bandwidth_limit);
     }
 }
 

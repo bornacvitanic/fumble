@@ -50,9 +50,9 @@ fn add_packet_to_buffer<'a>(buffer: &mut VecDeque<PacketData<'a>>, packet: Packe
     buffer.push_back(packet);
 }
 
-fn add_packets_to_buffer<'a>(mut buffer: &mut VecDeque<PacketData<'a>>, packets: &mut Vec<PacketData<'a>>, mut total_size: &mut usize) {
+fn add_packets_to_buffer<'a>(buffer: &mut VecDeque<PacketData<'a>>, packets: &mut Vec<PacketData<'a>>, total_size: &mut usize) {
     while let Some(packet) = packets.pop() {
-        add_packet_to_buffer(&mut buffer, packet, &mut total_size);
+        add_packet_to_buffer(buffer, packet, total_size);
     }
 }
 
@@ -65,9 +65,9 @@ fn remove_packet_from_buffer<'a>(buffer: &mut VecDeque<PacketData<'a>>, total_si
     }
 }
 
-fn maintain_buffer_size<'a>(buffer: &mut VecDeque<PacketData<'a>>, total_size: &mut usize) {
+fn maintain_buffer_size(buffer: &mut VecDeque<PacketData<'_>>, total_size: &mut usize) {
     while *total_size > MAX_BUFFER_SIZE {
-        if let Some(_) = remove_packet_from_buffer(buffer, total_size) {
+        if remove_packet_from_buffer(buffer, total_size).is_some() {
             // Packet removed from buffer to maintain size limit
         } else {
             break; // No more packets to remove
@@ -102,7 +102,7 @@ mod tests {
         let mut last_send_time = Instant::now() - Duration::from_secs(1);
         let bandwidth_limit = 1; // 1 KB/s
 
-        bandwidth_limiter(&mut packets, &mut buffer, &mut total_buffer_size, &mut last_send_time, bandwidth_limit);
+        bandwidth_limiter(&mut packets, &mut buffer, total_buffer_size, &mut last_send_time, bandwidth_limit);
 
         assert!(packets.len() <= 1);
     }
