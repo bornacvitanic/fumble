@@ -11,6 +11,7 @@ mod tests {
     use crate::network::drop::drop_packets;
     use windivert::layer::NetworkLayer;
     use windivert::packet::WinDivertPacket;
+    use crate::network::types::Probability;
 
     #[test]
     fn test_drop_packets() {
@@ -18,7 +19,7 @@ mod tests {
             let mut packets = vec![PacketData::from(WinDivertPacket::<NetworkLayer>::new(
                 vec![1, 2, 3],
             ))];
-            drop_packets(&mut packets, 1.0);
+            drop_packets(&mut packets, Probability::new(1.0).unwrap());
             assert!(packets.is_empty())
         }
     }

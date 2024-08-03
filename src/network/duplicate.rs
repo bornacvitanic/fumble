@@ -23,6 +23,7 @@ mod tests {
     use crate::network::duplicate::duplicate_packets;
     use windivert::layer::NetworkLayer;
     use windivert::packet::WinDivertPacket;
+    use crate::network::types::Probability;
 
     #[test]
     fn test_packet_duplication() {
@@ -33,7 +34,7 @@ mod tests {
             let original_len = original_packets.len();
             let mut packets = original_packets.clone();
 
-            duplicate_packets(&mut packets, 3, 1.0);
+            duplicate_packets(&mut packets, 3, Probability::new(1.0).unwrap());
 
             // Ensure three times as many packets
             assert_eq!(packets.len(), original_len * 3);
