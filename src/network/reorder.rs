@@ -1,7 +1,7 @@
-use std::cmp::{Ordering};
+use crate::network::capture::PacketData;
+use std::cmp::Ordering;
 use std::collections::BinaryHeap;
 use std::time::{Duration, Instant};
-use crate::network::capture::PacketData;
 
 pub struct DelayedPacket<'a> {
     pub packet: PacketData<'a>,

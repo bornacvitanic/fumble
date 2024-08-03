@@ -1,5 +1,5 @@
-use std::collections::VecDeque;
 use crate::network::capture::PacketData;
+use std::collections::VecDeque;
 use std::time::Duration;
 
 pub fn delay_packets<'a>(

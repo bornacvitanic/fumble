@@ -49,7 +49,7 @@ pub struct Cli {
 
     /// Set bandwidth limit in KB/s
     #[arg(short, long)]
-    pub bandwidth_limit: Option<usize>
+    pub bandwidth_limit: Option<usize>,
 }
 
 fn parse_probability(s: &str) -> Result<f64, String> {

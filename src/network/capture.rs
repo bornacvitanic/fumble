@@ -1,22 +1,22 @@
-use std::collections::{BinaryHeap, VecDeque};
-use std::sync::Arc;
-use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::mpsc::Receiver;
-use std::time::{Duration, Instant};
-use log::{error, info};
-use windivert::error::WinDivertError;
-use windivert::layer::NetworkLayer;
-use windivert::packet::WinDivertPacket;
-use windivert::prelude::WinDivertFlags;
-use windivert::WinDivert;
 use crate::cli::Cli;
 use crate::network::bandwidth::bandwidth_limiter;
 use crate::network::delay::delay_packets;
 use crate::network::drop::drop_packets;
 use crate::network::duplicate::duplicate_packets;
-use crate::network::reorder::{DelayedPacket, reorder_packets};
+use crate::network::reorder::{reorder_packets, DelayedPacket};
 use crate::network::throttle::throttle_packages;
 use crate::utils::log_statistics;
+use log::{error, info};
+use std::collections::{BinaryHeap, VecDeque};
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::mpsc::Receiver;
+use std::sync::Arc;
+use std::time::{Duration, Instant};
+use windivert::error::WinDivertError;
+use windivert::layer::NetworkLayer;
+use windivert::packet::WinDivertPacket;
+use windivert::prelude::WinDivertFlags;
+use windivert::WinDivert;
 
 #[derive(Clone)]
 pub struct PacketData<'a> {
@@ -46,9 +46,8 @@ pub struct PacketProcessingState<'a> {
 pub fn packet_receiving_thread(
     traffic_filter: String,
     packet_sender: std::sync::mpsc::Sender<PacketData>,
-    running: Arc<AtomicBool>
+    running: Arc<AtomicBool>,
 ) -> Result<(), WinDivertError> {
-
     let wd = WinDivert::<NetworkLayer>::network(traffic_filter, 0, WinDivertFlags::new()).map_err(
         |e| {
             error!("Failed to initialize WinDiver: {}", e);
@@ -58,12 +57,16 @@ pub fn packet_receiving_thread(
 
     let mut buffer = vec![0u8; 1500];
     loop {
-        if should_shutdown(&running) { break; }
+        if should_shutdown(&running) {
+            break;
+        }
         match wd.recv(Some(&mut buffer)) {
             Ok(packet) => {
                 let packet_data = PacketData::from(packet.into_owned());
                 if packet_sender.send(packet_data).is_err() {
-                    if should_shutdown(&running) { break; }
+                    if should_shutdown(&running) {
+                        break;
+                    }
                     error!("Failed to send packet data to main thread");
                     break;
                 }
@@ -85,13 +88,20 @@ fn should_shutdown(running: &Arc<AtomicBool>) -> bool {
     false
 }
 
-pub fn start_packet_processing(cli: Cli, packet_receiver: Receiver<PacketData>, running: Arc<AtomicBool>) -> Result<(), WinDivertError>{
-    let wd = WinDivert::<NetworkLayer>::network(cli.filter.clone().unwrap_or_default(), 0, WinDivertFlags::new()).map_err(
-    |e| {
+pub fn start_packet_processing(
+    cli: Cli,
+    packet_receiver: Receiver<PacketData>,
+    running: Arc<AtomicBool>,
+) -> Result<(), WinDivertError> {
+    let wd = WinDivert::<NetworkLayer>::network(
+        cli.filter.clone().unwrap_or_default(),
+        0,
+        WinDivertFlags::new(),
+    )
+    .map_err(|e| {
         error!("Failed to initialize WinDiver: {}", e);
         e
-    },
-    )?;
+    })?;
 
     let log_interval = Duration::from_secs(5);
     let mut last_log_time = Instant::now();
@@ -141,8 +151,8 @@ pub fn start_packet_processing(cli: Cli, packet_receiver: Receiver<PacketData>, 
 fn process_packets<'a>(
     cli: &Cli,
     packets: &mut Vec<PacketData<'a>>,
-    state: &mut PacketProcessingState<'a>) {
-
+    state: &mut PacketProcessingState<'a>,
+) {
     if let Some(drop_probability) = cli.drop {
         drop_packets(packets, drop_probability);
     }
@@ -156,11 +166,22 @@ fn process_packets<'a>(
     }
 
     if let Some(throttle_probability) = cli.throttle_probability {
-        throttle_packages(packets, &mut state.throttle_storage, &mut state.throttled_start_time, throttle_probability, Duration::from_millis(cli.throttle_duration), cli.throttle_drop);
+        throttle_packages(
+            packets,
+            &mut state.throttle_storage,
+            &mut state.throttled_start_time,
+            throttle_probability,
+            Duration::from_millis(cli.throttle_duration),
+            cli.throttle_drop,
+        );
     }
 
     if let Some(delay) = cli.reorder {
-        reorder_packets(packets, &mut state.reorder_storage, Duration::from_millis(delay));
+        reorder_packets(
+            packets,
+            &mut state.reorder_storage,
+            Duration::from_millis(delay),
+        );
     }
 
     if cli.duplicate_count > 1 && cli.duplicate_probability.unwrap_or(0.0) > 0.0 {
@@ -172,7 +193,13 @@ fn process_packets<'a>(
     }
 
     if let Some(bandwidth_limit) = cli.bandwidth_limit {
-        bandwidth_limiter(packets, &mut state.bandwidth_limit_storage, &mut state.bandwidth_storage_total_size,  &mut state.last_sent_package_time, bandwidth_limit);
+        bandwidth_limiter(
+            packets,
+            &mut state.bandwidth_limit_storage,
+            &mut state.bandwidth_storage_total_size,
+            &mut state.last_sent_package_time,
+            bandwidth_limit,
+        );
     }
 }
 

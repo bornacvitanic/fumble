@@ -1,7 +1,7 @@
-use std::collections::VecDeque;
-use std::time::{Instant};
-use log::{trace};
 use crate::network::capture::PacketData;
+use log::trace;
+use std::collections::VecDeque;
+use std::time::Instant;
 
 const MAX_BUFFER_SIZE: usize = 10 * 1024 * 1024; // 10 MB in bytes
 
@@ -31,7 +31,7 @@ pub fn bandwidth_limiter<'a>(
         bytes_sent += packet_size;
         match remove_packet_from_buffer(buffer, total_buffer_size) {
             Some(packet) => to_send.push(packet),
-            None => {},
+            None => {}
         }
     }
 
@@ -45,18 +45,29 @@ pub fn bandwidth_limiter<'a>(
     }
 }
 
-fn add_packet_to_buffer<'a>(buffer: &mut VecDeque<PacketData<'a>>, packet: PacketData<'a>, total_size: &mut usize) {
+fn add_packet_to_buffer<'a>(
+    buffer: &mut VecDeque<PacketData<'a>>,
+    packet: PacketData<'a>,
+    total_size: &mut usize,
+) {
     *total_size += packet.packet.data.len();
     buffer.push_back(packet);
 }
 
-fn add_packets_to_buffer<'a>(buffer: &mut VecDeque<PacketData<'a>>, packets: &mut Vec<PacketData<'a>>, total_size: &mut usize) {
+fn add_packets_to_buffer<'a>(
+    buffer: &mut VecDeque<PacketData<'a>>,
+    packets: &mut Vec<PacketData<'a>>,
+    total_size: &mut usize,
+) {
     while let Some(packet) = packets.pop() {
         add_packet_to_buffer(buffer, packet, total_size);
     }
 }
 
-fn remove_packet_from_buffer<'a>(buffer: &mut VecDeque<PacketData<'a>>, total_size: &mut usize) -> Option<PacketData<'a>> {
+fn remove_packet_from_buffer<'a>(
+    buffer: &mut VecDeque<PacketData<'a>>,
+    total_size: &mut usize,
+) -> Option<PacketData<'a>> {
     if let Some(packet) = buffer.pop_front() {
         *total_size -= packet.packet.data.len();
         Some(packet)
@@ -78,17 +89,15 @@ fn maintain_buffer_size(buffer: &mut VecDeque<PacketData<'_>>, total_size: &mut 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use windivert::packet::WinDivertPacket;
-    use windivert::layer::NetworkLayer;
     use std::time::Duration;
+    use windivert::layer::NetworkLayer;
+    use windivert::packet::WinDivertPacket;
 
     /// Safely creates a dummy packet with a specified length.
     /// Assumes the vector created with the specified length is valid for packet creation.
     fn create_dummy_packet<'a>(length: usize) -> WinDivertPacket<'a, NetworkLayer> {
         let data = vec![1; length];
-        unsafe {
-            WinDivertPacket::<NetworkLayer>::new(data)
-        }
+        unsafe { WinDivertPacket::<NetworkLayer>::new(data) }
     }
 
     #[test]
@@ -102,7 +111,13 @@ mod tests {
         let mut last_send_time = Instant::now() - Duration::from_secs(1);
         let bandwidth_limit = 1; // 1 KB/s
 
-        bandwidth_limiter(&mut packets, &mut buffer, total_buffer_size, &mut last_send_time, bandwidth_limit);
+        bandwidth_limiter(
+            &mut packets,
+            &mut buffer,
+            total_buffer_size,
+            &mut last_send_time,
+            bandwidth_limit,
+        );
 
         assert!(packets.len() <= 1);
     }
@@ -122,7 +137,13 @@ mod tests {
         let mut last_send_time = Instant::now();
         let bandwidth_limit = 100; // High enough to not limit the test
 
-        bandwidth_limiter(&mut packets, &mut buffer, &mut total_buffer_size, &mut last_send_time, bandwidth_limit);
+        bandwidth_limiter(
+            &mut packets,
+            &mut buffer,
+            &mut total_buffer_size,
+            &mut last_send_time,
+            bandwidth_limit,
+        );
 
         let actual_total_size: usize = buffer.iter().map(|p| p.packet.data.len()).sum();
         assert!(actual_total_size <= MAX_BUFFER_SIZE);
@@ -139,7 +160,13 @@ mod tests {
         let mut last_send_time = Instant::now() - Duration::from_secs(1);
         let bandwidth_limit = 10_000; // 10 MB/s
 
-        bandwidth_limiter(&mut packets, &mut buffer, &mut total_buffer_size, &mut last_send_time, bandwidth_limit);
+        bandwidth_limiter(
+            &mut packets,
+            &mut buffer,
+            &mut total_buffer_size,
+            &mut last_send_time,
+            bandwidth_limit,
+        );
 
         assert_eq!(packets.len(), 2);
     }
@@ -155,7 +182,13 @@ mod tests {
         let mut last_send_time = Instant::now();
         let bandwidth_limit = 0; // 0 KB/s
 
-        bandwidth_limiter(&mut packets, &mut buffer, &mut total_buffer_size, &mut last_send_time, bandwidth_limit);
+        bandwidth_limiter(
+            &mut packets,
+            &mut buffer,
+            &mut total_buffer_size,
+            &mut last_send_time,
+            bandwidth_limit,
+        );
 
         assert!(packets.is_empty());
         assert_eq!(buffer.len(), 2);
@@ -169,7 +202,13 @@ mod tests {
         let mut last_send_time = Instant::now();
         let bandwidth_limit = 10_000; // 10 MB/s
 
-        bandwidth_limiter(&mut packets, &mut buffer, &mut total_buffer_size, &mut last_send_time, bandwidth_limit);
+        bandwidth_limiter(
+            &mut packets,
+            &mut buffer,
+            &mut total_buffer_size,
+            &mut last_send_time,
+            bandwidth_limit,
+        );
 
         // Since the packets vector was empty, buffer should remain empty and nothing should be sent
         assert!(packets.is_empty());
