@@ -20,6 +20,14 @@ Just like its predecessor, fumble offers a user-friendly and interactive way to 
 - **Packet Duplication**: Duplicate packets to simulate packet duplication issues.
 - **Bandwidth Limiting**: Limit the bandwidth to simulate a constrained network environment.
 
+## Roadmap
+
+- **Packet Manipulation Feature - Tampering:** Add new features for packet tampering and manipulation for advanced usage scenarios.
+- **Enhanced Receiver Thread Handling:** Improve robustness and reliability of the packet receiving process.
+- **Configuration Support:** Introduce support for configuration files to simplify setup and usage.
+- **TUI/CLI Enhancements:** Develop a Text User Interface (TUI) or enhance command-line interface for more user-friendly interactions.
+- **Graphical User Interface (GUI):** Implement a GUI to cater to users who prefer not to use the command line.
+
 ## Requirements
 
 `fumble` requires `WinDivert.dll` to function properly. You can download it from the [official WinDivert releases page](https://github.com/basil00/Divert/releases).
