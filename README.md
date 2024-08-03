@@ -49,7 +49,7 @@ You can include `fumble` as a dependency in your Rust project by adding it to yo
 
 ```toml
 [dependencies]
-fumble = "0.1.0"
+fumble = "0.2.0"
 ```
 
 Then, run `cargo build` to download and compile the crate.
