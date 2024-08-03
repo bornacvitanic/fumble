@@ -1,11 +1,12 @@
+use std::process::exit;
 use clap::Parser;
 use env_logger::Env;
 use fumble::cli::Cli;
 use fumble::network::capture::{packet_receiving_thread, start_packet_processing};
-use log::{debug, info};
+use log::{debug, error, info};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc::channel;
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 use std::thread;
 use windivert::error::WinDivertError;
 
@@ -16,7 +17,8 @@ fn main() -> Result<(), WinDivertError> {
     log_initialization_info(&cli);
 
     let running = Arc::new(AtomicBool::new(true));
-    setup_ctrlc_handler(running.clone());
+    let shutdown_triggered = Arc::new(Mutex::new(false));
+    setup_ctrlc_handler(running.clone(), shutdown_triggered.clone());
 
     let (packet_sender, packet_receiver) = channel();
     let traffic_filter = cli.filter.clone().unwrap_or_default();
@@ -35,12 +37,19 @@ fn main() -> Result<(), WinDivertError> {
     Ok(())
 }
 
-fn setup_ctrlc_handler(running: Arc<AtomicBool>) {
+fn setup_ctrlc_handler(running: Arc<AtomicBool>, shutdown_triggered: Arc<Mutex<bool>>) {
     ctrlc::set_handler(move || {
-        info!("Ctrl+C pressed; initiating shutdown...");
-        running.store(false, Ordering::SeqCst);
+        let mut shutdown_initiated = shutdown_triggered.lock().unwrap();
+        if !*shutdown_initiated {
+            *shutdown_initiated = true;
+            info!("Ctrl+C pressed; initiating shutdown...");
+            running.store(false, Ordering::SeqCst);
+        } else {
+            error!("Ctrl+C pressed again; forcing immediate exit.");
+            exit(1); // Exit immediately without waiting for cleanup
+        }
     })
-    .expect("Error setting Ctrl-C handler");
+        .expect("Error setting Ctrl-C handler");
 }
 
 fn initialize_logging() {
