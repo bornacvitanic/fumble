@@ -5,3 +5,4 @@ pub mod drop;
 pub mod duplicate;
 pub mod reorder;
 pub mod throttle;
+pub mod types;

@@ -2,12 +2,13 @@ use crate::network::capture::PacketData;
 use rand::{thread_rng, Rng};
 use std::collections::VecDeque;
 use std::time::{Duration, Instant};
+use crate::network::types::Probability;
 
 pub fn throttle_packages<'a>(
     packets: &mut Vec<PacketData<'a>>,
     storage: &mut VecDeque<PacketData<'a>>,
     throttled_start_time: &mut Instant,
-    throttle_probability: f64,
+    throttle_probability: Probability,
     throttle_duration: Duration,
     drop: bool,
 ) {
@@ -19,7 +20,7 @@ pub fn throttle_packages<'a>(
         }
     } else {
         packets.extend(storage.drain(..));
-        if thread_rng().gen_bool(throttle_probability) {
+        if thread_rng().gen_bool(throttle_probability.value()) {
             *throttled_start_time = Instant::now();
         }
     }

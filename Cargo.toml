@@ -9,6 +9,10 @@ edition = "2021"
 keywords = ["clumsy", "network", "packet", "manipulation", "simulation"]
 categories = ["command-line-utilities", "development-tools::testing", "simulation", "network-programming"]
 
+[lib]
+name = "fumble"
+path = "src/lib.rs"
+
 [[bin]]
 name = "fumble"
 path = "src/main.rs"

@@ -184,11 +184,11 @@ fn process_packets<'a>(
         );
     }
 
-    if cli.duplicate.count > 1 && cli.duplicate.probability.unwrap_or(0.0) > 0.0 {
+    if cli.duplicate.count > 1 && cli.duplicate.probability.unwrap_or_default().value() > 0.0 {
         duplicate_packets(
             packets,
             cli.duplicate.count,
-            cli.duplicate.probability.unwrap_or(0.0),
+            cli.duplicate.probability.unwrap_or_default(),
         );
     }
 

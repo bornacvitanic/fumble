@@ -1,5 +1,3 @@
-mod cli;
-
 use clap::Parser;
 use env_logger::Env;
 use fumble::cli::Cli;
@@ -72,7 +70,7 @@ fn log_initialization_info(cli: &Cli) {
             max_delay
         )
     }
-    if cli.duplicate.count > 1usize && cli.duplicate.probability.unwrap_or(0.0) > 0.0 {
+    if cli.duplicate.count > 1usize && cli.duplicate.probability.unwrap_or_default().value() > 0.0 {
         info!(
             "Duplicating packets {} times with probability: {}",
             &cli.duplicate.count,

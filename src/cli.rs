@@ -1,3 +1,4 @@
+use crate::network::types::Probability;
 use clap::Parser;
 
 #[derive(Parser, Debug)]
@@ -37,8 +38,8 @@ pub struct Cli {
 #[derive(Parser, Debug, Default)]
 pub struct DropOptions {
     /// Probability of dropping packets, ranging from 0.0 to 1.0
-    #[arg(long = "drop-probability", value_parser = parse_probability, id = "drop-probability")]
-    pub probability: Option<f64>,
+    #[arg(long = "drop-probability", id = "drop-probability")]
+    pub probability: Option<Probability>,
 }
 
 #[derive(Parser, Debug, Default)]
@@ -51,8 +52,8 @@ pub struct DelayOptions {
 #[derive(Parser, Debug, Default)]
 pub struct ThrottleOptions {
     /// Probability of triggering a throttle event, ranging from 0.0 to 1.0
-    #[arg(long = "throttle-probability", value_parser = parse_probability, id = "throttle-probability")]
-    pub probability: Option<f64>,
+    #[arg(long = "throttle-probability", id = "throttle-probability")]
+    pub probability: Option<Probability>,
 
     /// Duration in milliseconds for which throttling should be applied
     #[arg(long = "throttle-duration", default_value_t = 30, id = "throttle-duration")]
@@ -77,8 +78,8 @@ pub struct DuplicateOptions {
     pub count: usize,
 
     /// Probability of duplicating packets, ranging from 0.0 to 1.0
-    #[arg(long = "duplicate-probability", value_parser = parse_probability, id = "duplicate-probability")]
-    pub probability: Option<f64>,
+    #[arg(long = "duplicate-probability", id = "duplicate-probability")]
+    pub probability: Option<Probability>,
 }
 
 #[derive(Parser, Debug, Default)]
@@ -86,15 +87,4 @@ pub struct BandwidthOptions {
     /// Maximum bandwidth limit in KB/s
     #[arg(long = "bandwidth-limit", id = "bandwidth-limit")]
     pub limit: Option<usize>,
-}
-
-fn parse_probability(s: &str) -> Result<f64, String> {
-    let value: f64 = s
-        .parse()
-        .map_err(|_| format!("`{}` isn't a valid number", s))?;
-    if (0.0..=1.0).contains(&value) {
-        Ok(value)
-    } else {
-        Err(format!("`{}` is not in the range 0.0 to 1.0", value))
-    }
 }
