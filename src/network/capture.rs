@@ -99,7 +99,6 @@ pub fn start_packet_processing(cli: Cli, packet_receiver: Receiver<PacketData>) 
     info!("Starting packet interception.");
     loop {
         // Try to receive packets from the channel
-        let packets : Vec<PacketData> = Vec::new();
         while let Ok(packet_data) = packet_receiver.try_recv() {
             state.packets.push(packet_data);
             total_packets += 1;
@@ -107,7 +106,7 @@ pub fn start_packet_processing(cli: Cli, packet_receiver: Receiver<PacketData>) 
 
         process_packets(&cli, &mut state);
 
-        for packet_data in packets {
+        for packet_data in &state.packets {
             wd.send(&packet_data.packet)?; // Send the packet data
             sent_packets += 1;
         }
