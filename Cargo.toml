@@ -1,6 +1,6 @@
 [package]
 name = "fumble"
-version = "0.2.0"
+version = "0.3.0"
 authors = ["Borna Cvitanić borna.cvitanic@gmail.com"]
 description = "an oxidized implementation of the original clumsy tool, designed to simulate adverse network conditions on Windows systems."
 repository = "https://github.com/bornacvitanic/fumble"
@@ -8,6 +8,10 @@ license-file = "LICENSE.md"
 edition = "2021"
 keywords = ["clumsy", "network", "packet", "manipulation", "simulation"]
 categories = ["command-line-utilities", "development-tools::testing", "simulation", "network-programming"]
+
+[lib]
+name = "fumble"
+path = "src/lib.rs"
 
 [[bin]]
 name = "fumble"
@@ -20,6 +24,10 @@ windivert = { version = "0.6", features = ["vendored"] }
 rand = "0.9.0-alpha.2"
 # CLI argument parsing library
 clap = { version = "4.5.11", features = ["derive"]}
+# Ctrl-C signals handling library to more gracefully shut down and be able to stop threads cleanly
+ctrlc = "3.2"
+# For matching strings
+regex = "1.10.5"
 # Libraries for better logging
 env_logger = "0.11.5"
 log = "0.4.22"

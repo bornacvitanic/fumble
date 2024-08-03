@@ -1,13 +1,14 @@
 use crate::network::capture::PacketData;
 use rand::Rng;
 use std::vec::Vec;
+use crate::network::types::Probability;
 
-pub fn duplicate_packets(packets: &mut Vec<PacketData>, count: usize, probability: f64) {
+pub fn duplicate_packets(packets: &mut Vec<PacketData>, count: usize, probability: Probability) {
     let mut rng = rand::thread_rng();
     let mut duplicate_packets = Vec::with_capacity(packets.len() * (count - 1));
 
     for packet_data in packets.iter() {
-        if rng.random::<f64>() < probability {
+        if rng.random::<f64>() < probability.value() {
             for _ in 1..count {
                 duplicate_packets.push(PacketData::from(packet_data.packet.clone()));
             }
@@ -22,6 +23,7 @@ mod tests {
     use crate::network::duplicate::duplicate_packets;
     use windivert::layer::NetworkLayer;
     use windivert::packet::WinDivertPacket;
+    use crate::network::types::Probability;
 
     #[test]
     fn test_packet_duplication() {
@@ -32,7 +34,7 @@ mod tests {
             let original_len = original_packets.len();
             let mut packets = original_packets.clone();
 
-            duplicate_packets(&mut packets, 3, 1.0);
+            duplicate_packets(&mut packets, 3, Probability::new(1.0).unwrap());
 
             // Ensure three times as many packets
             assert_eq!(packets.len(), original_len * 3);
