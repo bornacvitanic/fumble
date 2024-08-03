@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [unreleased]
+## [0.3.0] - 2024-08-03
 
 ### Bug Fixes
 
@@ -13,6 +13,8 @@ All notable changes to this project will be documented in this file.
 
 ### Documentation
 
+- Update README.md with feature roadmap
+
 - Update README.md to increment version number in installation example
 
 - Update CHANGELOG.md with changes for v0.2.0
@@ -20,9 +22,23 @@ All notable changes to this project will be documented in this file.
 
 ### Features
 
+- Implement forced exit on double Ctrl + C for immediate termination
+
+- Add filter port validation support
+
 - Add graceful shutdown and improved loggin with Ctrl-C signal handling
 
 - Refactor capture.rs to add a PacketProcessingState structs for easier state passing between methods
+
+
+### Refactors
+
+- Refactor CLI argument parsing with custom comamnd and field names
+
+
+### Renames
+
+- Update .idea meta files to rename project to fumble
 
 
 ### Styling
@@ -147,5 +163,3 @@ All notable changes to this project will be documented in this file.
 ### Testing
 
 - Add Unit tests for capture and dropping logic
-
-
