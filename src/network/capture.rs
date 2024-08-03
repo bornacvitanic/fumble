@@ -36,6 +36,7 @@ pub struct PacketProcessingState<'a> {
     pub delay_storage: VecDeque<PacketData<'a>>,
     pub reorder_storage: BinaryHeap<DelayedPacket<'a>>,
     pub bandwidth_limit_storage: VecDeque<PacketData<'a>>,
+    pub bandwidth_storage_total_size: usize,
     pub throttle_storage: VecDeque<PacketData<'a>>,
     pub throttled_start_time: Instant,
     pub last_sent_package_time: Instant,
@@ -91,6 +92,7 @@ pub fn start_packet_processing(cli: Cli, packet_receiver: Receiver<PacketData>) 
         delay_storage: VecDeque::new(),
         throttle_storage: VecDeque::new(),
         bandwidth_limit_storage: VecDeque::new(),
+        bandwidth_storage_total_size: 0,
         reorder_storage: BinaryHeap::new(),
         throttled_start_time: Instant::now(),
         last_sent_package_time: Instant::now(),
@@ -151,7 +153,7 @@ fn process_packets<'a>(
     }
 
     if let Some(bandwidth_limit) = cli.bandwidth_limit {
-        bandwidth_limiter(&mut state.packets, &mut state.bandwidth_limit_storage, &mut state.last_sent_package_time, bandwidth_limit);
+        bandwidth_limiter(&mut state.packets, &mut state.bandwidth_limit_storage, &mut state.bandwidth_storage_total_size,  &mut state.last_sent_package_time, bandwidth_limit);
     }
 }
 
