@@ -1,4 +1,6 @@
 use std::collections::{BinaryHeap, VecDeque};
+use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc::Receiver;
 use std::time::{Duration, Instant};
 use log::{error, info};
@@ -44,6 +46,7 @@ pub struct PacketProcessingState<'a> {
 pub fn packet_receiving_thread(
     traffic_filter: String,
     packet_sender: std::sync::mpsc::Sender<PacketData>,
+    running: Arc<AtomicBool>
 ) -> Result<(), WinDivertError> {
 
     let wd = WinDivert::<NetworkLayer>::network(&traffic_filter, 0, WinDivertFlags::new()).map_err(
@@ -55,10 +58,12 @@ pub fn packet_receiving_thread(
 
     let mut buffer = vec![0u8; 1500];
     loop {
+        if should_shutdown(&running) { break; }
         match wd.recv(Some(&mut buffer)) {
             Ok(packet) => {
                 let packet_data = PacketData::from(packet.into_owned());
                 if packet_sender.send(packet_data).is_err() {
+                    if should_shutdown(&running) { break; }
                     error!("Failed to send packet data to main thread");
                     break;
                 }
@@ -72,7 +77,15 @@ pub fn packet_receiving_thread(
     Ok(())
 }
 
-pub fn start_packet_processing(cli: Cli, packet_receiver: Receiver<PacketData>) -> Result<(), WinDivertError>{
+fn should_shutdown(running: &Arc<AtomicBool>) -> bool {
+    if !running.load(Ordering::SeqCst) {
+        info!("Packet receiving thread exiting due to shutdown signal.");
+        return true;
+    }
+    false
+}
+
+pub fn start_packet_processing(cli: Cli, packet_receiver: Receiver<PacketData>, running: Arc<AtomicBool>) -> Result<(), WinDivertError>{
     let wd = WinDivert::<NetworkLayer>::network(&cli.filter.clone().unwrap_or_default(), 0, WinDivertFlags::new()).map_err(
     |e| {
         error!("Failed to initialize WinDiver: {}", e);
@@ -97,7 +110,7 @@ pub fn start_packet_processing(cli: Cli, packet_receiver: Receiver<PacketData>) 
     };
 
     info!("Starting packet interception.");
-    loop {
+    while running.load(Ordering::SeqCst) {
         let mut packets = Vec::new();
         // Try to receive packets from the channel
         while let Ok(packet_data) = packet_receiver.try_recv() {
@@ -108,7 +121,10 @@ pub fn start_packet_processing(cli: Cli, packet_receiver: Receiver<PacketData>) 
         process_packets(&cli, &mut packets, &mut state);
 
         for packet_data in &packets {
-            wd.send(&packet_data.packet)?; // Send the packet data
+            wd.send(&packet_data.packet).map_err(|e| {
+                error!("Failed to send packet: {}", e);
+                e
+            })?;
             sent_packets += 1;
         }
 
@@ -118,6 +134,8 @@ pub fn start_packet_processing(cli: Cli, packet_receiver: Receiver<PacketData>) 
             last_log_time = Instant::now(); // Reset the timer
         }
     }
+
+    Ok(())
 }
 
 fn process_packets<'a>(
