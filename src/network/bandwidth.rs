@@ -7,8 +7,8 @@ const MAX_BUFFER_SIZE: usize = 100_000;
 pub fn bandwidth_limiter<'a>(
     packets: &mut Vec<PacketData<'a>>,
     buffer: &mut VecDeque<PacketData<'a>>,
+    last_send_time: &mut Instant,
     bandwidth_limit: usize,
-    last_send_time: &mut Instant
 ) {
     buffer.extend(packets.drain(..));
 

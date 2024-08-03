@@ -31,6 +31,16 @@ impl<'a> From<WinDivertPacket<'a, NetworkLayer>> for PacketData<'a> {
     }
 }
 
+pub struct PacketProcessingState<'a> {
+    pub packets: Vec<PacketData<'a>>,
+    pub delay_storage: VecDeque<PacketData<'a>>,
+    pub reorder_storage: BinaryHeap<DelayedPacket<'a>>,
+    pub bandwidth_limit_storage: VecDeque<PacketData<'a>>,
+    pub throttle_storage: VecDeque<PacketData<'a>>,
+    pub throttled_start_time: Instant,
+    pub last_sent_package_time: Instant,
+}
+
 pub fn packet_receiving_thread(
     traffic_filter: String,
     packet_sender: std::sync::mpsc::Sender<PacketData>,
@@ -75,23 +85,27 @@ pub fn start_packet_processing(cli: Cli, packet_receiver: Receiver<PacketData>) 
 
     let mut total_packets = 0;
     let mut sent_packets = 0;
-    let mut last_sent_package_time = Instant::now();
-    let mut throttled_start_time = Instant::now();
-    let mut delay_storage = VecDeque::new();
-    let mut throttle_storage = VecDeque::new();
-    let mut bandwidth_limit_storage = VecDeque::new();
-    let mut reorder_storage= BinaryHeap::new();
+
+    let mut state = PacketProcessingState {
+        packets: Vec::new(),
+        delay_storage: VecDeque::new(),
+        throttle_storage: VecDeque::new(),
+        bandwidth_limit_storage: VecDeque::new(),
+        reorder_storage: BinaryHeap::new(),
+        throttled_start_time: Instant::now(),
+        last_sent_package_time: Instant::now(),
+    };
 
     info!("Starting packet interception.");
     loop {
         // Try to receive packets from the channel
-        let mut packets = Vec::new();
+        let packets : Vec<PacketData> = Vec::new();
         while let Ok(packet_data) = packet_receiver.try_recv() {
-            packets.push(packet_data);
+            state.packets.push(packet_data);
             total_packets += 1;
         }
 
-        process_packets(&cli, &mut packets, &mut delay_storage, &mut reorder_storage, &mut bandwidth_limit_storage, &mut throttle_storage, &mut throttled_start_time, &mut last_sent_package_time);
+        process_packets(&cli, &mut state);
 
         for packet_data in packets {
             wd.send(&packet_data.packet)?; // Send the packet data
@@ -108,43 +122,37 @@ pub fn start_packet_processing(cli: Cli, packet_receiver: Receiver<PacketData>) 
 
 fn process_packets<'a>(
     cli: &Cli,
-    mut packets: &mut Vec<PacketData<'a>>,
-    mut delay_storage: &mut VecDeque<PacketData<'a>>,
-    mut reorder_storage: &mut BinaryHeap<DelayedPacket<'a>>,
-    mut bandwidth_limit_storage: &mut VecDeque<PacketData<'a>>,
-    mut throttle_storage: &mut VecDeque<PacketData<'a>>,
-    mut throttled_start_time: &mut Instant,
-    mut last_sent_package_time: &mut Instant) {
+    state: &mut PacketProcessingState) {
     if let Some(drop_probability) = cli.drop {
-        drop_packets(&mut packets, drop_probability);
+        drop_packets(&mut state.packets, drop_probability);
     }
 
     if let Some(delay) = cli.delay {
         delay_packets(
-            &mut packets,
-            &mut delay_storage,
+            &mut state.packets,
+            &mut state.delay_storage,
             Duration::from_millis(delay),
         );
     }
 
     if let Some(throttle_probability) = cli.throttle_probability {
-        throttle_packages(&mut packets, &mut throttle_storage, throttle_probability, Duration::from_millis(cli.throttle_duration), cli.throttle_drop, &mut throttled_start_time);
+        throttle_packages(&mut state.packets, &mut state.throttle_storage, &mut state.throttled_start_time, throttle_probability, Duration::from_millis(cli.throttle_duration), cli.throttle_drop);
     }
 
     if let Some(delay) = cli.reorder {
-        reorder_packets(&mut packets, &mut reorder_storage, Duration::from_millis(delay));
+        reorder_packets(&mut state.packets, &mut state.reorder_storage, Duration::from_millis(delay));
     }
 
     if cli.duplicate_count > 1 && cli.duplicate_probability.unwrap_or(0.0) > 0.0 {
         duplicate_packets(
-            &mut packets,
+            &mut state.packets,
             cli.duplicate_count,
             cli.duplicate_probability.unwrap_or(0.0),
         );
     }
 
     if let Some(bandwidth_limit) = cli.bandwidth_limit {
-        bandwidth_limiter(&mut packets, &mut bandwidth_limit_storage, bandwidth_limit, &mut last_sent_package_time);
+        bandwidth_limiter(&mut state.packets, &mut state.bandwidth_limit_storage, &mut state.last_sent_package_time, bandwidth_limit);
     }
 }
 

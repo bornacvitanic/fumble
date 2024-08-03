@@ -6,10 +6,11 @@ use crate::network::capture::PacketData;
 pub fn throttle_packages<'a>(
     packets: &mut Vec<PacketData<'a>>,
     storage: &mut VecDeque<PacketData<'a>>,
+    throttled_start_time: &mut Instant,
     throttle_probability: f64,
     throttle_duration: Duration,
     drop: bool,
-    throttled_start_time: &mut Instant) {
+    ) {
     if is_throttled(throttle_duration, throttled_start_time) {
         if drop {
             packets.clear();
