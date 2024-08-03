@@ -187,6 +187,7 @@ dependencies = [
  "env_logger",
  "log",
  "rand",
+ "regex",
  "windivert",
 ]
 

@@ -1,5 +1,8 @@
 use crate::network::types::Probability;
 use clap::Parser;
+use windivert::layer::NetworkLayer;
+use windivert::prelude::WinDivertFlags;
+use windivert::WinDivert;
 
 #[derive(Parser, Debug)]
 #[command(
@@ -13,7 +16,7 @@ use clap::Parser;
 )]
 pub struct Cli {
     /// Filter expression for capturing packets
-    #[arg(short, long)]
+    #[arg(short, long, value_parser = validate_filter)]
     pub filter: Option<String>,
 
     #[command(flatten)]
@@ -87,4 +90,25 @@ pub struct BandwidthOptions {
     /// Maximum bandwidth limit in KB/s
     #[arg(long = "bandwidth-limit", id = "bandwidth-limit")]
     pub limit: Option<usize>,
+}
+
+fn validate_filter(filter: &str) -> Result<String, String> {
+    // Attempt to open a handle to validate the filter string syntax
+    let handle = WinDivert::<NetworkLayer>::network(filter, 0, WinDivertFlags::new());
+    if handle.is_err() {
+        return Err(handle.err().unwrap().to_string());
+    }
+
+    // Additional check: ensure any provided port numbers are valid
+    let port_pattern = regex::Regex::new(r"(tcp|udp)\.(SrcPort|DstPort)\s*==\s*(\d+)(?:$|\s)").unwrap();
+    for cap in port_pattern.captures_iter(filter) {
+        if let Some(port_str) = cap.get(3) {
+            if let Err(e) = port_str.as_str().parse::<u16>() {
+                println!("Invalid port number detected.");
+                return Err(format!("Invalid port number detected. Port number {} is out of range (0-65535). Error: {}", port_str.as_str(), e));
+            }
+        }
+    }
+
+    Ok(filter.to_string())
 }
