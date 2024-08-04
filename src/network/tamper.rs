@@ -1,12 +1,11 @@
 use std::borrow::Cow;
 use std::collections::HashSet;
-use std::ops::BitAndAssign;
-use log::{error, info};
+use log::{error};
 use crate::network::capture::PacketData;
 use crate::network::types::Probability;
 use windivert_sys::ChecksumFlags;
 
-pub fn tamper_packets(packets: &mut Vec<PacketData>, tamper_probability: Probability, tamper_amount: Probability, recalculate_checksums: bool) {
+pub fn tamper_packets(packets: &mut [PacketData], tamper_probability: Probability, tamper_amount: Probability, recalculate_checksums: bool) {
     for packet_data in packets.iter_mut() {
         if rand::random::<f64>() >= tamper_probability.value() {
             continue;
@@ -145,6 +144,6 @@ use rand::Rng;
 fn random_data_injection(data: &mut [u8], offset: usize, length: usize) {
     let mut rng = rand::thread_rng();
     for i in offset..std::cmp::min(data.len(), offset + length) {
-        data[i] = rng.gen();
+        data[i] = rng.random();
     }
 }

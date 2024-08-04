@@ -18,7 +18,6 @@ use windivert::packet::WinDivertPacket;
 use windivert::prelude::WinDivertFlags;
 use windivert::WinDivert;
 use crate::network::tamper::tamper_packets;
-use crate::network::types::Probability;
 
 #[derive(Clone)]
 pub struct PacketData<'a> {
