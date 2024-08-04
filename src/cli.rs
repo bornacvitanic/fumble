@@ -2,7 +2,7 @@ use crate::network::types::Probability;
 use clap::Parser;
 use windivert::layer::NetworkLayer;
 use windivert::prelude::WinDivertFlags;
-use windivert::WinDivert;
+use windivert::{CloseAction, WinDivert};
 
 #[derive(Parser, Debug)]
 #[command(
@@ -95,8 +95,9 @@ pub struct BandwidthOptions {
 fn validate_filter(filter: &str) -> Result<String, String> {
     // Attempt to open a handle to validate the filter string syntax
     let handle = WinDivert::<NetworkLayer>::network(filter, 0, WinDivertFlags::new());
-    if handle.is_err() {
-        return Err(handle.err().unwrap().to_string());
+    match handle {
+        Ok(mut wd) => { wd.close(CloseAction::Nothing).expect("Failed to close filter validation WinDivert handle."); }
+        Err(e) => { return Err(e.to_string()); }
     }
 
     // Additional check: ensure any provided port numbers are valid
