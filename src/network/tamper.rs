@@ -1,11 +1,16 @@
-use std::borrow::Cow;
-use std::collections::HashSet;
-use log::{error};
 use crate::network::capture::PacketData;
 use crate::network::types::Probability;
+use log::error;
+use std::borrow::Cow;
+use std::collections::HashSet;
 use windivert_sys::ChecksumFlags;
 
-pub fn tamper_packets(packets: &mut [PacketData], tamper_probability: Probability, tamper_amount: Probability, recalculate_checksums: bool) {
+pub fn tamper_packets(
+    packets: &mut [PacketData],
+    tamper_probability: Probability,
+    tamper_amount: Probability,
+    recalculate_checksums: bool,
+) {
     for packet_data in packets.iter_mut() {
         if rand::random::<f64>() >= tamper_probability.value() {
             continue;
@@ -25,7 +30,7 @@ pub fn tamper_packets(packets: &mut [PacketData], tamper_probability: Probabilit
         let total_header_len = match protocol {
             17 => parse_udp_header(data, ip_header_len), // UDP
             6 => parse_tcp_header(data, ip_header_len),  // TCP
-            _ => ip_header_len, // Unsupported protocols
+            _ => ip_header_len,                          // Unsupported protocols
         };
 
         let payload_offset = total_header_len;
@@ -37,7 +42,10 @@ pub fn tamper_packets(packets: &mut [PacketData], tamper_probability: Probabilit
         }
 
         if recalculate_checksums {
-            if let Err(e) = packet_data.packet.recalculate_checksums(ChecksumFlags::new()) {
+            if let Err(e) = packet_data
+                .packet
+                .recalculate_checksums(ChecksumFlags::new())
+            {
                 error!("Error recalculating checksums: {}", e);
             }
         }
@@ -74,7 +82,6 @@ fn get_ip_version(data: &[u8]) -> Option<(u8, &[u8])> {
     let version = data[0] >> 4;
     Some((version, data))
 }
-
 
 fn parse_ipv4_header(data: &[u8]) -> (usize, u8) {
     let header_length = ((data[0] & 0x0F) * 4) as usize;

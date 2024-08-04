@@ -4,6 +4,7 @@ use crate::network::delay::delay_packets;
 use crate::network::drop::drop_packets;
 use crate::network::duplicate::duplicate_packets;
 use crate::network::reorder::{reorder_packets, DelayedPacket};
+use crate::network::tamper::tamper_packets;
 use crate::network::throttle::throttle_packages;
 use crate::utils::log_statistics;
 use log::{error, info};
@@ -17,7 +18,6 @@ use windivert::layer::NetworkLayer;
 use windivert::packet::WinDivertPacket;
 use windivert::prelude::WinDivertFlags;
 use windivert::WinDivert;
-use crate::network::tamper::tamper_packets;
 
 #[derive(Clone)]
 pub struct PacketData<'a> {
@@ -186,7 +186,12 @@ fn process_packets<'a>(
     }
 
     if let Some(tamper_probability) = cli.tamper.probability {
-        tamper_packets(packets, tamper_probability, cli.tamper.amount, cli.tamper.recalculate_checksums.unwrap_or(true));
+        tamper_packets(
+            packets,
+            tamper_probability,
+            cli.tamper.amount,
+            cli.tamper.recalculate_checksums.unwrap_or(true),
+        );
     }
 
     if cli.duplicate.count > 1 && cli.duplicate.probability.unwrap_or_default().value() > 0.0 {

@@ -1,9 +1,9 @@
-use std::process::exit;
 use clap::Parser;
 use env_logger::Env;
 use fumble::cli::Cli;
 use fumble::network::capture::{packet_receiving_thread, start_packet_processing};
 use log::{debug, error, info};
+use std::process::exit;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc::channel;
 use std::sync::{Arc, Mutex};
@@ -49,7 +49,7 @@ fn setup_ctrlc_handler(running: Arc<AtomicBool>, shutdown_triggered: Arc<Mutex<b
             exit(1); // Exit immediately without waiting for cleanup
         }
     })
-        .expect("Error setting Ctrl-C handler");
+    .expect("Error setting Ctrl-C handler");
 }
 
 fn initialize_logging() {
@@ -82,7 +82,9 @@ fn log_initialization_info(cli: &Cli) {
     if let Some(tamper_probability) = &cli.tamper.probability {
         info!(
             "Tampering packets with probability {} and amount {}. Recalculating checksums: {}",
-            tamper_probability, &cli.tamper.amount, &cli.tamper.recalculate_checksums.unwrap_or(true)
+            tamper_probability,
+            &cli.tamper.amount,
+            &cli.tamper.recalculate_checksums.unwrap_or(true)
         )
     }
     if cli.duplicate.count > 1usize && cli.duplicate.probability.unwrap_or_default().value() > 0.0 {

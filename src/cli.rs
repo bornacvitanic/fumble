@@ -62,7 +62,11 @@ pub struct ThrottleOptions {
     pub probability: Option<Probability>,
 
     /// Duration in milliseconds for which throttling should be applied
-    #[arg(long = "throttle-duration", default_value_t = 30, id = "throttle-duration")]
+    #[arg(
+        long = "throttle-duration",
+        default_value_t = 30,
+        id = "throttle-duration"
+    )]
     pub duration: u64,
 
     /// Indicates whether throttled packets should be dropped
@@ -88,7 +92,10 @@ pub struct TamperOptions {
     pub amount: Probability,
 
     /// Whether tampered packets should have their checksums recalculated to mask the tampering and avoid the packets getting automatically dropped
-    #[arg(long = "tamper-recalculate-checksums", id = "tamper-recalculate-checksums")]
+    #[arg(
+        long = "tamper-recalculate-checksums",
+        id = "tamper-recalculate-checksums"
+    )]
     pub recalculate_checksums: Option<bool>,
 }
 
@@ -114,12 +121,18 @@ fn validate_filter(filter: &str) -> Result<String, String> {
     // Attempt to open a handle to validate the filter string syntax
     let handle = WinDivert::<NetworkLayer>::network(filter, 0, WinDivertFlags::new());
     match handle {
-        Ok(mut wd) => { wd.close(CloseAction::Nothing).expect("Failed to close filter validation WinDivert handle."); }
-        Err(e) => { return Err(e.to_string()); }
+        Ok(mut wd) => {
+            wd.close(CloseAction::Nothing)
+                .expect("Failed to close filter validation WinDivert handle.");
+        }
+        Err(e) => {
+            return Err(e.to_string());
+        }
     }
 
     // Additional check: ensure any provided port numbers are valid
-    let port_pattern = regex::Regex::new(r"(tcp|udp)\.(SrcPort|DstPort)\s*==\s*(\d+)(?:$|\s)").unwrap();
+    let port_pattern =
+        regex::Regex::new(r"(tcp|udp)\.(SrcPort|DstPort)\s*==\s*(\d+)(?:$|\s)").unwrap();
     for cap in port_pattern.captures_iter(filter) {
         if let Some(port_str) = cap.get(3) {
             if let Err(e) = port_str.as_str().parse::<u16>() {
