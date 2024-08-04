@@ -32,6 +32,9 @@ pub struct Cli {
     pub reorder: ReorderOptions,
 
     #[command(flatten)]
+    pub tamper: TamperOptions,
+
+    #[command(flatten)]
     pub duplicate: DuplicateOptions,
 
     #[command(flatten)]
@@ -72,6 +75,21 @@ pub struct ReorderOptions {
     /// Maximum random delay in milliseconds to apply when reordering packets
     #[arg(long = "reorder-max-delay", id = "reorder-max-delay")]
     pub max_delay: Option<u64>,
+}
+
+#[derive(Parser, Debug, Default)]
+pub struct TamperOptions {
+    /// Probability of tampering packets, ranging from 0.0 to 1.0
+    #[arg(long = "tamper-probability", id = "tamper-probability")]
+    pub probability: Option<Probability>,
+
+    /// Amount of tampering that should be applied, ranging from 0.0 to 1.0
+    #[arg(long = "tamper-amount", default_value_t = Probability::new(0.1).unwrap(), id = "tamper-amount")]
+    pub amount: Probability,
+
+    /// Whether tampered packets should have their checksums recalculated to mask the tampering and avoid the packets getting automatically dropped
+    #[arg(long = "tamper-recalculate-checksums", id = "tamper-recalculate-checksums")]
+    pub recalculate_checksums: Option<bool>,
 }
 
 #[derive(Parser, Debug, Default)]

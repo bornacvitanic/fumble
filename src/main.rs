@@ -79,6 +79,12 @@ fn log_initialization_info(cli: &Cli) {
             max_delay
         )
     }
+    if let Some(tamper_probability) = &cli.tamper.probability {
+        info!(
+            "Tampering packets with probability {} and amount {}. Recalculating checksums: {}",
+            tamper_probability, &cli.tamper.amount, &cli.tamper.recalculate_checksums.unwrap_or(true)
+        )
+    }
     if cli.duplicate.count > 1usize && cli.duplicate.probability.unwrap_or_default().value() > 0.0 {
         info!(
             "Duplicating packets {} times with probability: {}",

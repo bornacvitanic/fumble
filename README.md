@@ -17,12 +17,12 @@ Just like its predecessor, fumble offers a user-friendly and interactive way to 
 - **Packet Delay**: Introduce delays to simulate latency.
 - **Packet Throttling**: Temporarily hold or drop packets to simulate sporadic network throttling.
 - **Packet Reordering**: Reorder packets by applying a random delay to simulate out-of-order delivery.
+- **Packet Tampering:** Modify packet payloads by altering, flipping, or injecting data to simulate corrupted transmissions.
 - **Packet Duplication**: Duplicate packets to simulate packet duplication issues.
 - **Bandwidth Limiting**: Limit the bandwidth to simulate a constrained network environment.
 
 ## Roadmap
 
-- **Packet Manipulation Feature - Tampering:** Add new features for packet tampering and manipulation for advanced usage scenarios.
 - **Enhanced Receiver Thread Handling:** Improve robustness and reliability of the packet receiving process.
 - **Configuration Support:** Introduce support for configuration files to simplify setup and usage.
 - **TUI/CLI Enhancements:** Develop a Text User Interface (TUI) or enhance command-line interface for more user-friendly interactions.

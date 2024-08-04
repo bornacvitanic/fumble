@@ -6,3 +6,4 @@ pub mod duplicate;
 pub mod reorder;
 pub mod throttle;
 pub mod types;
+mod tamper;

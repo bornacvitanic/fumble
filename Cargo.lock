@@ -189,6 +189,7 @@ dependencies = [
  "rand",
  "regex",
  "windivert",
+ "windivert-sys",
 ]
 
 [[package]]

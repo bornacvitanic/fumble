@@ -17,6 +17,8 @@ use windivert::layer::NetworkLayer;
 use windivert::packet::WinDivertPacket;
 use windivert::prelude::WinDivertFlags;
 use windivert::WinDivert;
+use crate::network::tamper::tamper_packets;
+use crate::network::types::Probability;
 
 #[derive(Clone)]
 pub struct PacketData<'a> {
@@ -182,6 +184,10 @@ fn process_packets<'a>(
             &mut state.reorder_storage,
             Duration::from_millis(delay),
         );
+    }
+
+    if let Some(tamper_probability) = cli.tamper.probability {
+        tamper_packets(packets, tamper_probability, cli.tamper.amount, cli.tamper.recalculate_checksums.unwrap_or(true));
     }
 
     if cli.duplicate.count > 1 && cli.duplicate.probability.unwrap_or_default().value() > 0.0 {
