@@ -1,7 +1,6 @@
 use crate::network::capture::PacketData;
 use crate::network::types::Probability;
 use log::error;
-use std::borrow::Cow;
 use std::collections::HashSet;
 use windivert_sys::ChecksumFlags;
 
