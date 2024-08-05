@@ -1,8 +1,7 @@
 use crate::network::types::Probability;
+use crate::network::utils::filter::validate_filter;
 use clap::Parser;
-use windivert::layer::NetworkLayer;
-use windivert::prelude::WinDivertFlags;
-use windivert::{CloseAction, WinDivert};
+use log::info;
 
 #[derive(Parser, Debug)]
 #[command(
@@ -117,30 +116,46 @@ pub struct BandwidthOptions {
     pub limit: Option<usize>,
 }
 
-fn validate_filter(filter: &str) -> Result<String, String> {
-    // Attempt to open a handle to validate the filter string syntax
-    let handle = WinDivert::<NetworkLayer>::network(filter, 0, WinDivertFlags::new());
-    match handle {
-        Ok(mut wd) => {
-            wd.close(CloseAction::Nothing)
-                .expect("Failed to close filter validation WinDivert handle.");
-        }
-        Err(e) => {
-            return Err(e.to_string());
-        }
+pub fn log_initialization_info(cli: &Cli) {
+    if let Some(traffic_filter) = &cli.filter {
+        info!("Traffic filer: {}", traffic_filter);
     }
-
-    // Additional check: ensure any provided port numbers are valid
-    let port_pattern =
-        regex::Regex::new(r"(tcp|udp)\.(SrcPort|DstPort)\s*==\s*(\d+)(?:$|\s)").unwrap();
-    for cap in port_pattern.captures_iter(filter) {
-        if let Some(port_str) = cap.get(3) {
-            if let Err(e) = port_str.as_str().parse::<u16>() {
-                println!("Invalid port number detected.");
-                return Err(format!("Invalid port number detected. Port number {} is out of range (0-65535). Error: {}", port_str.as_str(), e));
-            }
-        }
+    if let Some(drop_probability) = &cli.drop.probability {
+        info!("Dropping packets with probability: {}", drop_probability);
     }
-
-    Ok(filter.to_string())
+    if let Some(delay) = &cli.delay.duration {
+        info!("Delaying packets for: {} ms", delay)
+    }
+    if let Some(throttle_probability) = &cli.throttle.probability {
+        info!(
+            "Throttling packets with probability of {} ms with a throttle duration of {}. \
+        Throttle packet dropping: {}",
+            throttle_probability, &cli.throttle.duration, &cli.throttle.drop
+        )
+    }
+    if let Some(max_delay) = &cli.reorder.max_delay {
+        info!(
+            "Reordering packets with maximum random delay of: {} ms",
+            max_delay
+        )
+    }
+    if let Some(tamper_probability) = &cli.tamper.probability {
+        info!(
+            "Tampering packets with probability {} and amount {}. Recalculating checksums: {}",
+            tamper_probability,
+            &cli.tamper.amount,
+            &cli.tamper.recalculate_checksums.unwrap_or(true)
+        )
+    }
+    let duplicate_probability = cli.duplicate.probability.unwrap_or_default();
+    if cli.duplicate.count > 1usize && duplicate_probability.value() > 0.0 {
+        info!(
+            "Duplicating packets {} times with probability: {}",
+            &cli.duplicate.count,
+            duplicate_probability
+        );
+    }
+    if let Some(bandwidth_limit) = &cli.bandwidth.limit {
+        info!("Limiting bandwidth to: {} KB/s", bandwidth_limit)
+    }
 }
