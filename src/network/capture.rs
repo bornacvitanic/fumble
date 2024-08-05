@@ -18,10 +18,8 @@ use windivert::error::WinDivertError;
 use windivert::layer::NetworkLayer;
 use windivert::packet::WinDivertPacket;
 use windivert::prelude::WinDivertFlags;
-use windivert::{CloseAction, WinDivert};
-use tokio::task;
+use windivert::{WinDivert};
 use tokio::time::{sleep};
-use tokio::time::Duration as DurTok;
 
 #[derive(Clone)]
 pub struct PacketData<'a> {
@@ -48,9 +46,9 @@ pub struct PacketProcessingState<'a> {
     pub last_sent_package_time: Instant,
 }
 
-pub async fn packet_receiving_thread<'a>(
+pub async fn packet_receiving_thread(
     traffic_filter: String,
-    packet_sender: mpsc::Sender<PacketData<'a>>,
+    packet_sender: mpsc::Sender<PacketData<'_>>,
     running: Arc<AtomicBool>,
 ) -> Result<(), WinDivertError> {
     let wd = WinDivert::<NetworkLayer>::network(&traffic_filter, 0, WinDivertFlags::new()).map_err(|e| {
@@ -65,7 +63,7 @@ pub async fn packet_receiving_thread<'a>(
         let packet_fut = tokio::task::spawn_blocking(move || {
             let mut buf = vec![0u8; 1500];
             let result = {
-                let mut wd_guard = wd_clone.lock().unwrap();
+                let wd_guard = wd_clone.lock().unwrap();
                 wd_guard.recv(Some(&mut buf))
             };
             result.map(|packet| packet.into_owned()).ok()

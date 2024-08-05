@@ -5,7 +5,6 @@ use fumble::network::capture::{packet_receiving_thread, start_packet_processing}
 use log::{debug, error, info};
 use std::process::exit;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::mpsc::channel;
 use std::sync::{Arc, Mutex};
 use windivert::error::WinDivertError;
 
