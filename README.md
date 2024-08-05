@@ -21,6 +21,10 @@ Just like its predecessor, fumble offers a user-friendly and interactive way to 
 - **Packet Duplication**: Duplicate packets to simulate packet duplication issues.
 - **Bandwidth Limiting**: Limit the bandwidth to simulate a constrained network environment.
 
+## Known Issues
+
+There is a known issue where the packet receiving thread, which operates in a blocking manner, may not terminate correctly if no packets match the specified filter criteria. This situation can arise when no network traffic is present that meets the filter's conditions. As a result, the thread may remain active, potentially causing subsequent runs with the same filter to fail in receiving packets because the previous instance of the thread continues to intercept and discard them. It is recommended to ensure proper shutdown of the application and verify the termination of the receiving thread to avoid this issue.
+
 ## Roadmap
 
 - **Enhanced Receiver Thread Handling:** Improve robustness and reliability of the packet receiving process.
@@ -57,7 +61,7 @@ You can include `fumble` as a dependency in your Rust project by adding it to yo
 
 ```toml
 [dependencies]
-fumble = "0.4.0"
+fumble = "0.4.2"
 ```
 
 Then, run `cargo build` to download and compile the crate.
