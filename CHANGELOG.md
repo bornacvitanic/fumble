@@ -2,6 +2,52 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.0] - 2024-08-05
+
+### Bug Fixes
+
+- Fix filter validation method not properly closing WinDivert handle
+
+- Fix tests to use new Probability type
+
+
+### Documentation
+
+- Document packet tampering functionality in README.md
+
+
+### Features
+
+- Add async packet receiving and processing with Tokio integration
+
+- Implement package tampering support and CLI commands
+
+
+### Removals
+
+- Remove unused extract_payload method from tamper.rs
+
+
+### Styling
+
+- Clean up comments and logs in capture logic
+
+- Style capture.rs using fmt
+
+- Clean up unused imports in capture file
+
+- Style scripts using fmt
+
+- Clean up tamper logic using clippy
+
+
+### Updates
+
+- Update project version to 0.4.0
+
+- Update Cargo.toml to remove unused tokio features
+
+
 ## [0.3.0] - 2024-08-03
 
 ### Bug Fixes
@@ -54,6 +100,8 @@ All notable changes to this project will be documented in this file.
 
 
 ### Updates
+
+- Update project to 0.3.0
 
 - Update main method to extract Ctrl-C handing logic to submethod
 
