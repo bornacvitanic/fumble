@@ -180,7 +180,7 @@ dependencies = [
 
 [[package]]
 name = "fumble"
-version = "0.4.1"
+version = "0.4.2"
 dependencies = [
  "clap",
  "ctrlc",
