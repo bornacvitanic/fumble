@@ -1,8 +1,8 @@
 use crate::network::core::packet_data::PacketData;
+use log::error;
 use std::cmp::Ordering;
 use std::collections::BinaryHeap;
 use std::time::{Duration, Instant};
-use log::error;
 
 pub struct DelayedPacket<'a> {
     pub packet: PacketData<'a>,
