@@ -5,11 +5,11 @@ use std::vec::Vec;
 
 pub fn duplicate_packets(packets: &mut Vec<PacketData>, count: usize, probability: Probability) {
     let mut rng = rand::thread_rng();
-    let mut duplicate_packets = Vec::with_capacity(packets.len() * (count - 1));
+    let mut duplicate_packets = Vec::with_capacity(packets.len() * count);
 
     for packet_data in packets.iter() {
         if rng.random::<f64>() < probability.value() {
-            for _ in 1..count {
+            for _ in 1..=count {
                 duplicate_packets.push(PacketData::from(packet_data.packet.clone()));
             }
         }
