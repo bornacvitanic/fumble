@@ -1,8 +1,8 @@
 use regex::Regex;
+use thiserror::Error;
 use windivert::layer::NetworkLayer;
 use windivert::prelude::WinDivertFlags;
 use windivert::{CloseAction, WinDivert};
-use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum FilterError {
@@ -17,7 +17,8 @@ pub fn validate_filter(filter: &str) -> Result<String, FilterError> {
     let mut win_divert = WinDivert::<NetworkLayer>::network(filter, 0, WinDivertFlags::new())
         .map_err(|e| FilterError::InvalidSyntax(e.to_string()))?;
 
-    win_divert.close(CloseAction::Nothing)
+    win_divert
+        .close(CloseAction::Nothing)
         .map_err(|_| FilterError::InvalidSyntax("Failed to close handle.".into()))?;
 
     // Additional check: ensure any provided port numbers are valid
@@ -25,7 +26,10 @@ pub fn validate_filter(filter: &str) -> Result<String, FilterError> {
     for cap in port_pattern.captures_iter(filter) {
         if let Some(port_str) = cap.get(3) {
             port_str.as_str().parse::<u16>().map_err(|_| {
-                FilterError::InvalidPort(format!("Port number {} is out of range (0-65535)", port_str.as_str()))
+                FilterError::InvalidPort(format!(
+                    "Port number {} is out of range (0-65535)",
+                    port_str.as_str()
+                ))
             })?;
         }
     }

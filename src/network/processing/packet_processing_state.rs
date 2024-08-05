@@ -1,7 +1,7 @@
-use std::collections::{BinaryHeap, VecDeque};
-use std::time::Instant;
 use crate::network::core::packet_data::PacketData;
 use crate::network::modules::reorder::DelayedPacket;
+use std::collections::{BinaryHeap, VecDeque};
+use std::time::Instant;
 
 pub struct PacketProcessingState<'a> {
     pub delay_storage: VecDeque<PacketData<'a>>,

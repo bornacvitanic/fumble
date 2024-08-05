@@ -151,8 +151,7 @@ pub fn log_initialization_info(cli: &Cli) {
     if cli.duplicate.count > 1usize && duplicate_probability.value() > 0.0 {
         info!(
             "Duplicating packets {} times with probability: {}",
-            &cli.duplicate.count,
-            duplicate_probability
+            &cli.duplicate.count, duplicate_probability
         );
     }
     if let Some(bandwidth_limit) = &cli.bandwidth.limit {

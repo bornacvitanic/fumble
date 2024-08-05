@@ -1,13 +1,3 @@
-use std::time::{Duration, Instant};
-use tokio::sync::mpsc::Receiver;
-use std::sync::Arc;
-use std::sync::atomic::{AtomicBool, Ordering};
-use windivert::error::WinDivertError;
-use windivert::WinDivert;
-use windivert::layer::NetworkLayer;
-use windivert_sys::WinDivertFlags;
-use log::{error, info};
-use std::collections::{BinaryHeap, VecDeque};
 use crate::cli::Cli;
 use crate::network::core::packet_data::PacketData;
 use crate::network::modules::bandwidth::bandwidth_limiter;
@@ -19,6 +9,16 @@ use crate::network::modules::tamper::tamper_packets;
 use crate::network::modules::throttle::throttle_packages;
 use crate::network::processing::packet_processing_state::PacketProcessingState;
 use crate::utils::log_statistics;
+use log::{error, info};
+use std::collections::{BinaryHeap, VecDeque};
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::mpsc::Receiver;
+use std::sync::Arc;
+use std::time::{Duration, Instant};
+use windivert::error::WinDivertError;
+use windivert::layer::NetworkLayer;
+use windivert::WinDivert;
+use windivert_sys::WinDivertFlags;
 
 pub fn process_packets<'a>(
     cli: &Cli,
@@ -86,7 +86,7 @@ pub fn process_packets<'a>(
 
 pub fn start_packet_processing(
     cli: Cli,
-    mut packet_receiver: Receiver<PacketData>,
+    packet_receiver: Receiver<PacketData>,
     running: Arc<AtomicBool>,
 ) -> Result<(), WinDivertError> {
     let wd = WinDivert::<NetworkLayer>::network(

@@ -1,17 +1,17 @@
 use clap::Parser;
 use env_logger::Env;
-use fumble::cli::{Cli, log_initialization_info};
+use fumble::cli::{log_initialization_info, Cli};
 use fumble::network::processing::packet_processing::start_packet_processing;
 use fumble::network::processing::packet_receiving::receive_packets;
 use log::{debug, error, info};
 use std::process::exit;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::{Arc, Mutex};
-use tokio::task::JoinHandle;
+use std::sync::{mpsc, Arc, Mutex};
+use std::thread;
+use std::thread::JoinHandle;
 use windivert::error::WinDivertError;
 
-#[tokio::main]
-async fn main() -> Result<(), WinDivertError> {
+fn main() -> Result<(), WinDivertError> {
     initialize_logging();
     let cli = Cli::parse();
     debug!("Parsed CLI arguments: {:?}", &cli);
@@ -21,29 +21,28 @@ async fn main() -> Result<(), WinDivertError> {
     let shutdown_triggered = Arc::new(Mutex::new(false));
     setup_ctrlc_handler(running.clone(), shutdown_triggered.clone());
 
-    // Tokio's mpsc channel for async compatibility
-    let (packet_sender, packet_receiver) = tokio::sync::mpsc::channel(100);
+    let (packet_sender, packet_receiver) = mpsc::channel();
     let traffic_filter = cli.filter.clone().unwrap_or_default();
 
-    // Spawn the packet receiving thread
-    let packet_receiver_handle = tokio::spawn({
+    // Start the packet receiving thread
+    let packet_receiver_handle = thread::spawn({
         let running = running.clone();
-        receive_packets(traffic_filter, packet_sender, running)
+        move || receive_packets(traffic_filter, packet_sender, running)
     });
 
     // Start packet processing
     start_packet_processing(cli, packet_receiver, running.clone())?;
     info!("Packet processing stopped. Awaiting packet receiving thread termination...");
 
-    wait_for_receiver_thread(packet_receiver_handle).await;
+    wait_for_receiving_thread(packet_receiver_handle);
 
     info!("Application shutdown complete.");
-    exit(1);
+    Ok(())
 }
 
-async fn wait_for_receiver_thread(packet_receiver_handle: JoinHandle<Result<(), WinDivertError>>) {
-    match packet_receiver_handle.await {
-        Ok(Ok(_)) => {
+fn wait_for_receiving_thread(packet_receiver_handle: JoinHandle<Result<(), WinDivertError>>) {
+    match packet_receiver_handle.join() {
+        Ok(Ok(())) => {
             info!("Packet receiving thread completed successfully.");
         }
         Ok(Err(e)) => {

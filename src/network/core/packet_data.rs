@@ -19,10 +19,10 @@ impl<'a> From<WinDivertPacket<'a, NetworkLayer>> for PacketData<'a> {
 
 #[cfg(test)]
 mod tests {
+    use crate::network::core::packet_data::PacketData;
     use crate::network::utils::filter::PacketData;
     use windivert::layer::NetworkLayer;
     use windivert::packet::WinDivertPacket;
-    use crate::network::core::packet_data::PacketData;
 
     #[test]
     fn test_packet_data_creation() {
