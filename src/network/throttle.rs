@@ -1,8 +1,8 @@
 use crate::network::capture::PacketData;
+use crate::network::types::Probability;
 use rand::{thread_rng, Rng};
 use std::collections::VecDeque;
 use std::time::{Duration, Instant};
-use crate::network::types::Probability;
 
 pub fn throttle_packages<'a>(
     packets: &mut Vec<PacketData<'a>>,

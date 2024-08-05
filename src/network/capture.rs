@@ -4,14 +4,17 @@ use crate::network::delay::delay_packets;
 use crate::network::drop::drop_packets;
 use crate::network::duplicate::duplicate_packets;
 use crate::network::reorder::{reorder_packets, DelayedPacket};
+use crate::network::tamper::tamper_packets;
 use crate::network::throttle::throttle_packages;
 use crate::utils::log_statistics;
-use log::{error, info};
+use log::{error, info, trace};
 use std::collections::{BinaryHeap, VecDeque};
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::mpsc::Receiver;
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
+use tokio::sync::mpsc;
+use tokio::sync::mpsc::Receiver;
+use tokio::time::sleep;
 use windivert::error::WinDivertError;
 use windivert::layer::NetworkLayer;
 use windivert::packet::WinDivertPacket;
@@ -43,40 +46,53 @@ pub struct PacketProcessingState<'a> {
     pub last_sent_package_time: Instant,
 }
 
-pub fn packet_receiving_thread(
+pub async fn packet_receiving_thread(
     traffic_filter: String,
-    packet_sender: std::sync::mpsc::Sender<PacketData>,
+    packet_sender: mpsc::Sender<PacketData<'_>>,
     running: Arc<AtomicBool>,
 ) -> Result<(), WinDivertError> {
-    let wd = WinDivert::<NetworkLayer>::network(traffic_filter, 0, WinDivertFlags::new()).map_err(
-        |e| {
-            error!("Failed to initialize WinDiver: {}", e);
+    let wd = WinDivert::<NetworkLayer>::network(&traffic_filter, 0, WinDivertFlags::new())
+        .map_err(|e| {
+            error!("Failed to initialize WinDivert: {}", e);
             e
-        },
-    )?;
+        })?;
 
-    let mut buffer = vec![0u8; 1500];
-    loop {
-        if should_shutdown(&running) {
-            break;
-        }
-        match wd.recv(Some(&mut buffer)) {
-            Ok(packet) => {
-                let packet_data = PacketData::from(packet.into_owned());
-                if packet_sender.send(packet_data).is_err() {
-                    if should_shutdown(&running) {
+    let wd = Arc::new(Mutex::new(wd));
+
+    while running.load(Ordering::SeqCst) {
+        let wd_clone = Arc::clone(&wd);
+        let packet_fut = tokio::task::spawn_blocking(move || {
+            let mut buf = vec![0u8; 1500];
+            let result = {
+                let wd_guard = wd_clone.lock().unwrap();
+                wd_guard.recv(Some(&mut buf))
+            };
+            result.map(|packet| packet.into_owned()).ok()
+        });
+
+        tokio::select! {
+            packet_result = packet_fut => {
+                if let Ok(Some(packet)) = packet_result {
+                    let packet_data = PacketData::from(packet);
+                    if packet_sender.send(packet_data).await.is_err() {
+                        if !running.load(Ordering::SeqCst) {
+                            error!("Failed to send packet data to main thread");
+                        }
                         break;
                     }
-                    error!("Failed to send packet data to main thread");
+                } else {
+                    error!("Failed to receive or process packet.");
+                }
+            }
+            _ = sleep(Duration::from_millis(250)) => {
+                trace!("No packets received. Checking shutdown signal after timeout");
+                if should_shutdown(&running) {
                     break;
                 }
             }
-            Err(e) => {
-                error!("Failed to receive packet: {}", e);
-                break;
-            }
         }
     }
+    info!("Shutting down packet receiving thread");
     Ok(())
 }
 
@@ -90,7 +106,7 @@ fn should_shutdown(running: &Arc<AtomicBool>) -> bool {
 
 pub fn start_packet_processing(
     cli: Cli,
-    packet_receiver: Receiver<PacketData>,
+    mut packet_receiver: Receiver<PacketData>,
     running: Arc<AtomicBool>,
 ) -> Result<(), WinDivertError> {
     let wd = WinDivert::<NetworkLayer>::network(
@@ -181,6 +197,15 @@ fn process_packets<'a>(
             packets,
             &mut state.reorder_storage,
             Duration::from_millis(delay),
+        );
+    }
+
+    if let Some(tamper_probability) = cli.tamper.probability {
+        tamper_packets(
+            packets,
+            tamper_probability,
+            cli.tamper.amount,
+            cli.tamper.recalculate_checksums.unwrap_or(true),
         );
     }
 

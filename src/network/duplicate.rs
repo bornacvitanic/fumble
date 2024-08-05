@@ -1,7 +1,7 @@
 use crate::network::capture::PacketData;
+use crate::network::types::Probability;
 use rand::Rng;
 use std::vec::Vec;
-use crate::network::types::Probability;
 
 pub fn duplicate_packets(packets: &mut Vec<PacketData>, count: usize, probability: Probability) {
     let mut rng = rand::thread_rng();
@@ -21,9 +21,9 @@ pub fn duplicate_packets(packets: &mut Vec<PacketData>, count: usize, probabilit
 mod tests {
     use crate::network::capture::PacketData;
     use crate::network::duplicate::duplicate_packets;
+    use crate::network::types::Probability;
     use windivert::layer::NetworkLayer;
     use windivert::packet::WinDivertPacket;
-    use crate::network::types::Probability;
 
     #[test]
     fn test_packet_duplication() {

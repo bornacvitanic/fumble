@@ -1,6 +1,6 @@
 [package]
 name = "fumble"
-version = "0.3.0"
+version = "0.4.0"
 authors = ["Borna Cvitanić borna.cvitanic@gmail.com"]
 description = "an oxidized implementation of the original clumsy tool, designed to simulate adverse network conditions on Windows systems."
 repository = "https://github.com/bornacvitanic/fumble"
@@ -20,6 +20,9 @@ path = "src/main.rs"
 [dependencies]
 # Rust bindings for the WinDivert library, enabling packet capture and modification on Windows.
 windivert = { version = "0.6", features = ["vendored"] }
+windivert-sys = "0.10.0"
+# Async library to handle WinDivert blocking receive call
+tokio = { version = "1.39.2", features = ["rt-multi-thread", "sync", "time", "macros"] }
 # Library for generating random numbers, used for probabilistic operations.
 rand = "0.9.0-alpha.2"
 # CLI argument parsing library

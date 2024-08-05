@@ -29,7 +29,9 @@ pub fn bandwidth_limiter<'a>(
             break;
         }
         bytes_sent += packet_size;
-        if let Some(packet) = remove_packet_from_buffer(buffer, total_buffer_size) { to_send.push(packet) }
+        if let Some(packet) = remove_packet_from_buffer(buffer, total_buffer_size) {
+            to_send.push(packet)
+        }
     }
 
     packets.extend(to_send);

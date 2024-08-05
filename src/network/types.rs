@@ -23,7 +23,9 @@ impl FromStr for Probability {
     type Err = String;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let value: f64 = s.parse().map_err(|_| format!("`{}` is not a valid number", s))?;
+        let value: f64 = s
+            .parse()
+            .map_err(|_| format!("`{}` is not a valid number", s))?;
         Probability::new(value)
     }
 }

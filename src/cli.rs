@@ -2,7 +2,7 @@ use crate::network::types::Probability;
 use clap::Parser;
 use windivert::layer::NetworkLayer;
 use windivert::prelude::WinDivertFlags;
-use windivert::WinDivert;
+use windivert::{CloseAction, WinDivert};
 
 #[derive(Parser, Debug)]
 #[command(
@@ -32,6 +32,9 @@ pub struct Cli {
     pub reorder: ReorderOptions,
 
     #[command(flatten)]
+    pub tamper: TamperOptions,
+
+    #[command(flatten)]
     pub duplicate: DuplicateOptions,
 
     #[command(flatten)]
@@ -59,7 +62,11 @@ pub struct ThrottleOptions {
     pub probability: Option<Probability>,
 
     /// Duration in milliseconds for which throttling should be applied
-    #[arg(long = "throttle-duration", default_value_t = 30, id = "throttle-duration")]
+    #[arg(
+        long = "throttle-duration",
+        default_value_t = 30,
+        id = "throttle-duration"
+    )]
     pub duration: u64,
 
     /// Indicates whether throttled packets should be dropped
@@ -72,6 +79,24 @@ pub struct ReorderOptions {
     /// Maximum random delay in milliseconds to apply when reordering packets
     #[arg(long = "reorder-max-delay", id = "reorder-max-delay")]
     pub max_delay: Option<u64>,
+}
+
+#[derive(Parser, Debug, Default)]
+pub struct TamperOptions {
+    /// Probability of tampering packets, ranging from 0.0 to 1.0
+    #[arg(long = "tamper-probability", id = "tamper-probability")]
+    pub probability: Option<Probability>,
+
+    /// Amount of tampering that should be applied, ranging from 0.0 to 1.0
+    #[arg(long = "tamper-amount", default_value_t = Probability::new(0.1).unwrap(), id = "tamper-amount")]
+    pub amount: Probability,
+
+    /// Whether tampered packets should have their checksums recalculated to mask the tampering and avoid the packets getting automatically dropped
+    #[arg(
+        long = "tamper-recalculate-checksums",
+        id = "tamper-recalculate-checksums"
+    )]
+    pub recalculate_checksums: Option<bool>,
 }
 
 #[derive(Parser, Debug, Default)]
@@ -95,12 +120,19 @@ pub struct BandwidthOptions {
 fn validate_filter(filter: &str) -> Result<String, String> {
     // Attempt to open a handle to validate the filter string syntax
     let handle = WinDivert::<NetworkLayer>::network(filter, 0, WinDivertFlags::new());
-    if handle.is_err() {
-        return Err(handle.err().unwrap().to_string());
+    match handle {
+        Ok(mut wd) => {
+            wd.close(CloseAction::Nothing)
+                .expect("Failed to close filter validation WinDivert handle.");
+        }
+        Err(e) => {
+            return Err(e.to_string());
+        }
     }
 
     // Additional check: ensure any provided port numbers are valid
-    let port_pattern = regex::Regex::new(r"(tcp|udp)\.(SrcPort|DstPort)\s*==\s*(\d+)(?:$|\s)").unwrap();
+    let port_pattern =
+        regex::Regex::new(r"(tcp|udp)\.(SrcPort|DstPort)\s*==\s*(\d+)(?:$|\s)").unwrap();
     for cap in port_pattern.captures_iter(filter) {
         if let Some(port_str) = cap.get(3) {
             if let Err(e) = port_str.as_str().parse::<u16>() {

@@ -1,16 +1,15 @@
-use std::process::exit;
 use clap::Parser;
 use env_logger::Env;
 use fumble::cli::Cli;
 use fumble::network::capture::{packet_receiving_thread, start_packet_processing};
 use log::{debug, error, info};
+use std::process::exit;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::mpsc::channel;
 use std::sync::{Arc, Mutex};
-use std::thread;
 use windivert::error::WinDivertError;
 
-fn main() -> Result<(), WinDivertError> {
+#[tokio::main]
+async fn main() -> Result<(), WinDivertError> {
     initialize_logging();
     let cli = Cli::parse();
     debug!("Parsed CLI arguments: {:?}", &cli);
@@ -20,21 +19,34 @@ fn main() -> Result<(), WinDivertError> {
     let shutdown_triggered = Arc::new(Mutex::new(false));
     setup_ctrlc_handler(running.clone(), shutdown_triggered.clone());
 
-    let (packet_sender, packet_receiver) = channel();
+    // okio's mpsc channel for async compatibility
+    let (packet_sender, packet_receiver) = tokio::sync::mpsc::channel(100);
     let traffic_filter = cli.filter.clone().unwrap_or_default();
 
-    let handle = thread::spawn({
+    // Spawn the packet receiving thread
+    let packet_receiver_handle = tokio::spawn({
         let running = running.clone();
-        move || packet_receiving_thread(traffic_filter, packet_sender, running)
+        packet_receiving_thread(traffic_filter, packet_sender, running)
     });
 
-    start_packet_processing(cli, packet_receiver, running)?;
+    // Start packet processing
+    start_packet_processing(cli, packet_receiver, running.clone())?;
     info!("Packet processing stopped. Awaiting packet receiving thread termination...");
 
-    handle.join().expect("Thread panicked")?;
-    info!("Application shutdown complete.");
+    match packet_receiver_handle.await {
+        Ok(Ok(_)) => {
+            info!("Packet receiving thread completed successfully.");
+        }
+        Ok(Err(e)) => {
+            error!("Packet receiving thread encountered an error: {:?}", e);
+        }
+        Err(e) => {
+            error!("Failed to join packet receiving thread: {:?}", e);
+        }
+    }
 
-    Ok(())
+    info!("Application shutdown complete.");
+    exit(1);
 }
 
 fn setup_ctrlc_handler(running: Arc<AtomicBool>, shutdown_triggered: Arc<Mutex<bool>>) {
@@ -49,7 +61,7 @@ fn setup_ctrlc_handler(running: Arc<AtomicBool>, shutdown_triggered: Arc<Mutex<b
             exit(1); // Exit immediately without waiting for cleanup
         }
     })
-        .expect("Error setting Ctrl-C handler");
+    .expect("Error setting Ctrl-C handler");
 }
 
 fn initialize_logging() {
@@ -77,6 +89,14 @@ fn log_initialization_info(cli: &Cli) {
         info!(
             "Reordering packets with maximum random delay of: {} ms",
             max_delay
+        )
+    }
+    if let Some(tamper_probability) = &cli.tamper.probability {
+        info!(
+            "Tampering packets with probability {} and amount {}. Recalculating checksums: {}",
+            tamper_probability,
+            &cli.tamper.amount,
+            &cli.tamper.recalculate_checksums.unwrap_or(true)
         )
     }
     if cli.duplicate.count > 1usize && cli.duplicate.probability.unwrap_or_default().value() > 0.0 {

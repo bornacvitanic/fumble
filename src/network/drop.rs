@@ -9,9 +9,9 @@ pub fn drop_packets(packets: &mut Vec<PacketData>, drop_probability: Probability
 mod tests {
     use crate::network::capture::PacketData;
     use crate::network::drop::drop_packets;
+    use crate::network::types::Probability;
     use windivert::layer::NetworkLayer;
     use windivert::packet::WinDivertPacket;
-    use crate::network::types::Probability;
 
     #[test]
     fn test_drop_packets() {
