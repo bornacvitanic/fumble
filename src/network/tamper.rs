@@ -105,13 +105,6 @@ fn parse_tcp_header(data: &[u8], ip_header_len: usize) -> usize {
     ip_header_len + tcp_data_offset as usize
 }
 
-fn extract_payload<'a>(data: &'a Cow<'a, [u8]>, header_size: usize) -> Cow<'a, [u8]> {
-    match data {
-        Cow::Borrowed(bytes) => Cow::Borrowed(&bytes[header_size..]),
-        Cow::Owned(bytes) => Cow::Owned(bytes.clone().split_off(header_size)),
-    }
-}
-
 fn bit_manipulation(data: &mut [u8], bit_index: usize, new_bit: bool) {
     let byte_index = bit_index / 8;
     let bit_position = bit_index % 8;
