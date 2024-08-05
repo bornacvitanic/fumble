@@ -1,4 +1,4 @@
-use crate::network::capture::PacketData;
+use crate::network::core::packet_data::PacketData;
 use std::collections::VecDeque;
 use std::time::Duration;
 

@@ -1,4 +1,4 @@
-use crate::network::capture::PacketData;
+use crate::network::core::packet_data::PacketData;
 use log::trace;
 use std::collections::VecDeque;
 use std::time::Instant;
@@ -87,10 +87,13 @@ fn maintain_buffer_size(buffer: &mut VecDeque<PacketData<'_>>, total_size: &mut 
 
 #[cfg(test)]
 mod tests {
+    use std::collections::VecDeque;
     use super::*;
     use std::time::Duration;
     use windivert::layer::NetworkLayer;
     use windivert::packet::WinDivertPacket;
+    use crate::network::core::packet_data::PacketData;
+    use crate::network::modules::bandwidth::{add_packet_to_buffer, add_packets_to_buffer, bandwidth_limiter, MAX_BUFFER_SIZE, remove_packet_from_buffer};
 
     /// Safely creates a dummy packet with a specified length.
     /// Assumes the vector created with the specified length is valid for packet creation.

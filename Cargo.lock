@@ -218,6 +218,7 @@ dependencies = [
  "log",
  "rand",
  "regex",
+ "thiserror",
  "tokio",
  "windivert",
  "windivert-sys",

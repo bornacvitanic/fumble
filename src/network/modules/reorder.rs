@@ -1,7 +1,8 @@
-use crate::network::capture::PacketData;
+use crate::network::core::packet_data::PacketData;
 use std::cmp::Ordering;
 use std::collections::BinaryHeap;
 use std::time::{Duration, Instant};
+use log::error;
 
 pub struct DelayedPacket<'a> {
     pub packet: PacketData<'a>,
@@ -53,8 +54,12 @@ pub fn reorder_packets<'a>(
     let now = Instant::now();
     while let Some(delayed_packet) = storage.peek() {
         if delayed_packet.delay_until <= now {
-            let delayed_packet = storage.pop().unwrap();
-            packets.push(delayed_packet.packet);
+            if let Some(delayed_packet) = storage.pop() {
+                packets.push(delayed_packet.packet);
+            } else {
+                error!("Expected a delayed packet, but none was found in storage.");
+                break;
+            }
         } else {
             break;
         }
