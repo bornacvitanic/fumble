@@ -14,12 +14,12 @@ use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::Receiver;
+use tokio::time::sleep;
 use windivert::error::WinDivertError;
 use windivert::layer::NetworkLayer;
 use windivert::packet::WinDivertPacket;
 use windivert::prelude::WinDivertFlags;
-use windivert::{WinDivert};
-use tokio::time::{sleep};
+use windivert::WinDivert;
 
 #[derive(Clone)]
 pub struct PacketData<'a> {
@@ -51,10 +51,11 @@ pub async fn packet_receiving_thread(
     packet_sender: mpsc::Sender<PacketData<'_>>,
     running: Arc<AtomicBool>,
 ) -> Result<(), WinDivertError> {
-    let wd = WinDivert::<NetworkLayer>::network(&traffic_filter, 0, WinDivertFlags::new()).map_err(|e| {
-        error!("Failed to initialize WinDivert: {}", e);
-        e
-    })?;
+    let wd = WinDivert::<NetworkLayer>::network(&traffic_filter, 0, WinDivertFlags::new())
+        .map_err(|e| {
+            error!("Failed to initialize WinDivert: {}", e);
+            e
+        })?;
 
     let wd = Arc::new(Mutex::new(wd));
 
