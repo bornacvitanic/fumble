@@ -1,4 +1,4 @@
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Duration;
 use log::{error, info, trace};
@@ -15,22 +15,17 @@ pub async fn receive_packets(
     packet_sender: mpsc::Sender<PacketData<'_>>,
     running: Arc<AtomicBool>,
 ) -> Result<(), WinDivertError> {
-    let wd = WinDivert::<NetworkLayer>::network(&traffic_filter, 0, WinDivertFlags::new())
+    let wd = Arc::new(WinDivert::<NetworkLayer>::network(&traffic_filter, 0, WinDivertFlags::new())
         .map_err(|e| {
             error!("Failed to initialize WinDivert: {}", e);
             e
-        })?;
-
-    let wd = Arc::new(Mutex::new(wd));
+        })?);
 
     while running.load(Ordering::SeqCst) {
-        let wd_clone = Arc::clone(&wd);
+        let wd = Arc::clone(&wd);
         let packet_fut = tokio::task::spawn_blocking(move || {
             let mut buf = vec![0u8; 1500];
-            let result = {
-                let wd_guard = wd_clone.lock().unwrap();
-                wd_guard.recv(Some(&mut buf))
-            };
+            let result = wd.recv(Some(&mut buf));
             result.map(|packet| packet.into_owned()).ok()
         });
 
@@ -46,12 +41,6 @@ pub async fn receive_packets(
                     }
                 } else {
                     error!("Failed to receive or process packet.");
-                }
-            }
-            _ = sleep(Duration::from_millis(250)) => {
-                trace!("No packets received. Checking shutdown signal after timeout");
-                if should_shutdown(&running) {
-                    break;
                 }
             }
         }

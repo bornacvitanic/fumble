@@ -1,6 +1,6 @@
 [package]
 name = "fumble"
-version = "0.4.0"
+version = "0.4.1"
 authors = ["Borna Cvitanić borna.cvitanic@gmail.com"]
 description = "an oxidized implementation of the original clumsy tool, designed to simulate adverse network conditions on Windows systems."
 repository = "https://github.com/bornacvitanic/fumble"
