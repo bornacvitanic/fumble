@@ -7,10 +7,10 @@ use std::process::exit;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc::channel;
 use std::sync::{Arc, Mutex};
-use std::thread;
 use windivert::error::WinDivertError;
 
-fn main() -> Result<(), WinDivertError> {
+#[tokio::main]
+async fn main() -> Result<(), WinDivertError> {
     initialize_logging();
     let cli = Cli::parse();
     debug!("Parsed CLI arguments: {:?}", &cli);
@@ -20,21 +20,35 @@ fn main() -> Result<(), WinDivertError> {
     let shutdown_triggered = Arc::new(Mutex::new(false));
     setup_ctrlc_handler(running.clone(), shutdown_triggered.clone());
 
-    let (packet_sender, packet_receiver) = channel();
+    // Use tokio's mpsc channel for async compatibility
+    let (packet_sender, packet_receiver) = tokio::sync::mpsc::channel(100);
     let traffic_filter = cli.filter.clone().unwrap_or_default();
 
-    let handle = thread::spawn({
+    // Spawn the packet receiving thread
+    let packet_receiver_handle = tokio::spawn({
         let running = running.clone();
-        move || packet_receiving_thread(traffic_filter, packet_sender, running)
+        packet_receiving_thread(traffic_filter, packet_sender, running)
     });
 
-    start_packet_processing(cli, packet_receiver, running)?;
+    // Start packet processing (ensure this function can work with the tokio mpsc receiver)
+    start_packet_processing(cli, packet_receiver, running.clone())?;
     info!("Packet processing stopped. Awaiting packet receiving thread termination...");
 
-    handle.join().expect("Thread panicked")?;
-    info!("Application shutdown complete.");
+    // Await the packet receiving thread
+    match packet_receiver_handle.await {
+        Ok(Ok(_)) => {
+            info!("Packet receiving thread completed successfully.");
+        }
+        Ok(Err(e)) => {
+            error!("Packet receiving thread encountered an error: {:?}", e);
+        }
+        Err(e) => {
+            error!("Failed to join packet receiving thread: {:?}", e);
+        }
+    }
 
-    Ok(())
+    info!("Application shutdown complete.");
+    exit(1);
 }
 
 fn setup_ctrlc_handler(running: Arc<AtomicBool>, shutdown_triggered: Arc<Mutex<bool>>) {
