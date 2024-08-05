@@ -97,6 +97,9 @@ To see more detailed logs, set the `RUST_LOG` environment variable before runnin
 - `--throttle-duration <DURATION>`: Duration in milliseconds for which throttling is applied during a throttle event.
 - `--throttle-drop`: Makes throttled packets be dropped instead of delayed.
 - `--reorder <DELAY>`: Apply a random delay to reorder packets, simulating out-of-order delivery.
+- `--tamper-probability <PROBABILITY>`: Probability of tampering packets, ranging from 0.0 to 1.0.
+- `--tamper-amount <AMOUNT>`: Amount of tampering that should be applied, ranging from 0.0 to 1.0.
+- `--tamper-recalculate-checksums [true/false]`: Whether tampered packets should have their checksums recalculated to mask the tampering and avoid the packets getting automatically dropped.
 - `--duplicate-count <COUNT>`: Number of times to duplicate packets.
 - `--duplicate-probability <PROBABILITY>`: Probability of duplicating packets, must be between 0.0 and 1.0.
 - `--bandwidth-limit <KB/s>`: Limit the bandwidth in KB/s to simulate a constrained network environment.
@@ -133,6 +136,18 @@ To see more detailed logs, set the `RUST_LOG` environment variable before runnin
   fumble --filter "inbound and tcp" --reorder 100
   ```
 
+- Tamper packets with a 25% probability and a tamper amount of 0.2, recalculating checksums:
+
+  ```sh
+  fumble --filter "inbound and tcp" --tamper-probability 0.25 --tamper-amount 0.2 --tamper-recalculate-checksums true
+  ```
+
+- Tamper packets with a 30% probability, and do not recalculate checksums:
+
+  ```sh
+  fumble --filter "inbound and tcp" --tamper-probability 0.3 --tamper-recalculate-checksums false
+  ```
+
 - Duplicate packets with a 50% chance:
 
   ```sh
@@ -157,7 +172,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE.md) f
 
 - [clap](https://crates.io/crates/clap) - A command-line argument parser for Rust that provides a simple and powerful API for defining complex CLI interfaces.
 - [windivert](https://crates.io/crates/windivert) - A Rust binding for the WinDivert library, used for network packet interception and manipulation.
+- [tokio](https://crates.io/crates/tokio) - An asynchronous runtime for Rust, providing utilities for async I/O, timers, and synchronization primitives. Used for handling asynchronous tasks, including the blocking `WinDivert` receive calls.
 - [rand](https://crates.io/crates/rand) - A Rust library for generating random numbers, used for implementing random packet dropping and duplication.
+- [ctrlc](https://crates.io/crates/ctrlc) - A Rust library for handling Ctrl-C signals, enabling graceful shutdowns and clean thread termination.
+- [regex](https://crates.io/crates/regex) - A Rust library for regular expressions, used for string matching operations.
 - [env_logger](https://crates.io/crates/env_logger) - A simple logger for Rust applications that can be configured via environment variables.
 - [log](https://crates.io/crates/log) - A logging facade that provides a common interface for various log implementations.
 
