@@ -19,7 +19,7 @@ async fn main() -> Result<(), WinDivertError> {
     let shutdown_triggered = Arc::new(Mutex::new(false));
     setup_ctrlc_handler(running.clone(), shutdown_triggered.clone());
 
-    // Use tokio's mpsc channel for async compatibility
+    // okio's mpsc channel for async compatibility
     let (packet_sender, packet_receiver) = tokio::sync::mpsc::channel(100);
     let traffic_filter = cli.filter.clone().unwrap_or_default();
 
@@ -29,11 +29,10 @@ async fn main() -> Result<(), WinDivertError> {
         packet_receiving_thread(traffic_filter, packet_sender, running)
     });
 
-    // Start packet processing (ensure this function can work with the tokio mpsc receiver)
+    // Start packet processing
     start_packet_processing(cli, packet_receiver, running.clone())?;
     info!("Packet processing stopped. Awaiting packet receiving thread termination...");
 
-    // Await the packet receiving thread
     match packet_receiver_handle.await {
         Ok(Ok(_)) => {
             info!("Packet receiving thread completed successfully.");

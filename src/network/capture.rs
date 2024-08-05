@@ -87,12 +87,12 @@ pub async fn packet_receiving_thread(
             _ = sleep(Duration::from_millis(250)) => {
                 trace!("No packets received. Checking shutdown signal after timeout");
                 if should_shutdown(&running) {
-                    info!("Shutting down packet receiving thread");
                     break;
                 }
             }
         }
     }
+    info!("Shutting down packet receiving thread");
     Ok(())
 }
 
