@@ -1,4 +1,4 @@
-use crate::cli::{Cli, PacketManipulationSettings};
+use crate::cli::settings::packet_manipulation::PacketManipulationSettings;
 use crate::network::core::packet_data::PacketData;
 use crate::network::modules::bandwidth::bandwidth_limiter;
 use crate::network::modules::delay::delay_packets;
@@ -19,6 +19,7 @@ use windivert::error::WinDivertError;
 use windivert::layer::NetworkLayer;
 use windivert::WinDivert;
 use windivert_sys::WinDivertFlags;
+use crate::cli::Cli;
 
 pub fn start_packet_processing(
     cli: Cli,
