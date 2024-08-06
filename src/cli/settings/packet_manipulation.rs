@@ -12,6 +12,7 @@ use crate::cli::settings::tamper::TamperOptions;
 use crate::cli::settings::throttle::ThrottleOptions;
 
 #[derive(Parser, Debug, Serialize, Deserialize)]
+#[derive(Default)]
 pub struct PacketManipulationSettings {
     #[command(flatten)]
     pub drop: DropOptions,
@@ -35,19 +36,6 @@ pub struct PacketManipulationSettings {
     pub bandwidth: BandwidthOptions,
 }
 
-impl Default for PacketManipulationSettings {
-    fn default() -> Self {
-        PacketManipulationSettings {
-            drop: Default::default(),
-            delay: Default::default(),
-            throttle: Default::default(),
-            reorder: Default::default(),
-            tamper: Default::default(),
-            duplicate: Default::default(),
-            bandwidth: Default::default(),
-        }
-    }
-}
 
 impl PacketManipulationSettings {
     /// Load configuration from a TOML file
@@ -80,7 +68,7 @@ impl PacketManipulationSettings {
         let commented_out = serialized
             .lines()
             .map(|line| {
-                if line.trim().is_empty() || line.starts_with("[") {
+                if line.trim().is_empty() || line.starts_with('[') {
                     line.to_string()
                 } else {
                     format!("# {}", line)

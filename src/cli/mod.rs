@@ -17,6 +17,7 @@ pub mod utils;
     To customize the verbosity of logs, set the `RUST_LOG` environment variable before running `fumble`.\n\n\
     Example: RUST_LOG=debug fumble --filter 'tcp.DstPort == 80'"
 )]
+#[derive(Default)]
 pub struct Cli {
     /// Filter expression for capturing packets
     #[arg(short, long, value_parser = validate_filter)]
@@ -29,12 +30,3 @@ pub struct Cli {
     pub packet_manipulation_settings: PacketManipulationSettings,
 }
 
-impl Default for Cli {
-    fn default() -> Self {
-        Self {
-            config: Default::default(),
-            filter: None,
-            packet_manipulation_settings: Default::default()
-        }
-    }
-}

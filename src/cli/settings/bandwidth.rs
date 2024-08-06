@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 use crate::cli::utils::serialization::serialize_option;
 
 #[derive(Parser, Debug, Serialize, Deserialize)]
+#[derive(Default)]
 pub struct BandwidthOptions {
     /// Maximum bandwidth limit in KB/s
     #[arg(long = "bandwidth-limit", id = "bandwidth-limit")]
@@ -10,10 +11,3 @@ pub struct BandwidthOptions {
     pub limit: Option<usize>,
 }
 
-impl Default for BandwidthOptions {
-    fn default() -> Self {
-        BandwidthOptions {
-            limit: None,
-        }
-    }
-}
