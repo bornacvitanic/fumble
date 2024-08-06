@@ -112,7 +112,7 @@ mod tests {
             PacketData::from(create_dummy_packet(1000)),
         ];
         let mut buffer = VecDeque::new();
-        let mut total_buffer_size: &mut usize = &mut 0usize;
+        let total_buffer_size: &mut usize = &mut 0usize;
         let mut last_send_time = Instant::now() - Duration::from_secs(1);
         let bandwidth_limit = 1; // 1 KB/s
 
