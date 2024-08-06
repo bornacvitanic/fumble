@@ -1,6 +1,6 @@
 use clap::Parser;
 use env_logger::Env;
-use fumble::cli::{log_initialization_info, Cli};
+use fumble::cli::{log_initialization_info, Cli, ConfigOptions};
 use fumble::network::processing::packet_processing::start_packet_processing;
 use fumble::network::processing::packet_receiving::receive_packets;
 use log::{debug, error, info};
@@ -13,9 +13,40 @@ use windivert::error::WinDivertError;
 
 fn main() -> Result<(), WinDivertError> {
     initialize_logging();
-    let cli = Cli::parse();
+    let mut cli = Cli::parse();
     debug!("Parsed CLI arguments: {:?}", &cli);
-    log_initialization_info(&cli);
+
+    if let Some(path) = &cli.config.create_default {
+        // Create a default config file and exit
+        ConfigOptions::create_default_config(path)?;
+        info!("Default configuration file created at {:?}", path);
+        return Ok(());
+    }
+
+    if cli.config.list_configs {
+        // List all config files in the current directory
+        match ConfigOptions::list_all_configs("./configs") {
+            Ok(configs) => {
+                info!("Available configurations:");
+                for config in configs {
+                    info!("{}", config);
+                }
+            }
+            Err(e) => error!("Failed to list configs: {}", e),
+        }
+        return Ok(());
+    }
+
+    // Load configuration from file if specified
+    if let Some(path) = &cli.config.use_config {
+        // Clone the path to avoid borrowing issues
+        let path_clone = path.clone();
+        let loaded_settings = ConfigOptions::load_existing_config(&path_clone)?;
+        cli.packet_manipulation_settings = loaded_settings;
+        info!("Loaded configuration from {:?}", path_clone.display());
+    }
+
+    log_initialization_info(&cli.filter, &cli.packet_manipulation_settings);
 
     let running = Arc::new(AtomicBool::new(true));
     let shutdown_triggered = Arc::new(Mutex::new(false));
