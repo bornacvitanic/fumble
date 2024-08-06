@@ -1,4 +1,5 @@
 use crate::cli::settings::packet_manipulation::PacketManipulationSettings;
+use crate::cli::Cli;
 use crate::network::core::packet_data::PacketData;
 use crate::network::modules::bandwidth::bandwidth_limiter;
 use crate::network::modules::delay::delay_packets;
@@ -19,7 +20,6 @@ use windivert::error::WinDivertError;
 use windivert::layer::NetworkLayer;
 use windivert::WinDivert;
 use windivert_sys::WinDivertFlags;
-use crate::cli::Cli;
 
 pub fn start_packet_processing(
     cli: Cli,
@@ -31,10 +31,10 @@ pub fn start_packet_processing(
         0,
         WinDivertFlags::new(),
     )
-        .map_err(|e| {
-            error!("Failed to initialize WinDiver: {}", e);
-            e
-        })?;
+    .map_err(|e| {
+        error!("Failed to initialize WinDiver: {}", e);
+        e
+    })?;
 
     let log_interval = Duration::from_secs(5);
     let mut last_log_time = Instant::now();
@@ -126,7 +126,9 @@ pub fn process_packets<'a>(
         );
     }
 
-    if settings.duplicate.count > 1 && settings.duplicate.probability.unwrap_or_default().value() > 0.0 {
+    if settings.duplicate.count > 1
+        && settings.duplicate.probability.unwrap_or_default().value() > 0.0
+    {
         duplicate_packets(
             packets,
             settings.duplicate.count,

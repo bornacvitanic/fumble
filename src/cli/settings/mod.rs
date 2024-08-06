@@ -1,8 +1,8 @@
-pub mod packet_manipulation;
-mod drop;
+mod bandwidth;
 mod delay;
-mod throttle;
+mod drop;
+mod duplicate;
+pub mod packet_manipulation;
 mod reorder;
 mod tamper;
-mod duplicate;
-mod bandwidth;
+mod throttle;

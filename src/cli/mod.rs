@@ -1,7 +1,7 @@
-use clap::Parser;
 use crate::cli::config::config_options::ConfigOptions;
 use crate::cli::settings::packet_manipulation::PacketManipulationSettings;
 use crate::network::utils::filter::validate_filter;
+use clap::Parser;
 
 pub mod config;
 pub mod settings;
@@ -29,4 +29,3 @@ pub struct Cli {
     #[command(flatten)]
     pub packet_manipulation_settings: PacketManipulationSettings,
 }
-

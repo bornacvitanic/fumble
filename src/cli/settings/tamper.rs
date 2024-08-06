@@ -1,6 +1,6 @@
+use crate::network::types::Probability;
 use clap::Parser;
 use serde::{Deserialize, Serialize};
-use crate::network::types::Probability;
 
 #[derive(Parser, Debug, Serialize, Deserialize)]
 pub struct TamperOptions {

@@ -1,8 +1,3 @@
-use std::path::Path;
-use std::{fs, io};
-use std::io::Write;
-use clap::Parser;
-use serde::{Deserialize, Serialize};
 use crate::cli::settings::bandwidth::BandwidthOptions;
 use crate::cli::settings::delay::DelayOptions;
 use crate::cli::settings::drop::DropOptions;
@@ -10,9 +5,13 @@ use crate::cli::settings::duplicate::DuplicateOptions;
 use crate::cli::settings::reorder::ReorderOptions;
 use crate::cli::settings::tamper::TamperOptions;
 use crate::cli::settings::throttle::ThrottleOptions;
+use clap::Parser;
+use serde::{Deserialize, Serialize};
+use std::io::Write;
+use std::path::Path;
+use std::{fs, io};
 
-#[derive(Parser, Debug, Serialize, Deserialize)]
-#[derive(Default)]
+#[derive(Parser, Debug, Serialize, Deserialize, Default)]
 pub struct PacketManipulationSettings {
     #[command(flatten)]
     pub drop: DropOptions,
@@ -36,13 +35,12 @@ pub struct PacketManipulationSettings {
     pub bandwidth: BandwidthOptions,
 }
 
-
 impl PacketManipulationSettings {
     /// Load configuration from a TOML file
     pub fn load_from_file<P: AsRef<Path>>(path: P) -> io::Result<Self> {
         let content = fs::read_to_string(path)?;
-        let config = toml::from_str(&content)
-            .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?;
+        let config =
+            toml::from_str(&content).map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?;
         Ok(config)
     }
 

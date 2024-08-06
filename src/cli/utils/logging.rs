@@ -1,5 +1,5 @@
-use log::info;
 use crate::cli::settings::packet_manipulation::PacketManipulationSettings;
+use log::info;
 
 pub fn log_initialization_info(filter: &Option<String>, settings: &PacketManipulationSettings) {
     if let Some(traffic_filter) = &filter {

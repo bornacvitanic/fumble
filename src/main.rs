@@ -1,17 +1,17 @@
 use clap::Parser;
 use env_logger::Env;
-use fumble::cli::Cli;
 use fumble::cli::config::config_options::ConfigOptions;
+use fumble::cli::utils::logging::log_initialization_info;
+use fumble::cli::Cli;
 use fumble::network::processing::packet_processing::start_packet_processing;
 use fumble::network::processing::packet_receiving::receive_packets;
 use log::{debug, error, info};
 use std::process::exit;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::{Arc, mpsc, Mutex};
+use std::sync::{mpsc, Arc, Mutex};
 use std::thread;
 use std::thread::JoinHandle;
 use windivert::error::WinDivertError;
-use fumble::cli::utils::logging::log_initialization_info;
 
 fn main() -> Result<(), WinDivertError> {
     initialize_logging();

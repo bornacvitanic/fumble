@@ -1,2 +1,2 @@
-pub(crate) mod serialization;
 pub mod logging;
+pub(crate) mod serialization;

@@ -11,8 +11,6 @@ pub struct DelayOptions {
 
 impl Default for DelayOptions {
     fn default() -> Self {
-        DelayOptions {
-            duration: Some(0),
-        }
+        DelayOptions { duration: Some(0) }
     }
 }

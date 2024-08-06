@@ -1,6 +1,6 @@
+use crate::network::types::Probability;
 use clap::Parser;
 use serde::{Deserialize, Serialize};
-use crate::network::types::Probability;
 
 #[derive(Parser, Debug, Serialize, Deserialize)]
 pub struct ThrottleOptions {
@@ -13,7 +13,7 @@ pub struct ThrottleOptions {
     #[arg(
         long = "throttle-duration",
         default_value_t = 30,
-        id = "throttle-duration",
+        id = "throttle-duration"
     )]
     #[serde(default)]
     pub duration: u64,

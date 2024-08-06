@@ -1,11 +1,10 @@
+use crate::cli::settings::packet_manipulation::PacketManipulationSettings;
+use clap::Parser;
 use std::path::{Path, PathBuf};
 use std::{fs, io};
-use clap::Parser;
-use crate::cli::settings::packet_manipulation::PacketManipulationSettings;
 
 /// Manage configurations for fumble.
-#[derive(Parser, Debug)]
-#[derive(Default)]
+#[derive(Parser, Debug, Default)]
 pub struct ConfigOptions {
     /// Command to create a default configuration file.
     #[arg(long, help_heading = "Configuration Management")]
