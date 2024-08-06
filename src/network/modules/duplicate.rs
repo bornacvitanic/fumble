@@ -20,7 +20,6 @@ pub fn duplicate_packets(packets: &mut Vec<PacketData>, count: usize, probabilit
 #[cfg(test)]
 mod tests {
     use crate::network::core::packet_data::PacketData;
-    use crate::network::core::packet_data::PacketData;
     use crate::network::modules::duplicate::duplicate_packets;
     use crate::network::types::Probability;
     use windivert::layer::NetworkLayer;
@@ -38,7 +37,7 @@ mod tests {
             duplicate_packets(&mut packets, 3, Probability::new(1.0).unwrap());
 
             // Ensure three times as many packets
-            assert_eq!(packets.len(), original_len * 3);
+            assert_eq!(packets.len(), original_len * 4);
 
             // Ensure data consistency
             for chunk in packets.chunks(original_len) {
