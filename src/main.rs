@@ -18,20 +18,22 @@ fn main() -> Result<(), WinDivertError> {
     let mut cli = Cli::parse();
     debug!("Parsed CLI arguments: {:?}", &cli);
 
-    if let Some(path) = &cli.config.create_default {
+    if let Some(file_name) = &cli.config.create_default {
         // Create a default config file and exit
-        ConfigOptions::create_default_config(path)?;
-        info!("Default configuration file created at {:?}", path);
+        ConfigOptions::create_default_config(file_name)?;
+        info!(
+            "Default configuration file created with name {:?}",
+            file_name
+        );
         return Ok(());
     }
 
     if cli.config.list_configs {
         // List all config files in the current directory
-        match ConfigOptions::list_all_configs("./configs") {
+        match ConfigOptions::list_all_configs() {
             Ok(configs) => {
-                info!("Available configurations:");
                 for config in configs {
-                    info!("{}", config);
+                    println!("{}", config);
                 }
             }
             Err(e) => error!("Failed to list configs: {}", e),
@@ -40,12 +42,10 @@ fn main() -> Result<(), WinDivertError> {
     }
 
     // Load configuration from file if specified
-    if let Some(path) = &cli.config.use_config {
-        // Clone the path to avoid borrowing issues
-        let path_clone = path.clone();
-        let loaded_settings = ConfigOptions::load_existing_config(&path_clone)?;
+    if let Some(file_name) = &cli.config.use_config {
+        let loaded_settings = ConfigOptions::load_existing_config(file_name)?;
         cli.packet_manipulation_settings = loaded_settings;
-        info!("Loaded configuration from {:?}", path_clone.display());
+        info!("Loaded configuration from {:?}", file_name);
     }
 
     log_initialization_info(&cli.filter, &cli.packet_manipulation_settings);
