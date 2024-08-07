@@ -2,6 +2,64 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.5.0] - 2024-08-07
+
+### Bug Fixes
+
+- Fix packet manipulation module tests failing
+
+- Squash merge fixing-packet-capture into develop
+
+
+### Documentation
+
+- Update README.md to be up to date with the latest changes
+
+- Update README.md to mention known issues
+
+
+### Features
+
+- Add configuration file support and packet manipulation settings serialization
+
+
+### Refactors
+
+- Refactor configuration management to use the users configuration directory
+
+- Refactor CLI architecture to modularize cli components
+
+- Squash merge cleanup-refactor into develop
+
+
+### Removals
+
+- Remove unused import in tamper.rs
+
+
+### Revert
+
+- Revert back to using standard threads instead of tokio async
+
+even though tokio async looked promising as a way to get around the
+WinDivert receive blocking call testing showed that it caused packages
+getting skipped when sent at low amounts.
+
+
+### Styling
+
+- Style code using fmt
+
+- Clean up code using clippy
+
+
+### Updates
+
+- Update duplicate packets method to use the count number as the duplicate count not the total count of outgoing packet copies
+
+- Update project to 0.4.2
+
+
 ## [0.4.0] - 2024-08-05
 
 ### Bug Fixes
@@ -42,6 +100,8 @@ All notable changes to this project will be documented in this file.
 
 
 ### Updates
+
+- Update CHANGELOG to contain 0.4.0 changes
 
 - Update project version to 0.4.0
 
