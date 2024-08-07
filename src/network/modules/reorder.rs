@@ -1,5 +1,5 @@
 use crate::network::core::packet_data::PacketData;
-use log::error;
+use log::{error, warn};
 use std::cmp::Ordering;
 use std::collections::BinaryHeap;
 use std::time::{Duration, Instant};
@@ -45,6 +45,10 @@ pub fn reorder_packets<'a>(
     storage: &mut BinaryHeap<DelayedPacket<'a>>,
     max_delay: Duration,
 ) {
+    if max_delay.as_millis() == 0 {
+        warn!("Max delay cannot be zero. Skipping packet reordering.");
+        return;
+    }
     for packet in packets.drain(..) {
         let delay = Duration::from_millis((rand::random::<u128>() % max_delay.as_millis()) as u64);
         let delayed_packet = DelayedPacket::new(packet, delay);

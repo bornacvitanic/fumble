@@ -1,3 +1,4 @@
+use crate::cli::settings::packet_manipulation::PacketManipulationSettings;
 use crate::cli::Cli;
 use crate::network::core::packet_data::PacketData;
 use crate::network::modules::bandwidth::bandwidth_limiter;
@@ -19,70 +20,6 @@ use windivert::error::WinDivertError;
 use windivert::layer::NetworkLayer;
 use windivert::WinDivert;
 use windivert_sys::WinDivertFlags;
-
-pub fn process_packets<'a>(
-    cli: &Cli,
-    packets: &mut Vec<PacketData<'a>>,
-    state: &mut PacketProcessingState<'a>,
-) {
-    if let Some(drop_probability) = cli.drop.probability {
-        drop_packets(packets, drop_probability);
-    }
-
-    if let Some(delay) = cli.delay.duration {
-        delay_packets(
-            packets,
-            &mut state.delay_storage,
-            Duration::from_millis(delay),
-        );
-    }
-
-    if let Some(throttle_probability) = cli.throttle.probability {
-        throttle_packages(
-            packets,
-            &mut state.throttle_storage,
-            &mut state.throttled_start_time,
-            throttle_probability,
-            Duration::from_millis(cli.throttle.duration),
-            cli.throttle.drop,
-        );
-    }
-
-    if let Some(delay) = cli.reorder.max_delay {
-        reorder_packets(
-            packets,
-            &mut state.reorder_storage,
-            Duration::from_millis(delay),
-        );
-    }
-
-    if let Some(tamper_probability) = cli.tamper.probability {
-        tamper_packets(
-            packets,
-            tamper_probability,
-            cli.tamper.amount,
-            cli.tamper.recalculate_checksums.unwrap_or(true),
-        );
-    }
-
-    if cli.duplicate.count > 1 && cli.duplicate.probability.unwrap_or_default().value() > 0.0 {
-        duplicate_packets(
-            packets,
-            cli.duplicate.count,
-            cli.duplicate.probability.unwrap_or_default(),
-        );
-    }
-
-    if let Some(bandwidth_limit) = cli.bandwidth.limit {
-        bandwidth_limiter(
-            packets,
-            &mut state.bandwidth_limit_storage,
-            &mut state.bandwidth_storage_total_size,
-            &mut state.last_sent_package_time,
-            bandwidth_limit,
-        );
-    }
-}
 
 pub fn start_packet_processing(
     cli: Cli,
@@ -124,7 +61,7 @@ pub fn start_packet_processing(
             total_packets += 1;
         }
 
-        process_packets(&cli, &mut packets, &mut state);
+        process_packets(&cli.packet_manipulation_settings, &mut packets, &mut state);
 
         for packet_data in &packets {
             wd.send(&packet_data.packet).map_err(|e| {
@@ -142,4 +79,70 @@ pub fn start_packet_processing(
     }
 
     Ok(())
+}
+
+pub fn process_packets<'a>(
+    settings: &PacketManipulationSettings,
+    packets: &mut Vec<PacketData<'a>>,
+    state: &mut PacketProcessingState<'a>,
+) {
+    if let Some(drop_probability) = settings.drop.probability {
+        drop_packets(packets, drop_probability);
+    }
+
+    if let Some(delay) = settings.delay.duration {
+        delay_packets(
+            packets,
+            &mut state.delay_storage,
+            Duration::from_millis(delay),
+        );
+    }
+
+    if let Some(throttle_probability) = settings.throttle.probability {
+        throttle_packages(
+            packets,
+            &mut state.throttle_storage,
+            &mut state.throttled_start_time,
+            throttle_probability,
+            Duration::from_millis(settings.throttle.duration),
+            settings.throttle.drop,
+        );
+    }
+
+    if let Some(delay) = settings.reorder.max_delay {
+        reorder_packets(
+            packets,
+            &mut state.reorder_storage,
+            Duration::from_millis(delay),
+        );
+    }
+
+    if let Some(tamper_probability) = settings.tamper.probability {
+        tamper_packets(
+            packets,
+            tamper_probability,
+            settings.tamper.amount,
+            settings.tamper.recalculate_checksums.unwrap_or(true),
+        );
+    }
+
+    if settings.duplicate.count > 1
+        && settings.duplicate.probability.unwrap_or_default().value() > 0.0
+    {
+        duplicate_packets(
+            packets,
+            settings.duplicate.count,
+            settings.duplicate.probability.unwrap_or_default(),
+        );
+    }
+
+    if let Some(bandwidth_limit) = settings.bandwidth.limit {
+        bandwidth_limiter(
+            packets,
+            &mut state.bandwidth_limit_storage,
+            &mut state.bandwidth_storage_total_size,
+            &mut state.last_sent_package_time,
+            bandwidth_limit,
+        );
+    }
 }

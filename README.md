@@ -11,7 +11,7 @@ fumble is an oxidized (Rust-based) implementation of the original clumsy tool, d
 Just like its predecessor, fumble offers a user-friendly and interactive way to degrade network performance intentionally, making it easier to diagnose issues and improve the robustness of network-dependent applications. Whether you're a developer needing to simulate a flaky connection or a QA engineer stress-testing an application, fumble provides a versatile and reliable solution.
 
 ## Features
-
+### Packet Manipulation Features
 - **Packet Filtering**: Use filter expressions to capture specific packets.
 - **Packet Dropping**: Drop packets with a specified probability.
 - **Packet Delay**: Introduce delays to simulate latency.
@@ -20,6 +20,9 @@ Just like its predecessor, fumble offers a user-friendly and interactive way to 
 - **Packet Tampering:** Modify packet payloads by altering, flipping, or injecting data to simulate corrupted transmissions.
 - **Packet Duplication**: Duplicate packets to simulate packet duplication issues.
 - **Bandwidth Limiting**: Limit the bandwidth to simulate a constrained network environment.
+### Binary Features
+- **General CLI Usage:** Utilize a comprehensive command-line interface for flexible and detailed control over network manipulation settings. Easily specify parameters for packet filtering, dropping, delaying, throttling, reordering, tampering, duplicating, and bandwidth limiting.
+- **Configuration Support:** Easily manage your settings through configuration files. Create, list, and use configuration files to save and load your preferred settings, simplifying the setup and ensuring consistent behavior across different runs.
 
 ## Known Issues
 
@@ -28,7 +31,6 @@ There is a known issue where the packet receiving thread, which operates in a bl
 ## Roadmap
 
 - **Enhanced Receiver Thread Handling:** Improve robustness and reliability of the packet receiving process.
-- **Configuration Support:** Introduce support for configuration files to simplify setup and usage.
 - **TUI/CLI Enhancements:** Develop a Text User Interface (TUI) or enhance command-line interface for more user-friendly interactions.
 - **Graphical User Interface (GUI):** Implement a GUI to cater to users who prefer not to use the command line.
 
@@ -55,26 +57,26 @@ cd fumble
 cargo build --release
 ```
 
-### From crates.io as a Library
+### Using fumble as a Library
 
-You can include `fumble` as a dependency in your Rust project by adding it to your `Cargo.toml`:
+To include `fumble` as a dependency in your Rust project, add the following to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-fumble = "0.4.2"
+fumble = "0.5.0"
 ```
 
-Then, run `cargo build` to download and compile the crate.
+Run cargo build to download and compile the crate.
 
 ### From crates.io as a CLI
 
-To install `fumble` as a command-line tool globally, use the following command:
+To install fumble as a command-line tool globally, use:
 
 ```sh
 cargo install fumble
 ```
 
-This will install the `fumble` binary, allowing you to use the CLI tool from anywhere on your system.
+This installs the fumble binary, enabling you to use the CLI tool globally.
 
 ## Usage
 
@@ -86,7 +88,7 @@ fumble --filter "inbound and tcp" --delay 500 --drop 0.1
 
 ## Logging
 
-The tool uses the `env_logger` crate for logging. By default, info messages are shown.
+The tool uses the env_logger crate for logging. By default, informational messages are shown.
 
 ### Enabling Detailed Logs
 
@@ -107,6 +109,9 @@ To see more detailed logs, set the `RUST_LOG` environment variable before runnin
 - `--duplicate-count <COUNT>`: Number of times to duplicate packets.
 - `--duplicate-probability <PROBABILITY>`: Probability of duplicating packets, must be between 0.0 and 1.0.
 - `--bandwidth-limit <KB/s>`: Limit the bandwidth in KB/s to simulate a constrained network environment.
+- `--create-default <CREATE_DEFAULT>`: Command to create a default configuration file with the specified name.
+- `--use-config <USE_CONFIG>`: Command to use an existing configuration file based on specified name.
+- `--list-configs`: Command to list all available configuration files.
 
 ## Examples
 
@@ -176,12 +181,15 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE.md) f
 
 - [clap](https://crates.io/crates/clap) - A command-line argument parser for Rust that provides a simple and powerful API for defining complex CLI interfaces.
 - [windivert](https://crates.io/crates/windivert) - A Rust binding for the WinDivert library, used for network packet interception and manipulation.
-- [tokio](https://crates.io/crates/tokio) - An asynchronous runtime for Rust, providing utilities for async I/O, timers, and synchronization primitives. Used for handling asynchronous tasks, including the blocking `WinDivert` receive calls.
 - [rand](https://crates.io/crates/rand) - A Rust library for generating random numbers, used for implementing random packet dropping and duplication.
 - [ctrlc](https://crates.io/crates/ctrlc) - A Rust library for handling Ctrl-C signals, enabling graceful shutdowns and clean thread termination.
 - [regex](https://crates.io/crates/regex) - A Rust library for regular expressions, used for string matching operations.
 - [env_logger](https://crates.io/crates/env_logger) - A simple logger for Rust applications that can be configured via environment variables.
 - [log](https://crates.io/crates/log) - A logging facade that provides a common interface for various log implementations.
+- [serde](https://crates.io/crates/serde) - For serialization and deserialization of configuration files.
+- [toml](https://crates.io/crates/toml) - For parsing and serializing TOML configuration files.
+- [dirs](https://crates.io/crates/dirs) - For handling configuration directories across different operating systems.
+- [thiserror](https://crates.io/crates/thiserror) - For ergonomic error handling.
 
 ## Contact
 

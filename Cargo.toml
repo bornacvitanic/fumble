@@ -1,6 +1,6 @@
 [package]
 name = "fumble"
-version = "0.4.2"
+version = "0.5.0"
 authors = ["Borna Cvitanić borna.cvitanic@gmail.com"]
 description = "an oxidized implementation of the original clumsy tool, designed to simulate adverse network conditions on Windows systems."
 repository = "https://github.com/bornacvitanic/fumble"
@@ -29,6 +29,10 @@ clap = { version = "4.5.11", features = ["derive"]}
 ctrlc = "3.2"
 # For matching strings
 regex = "1.10.5"
+# For configuration file serialization and deserialization
+serde = { version = "1.0", features = ["derive"] }
+toml = "0.8.19"
+dirs = "5.0.1"
 # Libraries for better logging
 env_logger = "0.11.5"
 log = "0.4.22"
