@@ -69,38 +69,24 @@ fn main() -> Result<(), WinDivertError> {
         move || start_packet_processing(cli, packet_receiver, running)
     });
 
-    wait_for_sending_thread(packet_sender_handle);
+    wait_for_thread(packet_sender_handle, "Packet sending");
     info!("Awaiting packet receiving thread termination...");
-    wait_for_receiving_thread(packet_receiver_handle);
+    wait_for_thread(packet_receiver_handle, "Packet receiving");
 
     info!("Application shutdown complete.");
     Ok(())
 }
 
-fn wait_for_sending_thread(packet_sender_handle: JoinHandle<Result<(), WinDivertError>>) {
-    match packet_sender_handle.join() {
+fn wait_for_thread(thread_handle: JoinHandle<Result<(), WinDivertError>>, thread_name: &str) {
+    match thread_handle.join() {
         Ok(Ok(())) => {
-            info!("Packet sending thread completed successfully.");
+            info!("{} thread completed successfully.", thread_name);
         }
         Ok(Err(e)) => {
-            error!("Packet sending thread encountered an error: {:?}", e);
+            error!("{} thread encountered an error: {:?}", thread_name, e);
         }
         Err(e) => {
-            error!("Failed to join packet sending thread: {:?}", e);
-        }
-    }
-}
-
-fn wait_for_receiving_thread(packet_receiver_handle: JoinHandle<Result<(), WinDivertError>>) {
-    match packet_receiver_handle.join() {
-        Ok(Ok(())) => {
-            info!("Packet receiving thread completed successfully.");
-        }
-        Ok(Err(e)) => {
-            error!("Packet receiving thread encountered an error: {:?}", e);
-        }
-        Err(e) => {
-            error!("Failed to join packet receiving thread: {:?}", e);
+            error!("Failed to join {} thread: {:?}", thread_name, e);
         }
     }
 }
