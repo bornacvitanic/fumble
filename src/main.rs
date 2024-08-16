@@ -63,14 +63,32 @@ fn main() -> Result<(), WinDivertError> {
         move || receive_packets(traffic_filter, packet_sender, running)
     });
 
-    // Start packet processing
-    start_packet_processing(cli, packet_receiver, running.clone())?;
-    info!("Packet processing stopped. Awaiting packet receiving thread termination...");
+    // Start packet processing thread
+    let packet_sender_handle = thread::spawn({
+        let running = running.clone();
+        move || start_packet_processing(cli, packet_receiver, running)
+    });
 
+    wait_for_sending_thread(packet_sender_handle);
+    info!("Awaiting packet receiving thread termination...");
     wait_for_receiving_thread(packet_receiver_handle);
 
     info!("Application shutdown complete.");
     Ok(())
+}
+
+fn wait_for_sending_thread(packet_sender_handle: JoinHandle<Result<(), WinDivertError>>) {
+    match packet_sender_handle.join() {
+        Ok(Ok(())) => {
+            info!("Packet sending thread completed successfully.");
+        }
+        Ok(Err(e)) => {
+            error!("Packet sending thread encountered an error: {:?}", e);
+        }
+        Err(e) => {
+            error!("Failed to join packet sending thread: {:?}", e);
+        }
+    }
 }
 
 fn wait_for_receiving_thread(packet_receiver_handle: JoinHandle<Result<(), WinDivertError>>) {
