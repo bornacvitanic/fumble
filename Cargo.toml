@@ -25,6 +25,10 @@ windivert-sys = "0.10.0"
 rand = "0.9.0-alpha.2"
 # CLI argument parsing library
 clap = { version = "4.5.11", features = ["derive"]}
+# TUI (Terminal User Interface)
+ratatui = { version = "0.28.0"}
+tui-textarea = "0.6.1"
+lazy_static = "1.5.0"
 # Ctrl-C signals handling library to more gracefully shut down and be able to stop threads cleanly
 ctrlc = "3.2"
 # For matching strings

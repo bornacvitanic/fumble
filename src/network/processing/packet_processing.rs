@@ -14,7 +14,7 @@ use log::{error, info};
 use std::collections::{BinaryHeap, VecDeque};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc::Receiver;
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 use windivert::error::WinDivertError;
 use windivert::layer::NetworkLayer;
@@ -22,19 +22,20 @@ use windivert::WinDivert;
 use windivert_sys::WinDivertFlags;
 
 pub fn start_packet_processing(
-    cli: Cli,
+    cli: Arc<Mutex<Cli>>,
     packet_receiver: Receiver<PacketData>,
     running: Arc<AtomicBool>,
 ) -> Result<(), WinDivertError> {
     let wd = WinDivert::<NetworkLayer>::network(
-        cli.filter.clone().unwrap_or_default(),
+        cli.lock().unwrap().filter.clone().unwrap_or_default(),
         0,
         WinDivertFlags::new(),
     )
-    .map_err(|e| {
-        error!("Failed to initialize WinDiver: {}", e);
-        e
-    })?;
+        .map_err(|e| {
+            error!("Failed to initialize WinDiver: {}", e);
+            e
+        })?;
+
 
     let log_interval = Duration::from_secs(5);
     let mut last_log_time = Instant::now();
@@ -61,7 +62,9 @@ pub fn start_packet_processing(
             total_packets += 1;
         }
 
-        process_packets(&cli.packet_manipulation_settings, &mut packets, &mut state);
+        if let Ok(cli) = cli.lock() {
+            process_packets(&cli.packet_manipulation_settings, &mut packets, &mut state);
+        }
 
         for packet_data in &packets {
             wd.send(&packet_data.packet).map_err(|e| {
