@@ -168,19 +168,17 @@ fn update_cli_from_tui_state(state: &mut TuiState, cli: &Arc<Mutex<Cli>>) {
 fn update_tui_state_from_statistics(state: &mut TuiState, statistics: &Arc<RwLock<PacketProcessingStatistics>>) {
     match statistics.read() {
         Ok(stats) => {
-            if let CustomWidget::Drop(ref mut drop_widget) = state.sections[0] {
-                if drop_widget.is_active() {
-                    drop_widget.update_data(&stats.drop_stats);
-                }
-            }
-            if let CustomWidget::Delay(ref mut delay_widget) = state.sections[1] {
-                if delay_widget.is_active() {
-                    delay_widget.update_data(&stats.delay_stats);
-                }
-            }
-            if let CustomWidget::Throttle(ref mut throttle_widget) = state.sections[2] {
-                if throttle_widget.is_active() {
-                    throttle_widget.update_data(&stats.throttle_stats);
+            for section in state.sections.iter_mut() {
+                if section.is_active() {
+                    match section {
+                        CustomWidget::Drop(ref mut drop_widget) => {drop_widget.update_data(&stats.drop_stats);}
+                        CustomWidget::Delay(ref mut delay_widget) => {delay_widget.update_data(&stats.delay_stats);}
+                        CustomWidget::Throttle(ref mut throttle_widget) => {throttle_widget.update_data(&stats.throttle_stats);}
+                        CustomWidget::Reorder(_) => {}
+                        CustomWidget::Tamper(_) => {}
+                        CustomWidget::Duplicate(_) => {}
+                        CustomWidget::Bandwidth(_) => {}
+                    }
                 }
             }
         }
