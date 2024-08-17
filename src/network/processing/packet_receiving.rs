@@ -1,5 +1,5 @@
 use crate::network::core::packet_data::PacketData;
-use log::{error, info};
+use log::{debug, error};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{mpsc, Arc};
 use windivert::error::WinDivertError;
@@ -42,13 +42,13 @@ pub fn receive_packets(
         }
     }
 
-    info!("Shutting down packet receiving thread");
+    debug!("Shutting down packet receiving thread");
     Ok(())
 }
 
 fn should_shutdown(running: &Arc<AtomicBool>) -> bool {
     if !running.load(Ordering::SeqCst) {
-        info!("Packet receiving thread exiting due to shutdown signal.");
+        debug!("Packet receiving thread exiting due to shutdown signal.");
         return true;
     }
     false
