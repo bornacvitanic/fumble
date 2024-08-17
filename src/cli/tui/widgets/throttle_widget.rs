@@ -8,6 +8,7 @@ use tui_textarea::TextArea;
 use crate::cli::tui::traits::{DisplayName, HandleInput, IsActive, KeyBindings};
 use crate::cli::tui::widgets::utils::{auto_hide_cursor, RoundedBlockExt};
 use crate::cli::tui::widgets::utils;
+use crate::network::modules::stats::throttle_stats::ThrottleStats;
 
 pub struct ThrottleWidget<'a> {
     title: String,
@@ -16,7 +17,9 @@ pub struct ThrottleWidget<'a> {
     pub drop: bool,
     is_active: bool,
     interacting: bool,
-    selected: usize
+    selected: usize,
+    is_throttling: bool,
+    dropped_count: usize,
 }
 
 impl ThrottleWidget<'_> {
@@ -28,8 +31,15 @@ impl ThrottleWidget<'_> {
             drop: false,
             is_active: false,
             interacting: false,
-            selected: 0
+            selected: 0,
+            is_throttling: false,
+            dropped_count: 0,
         }
+    }
+
+    pub fn update_data(&mut self, stats: &ThrottleStats) {
+        self.is_throttling = stats.is_throttling;
+        self.dropped_count = stats.dropped_count;
     }
 }
 
@@ -107,10 +117,10 @@ impl Widget for &mut ThrottleWidget<'_> {
     where
         Self: Sized
     {
-        let [probability_area, duration_area, drop_area, drop_info_area] = Layout::horizontal([
+        let [probability_area, duration_area, drop_area, info_area] = Layout::horizontal([
+            Constraint::Max(12),
             Constraint::Max(10),
-            Constraint::Max(10),
-            Constraint::Max(10),
+            Constraint::Max(8),
             Constraint::Min(25),
         ]).areas(area.inner(Margin { horizontal: 1, vertical: 1 }));
 
@@ -133,6 +143,12 @@ impl Widget for &mut ThrottleWidget<'_> {
         let drop_paragraph = Paragraph::new(drop_span).block(Block::roundedt("Drop"));
         drop_paragraph.render(drop_area, buf);
 
-        Paragraph::new("Delayed by XXX ms").block(Block::invisible()).render(drop_info_area, buf);
+        let [is_throttling_info, drop_count, _excess_info] = Layout::horizontal([
+            Constraint::Max(10),
+            Constraint::Max(10),
+            Constraint::Fill(1)
+        ]).areas(info_area);
+        Paragraph::new(format!("{}", self.is_throttling)).block(Block::bordered().title("Throttling")).render(is_throttling_info, buf);
+        Paragraph::new(format!("{}", self.dropped_count)).block(Block::bordered().title("Dropped")).render(drop_count, buf);
     }
 }

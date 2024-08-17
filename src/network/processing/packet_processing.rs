@@ -113,6 +113,7 @@ pub fn process_packets<'a>(
             throttle_probability,
             Duration::from_millis(settings.throttle.duration),
             settings.throttle.drop,
+            &mut statistics.write().unwrap().throttle_stats
         );
     }
 

@@ -199,7 +199,11 @@ fn update_cli(state: &mut AppState, cli: &Arc<Mutex<Cli>>, statistics: &Arc<RwLo
                 cli.packet_manipulation_settings.delay.duration = Some(parsed_value);
             }
         }
-        if let CustomWidget::Throttle(ref throttle_widget) = state.sections[2] {
+        if let CustomWidget::Throttle(ref mut throttle_widget) = state.sections[2] {
+            if throttle_widget.is_active() {
+                let stats = statistics.read().unwrap();
+                throttle_widget.update_data(&stats.throttle_stats);
+            }
             if !throttle_widget.is_active() { cli.packet_manipulation_settings.throttle.probability = None }
             else {
                 if let Some(Ok(parsed_value)) = throttle_widget.probability_text_area.lines().get(0).map(|line| line.parse::<f64>()) {
