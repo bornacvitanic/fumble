@@ -189,7 +189,11 @@ fn update_cli(state: &mut AppState, cli: &Arc<Mutex<Cli>>, statistics: &Arc<RwLo
                 cli.packet_manipulation_settings.drop.probability = Probability::new(parsed_value).ok();
             }
         }
-        if let CustomWidget::Delay(ref delay_widget) = state.sections[1] {
+        if let CustomWidget::Delay(ref mut delay_widget) = state.sections[1] {
+            if delay_widget.is_active() {
+                let stats = statistics.read().unwrap();
+                delay_widget.update_data(&stats.delay_stats);
+            }
             if !delay_widget.is_active() { cli.packet_manipulation_settings.delay.duration = None }
             else if let Some(Ok(parsed_value)) = delay_widget.delay_duration.lines().get(0).map(|line| line.parse::<u64>()) {
                 cli.packet_manipulation_settings.delay.duration = Some(parsed_value);

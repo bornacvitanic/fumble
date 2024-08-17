@@ -7,12 +7,14 @@ use tui_textarea::TextArea;
 use crate::cli::tui::traits::{DisplayName, HandleInput, IsActive, KeyBindings};
 use crate::cli::tui::widgets::utils;
 use crate::cli::tui::widgets::utils::{auto_hide_cursor, RoundedBlockExt};
+use crate::network::modules::stats::delay_stats::DelayStats;
 
 pub struct DelayWidget<'a> {
     title: String,
     pub delay_duration: TextArea<'a>,
     is_active: bool,
     interacting: bool,
+    delayed_packet_count: usize,
 }
 
 impl DelayWidget<'_> {
@@ -21,8 +23,13 @@ impl DelayWidget<'_> {
             title: "Delay".to_string(),
             delay_duration: TextArea::default(),
             is_active: false,
-            interacting: false
+            interacting: false,
+            delayed_packet_count: 0,
         }
+    }
+
+    pub fn update_data(&mut self, stats: &DelayStats) {
+        self.delayed_packet_count = stats.delayed_package_count;
     }
 }
 
@@ -85,6 +92,10 @@ impl Widget for &mut DelayWidget<'_> {
         if self.delay_duration.block() == None { self.delay_duration.set_block(Block::roundedt("Duration")); }
         self.delay_duration.render(delay_duration_area, buf);
 
-        Paragraph::new("Delayed by XXX ms").block(Block::invisible()).render(info_area, buf);
+        let [delay_count_info, _excess_info] = Layout::horizontal([
+            Constraint::Max(30),
+            Constraint::Fill(1)
+        ]).areas(info_area);
+        Paragraph::new(format!("{} packets", self.delayed_packet_count)).block(Block::bordered().title("Delayed packets")).render(delay_count_info, buf);
     }
 }

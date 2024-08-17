@@ -1,6 +1,5 @@
 use tui_textarea::TextArea;
 use ratatui::prelude::{Color, Modifier, Style};
-use ratatui::style::Styled;
 use ratatui::widgets::{Block, Borders, BorderType};
 
 pub fn validate_probability(textarea: &mut TextArea) -> bool {

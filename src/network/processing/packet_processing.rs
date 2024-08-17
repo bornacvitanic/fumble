@@ -101,6 +101,7 @@ pub fn process_packets<'a>(
             packets,
             &mut state.delay_storage,
             Duration::from_millis(delay),
+            &mut statistics.write().unwrap().delay_stats
         );
     }
 
