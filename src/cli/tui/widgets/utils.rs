@@ -1,6 +1,7 @@
 use tui_textarea::TextArea;
 use ratatui::prelude::{Color, Modifier, Style};
 use ratatui::widgets::{Block, Borders, BorderType};
+use crate::network::types::Probability;
 
 pub fn validate_probability(textarea: &mut TextArea) -> bool {
     let res = textarea.lines()[0].parse::<f64>();
@@ -90,5 +91,37 @@ impl<'a> TextAreaExt for TextArea<'a> {
     fn set_text(&mut self, text: &str) {
         self.set_yank_text(text);
         self.paste();
+    }
+}
+
+pub trait ParseFromTextArea {
+    fn from_text_area(widget: &TextArea) -> Option<Self>
+    where
+        Self: Sized;
+}
+
+impl ParseFromTextArea for f64 {
+    fn from_text_area(widget: &TextArea) -> Option<Self> {
+        widget.lines().first().and_then(|line| line.parse::<f64>().ok())
+    }
+}
+
+impl ParseFromTextArea for u64 {
+    fn from_text_area(widget: &TextArea) -> Option<Self> {
+        widget.lines().first().and_then(|line| line.parse::<u64>().ok())
+    }
+}
+
+impl ParseFromTextArea for usize {
+    fn from_text_area(widget: &TextArea) -> Option<Self> {
+        widget.lines().first().and_then(|line| line.parse::<usize>().ok())
+    }
+}
+
+impl ParseFromTextArea for Probability {
+    fn from_text_area(widget: &TextArea) -> Option<Self> {
+        widget.lines().first()
+            .and_then(|line| line.parse::<f64>().ok())
+            .and_then(|num| Probability::new(num).ok())
     }
 }

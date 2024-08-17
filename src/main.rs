@@ -18,7 +18,7 @@ use fumble::cli::tui::terminal::TerminalManager;
 use fumble::cli::tui::{input, ui};
 use fumble::cli::tui::traits::IsActive;
 use fumble::cli::tui::widgets::custom_widget::CustomWidget;
-use fumble::cli::tui::widgets::utils::TextAreaExt;
+use fumble::cli::tui::widgets::utils::{ParseFromTextArea, TextAreaExt};
 use fumble::network::modules::stats::{initialize_statistics, PacketProcessingStatistics};
 use fumble::network::types::Probability;
 
@@ -185,8 +185,8 @@ fn update_cli(state: &mut AppState, cli: &Arc<Mutex<Cli>>, statistics: &Arc<RwLo
                 drop_widget.update_data(&stats.drop_stats);
             }
             if !drop_widget.is_active() { cli.packet_manipulation_settings.drop.probability = None }
-            else if let Some(Ok(parsed_value)) = drop_widget.probability_text_area.lines().get(0).map(|line| line.parse::<f64>()) {
-                cli.packet_manipulation_settings.drop.probability = Probability::new(parsed_value).ok();
+            else {
+                cli.packet_manipulation_settings.drop.probability = Probability::from_text_area(&drop_widget.probability_text_area);
             }
         }
         if let CustomWidget::Delay(ref mut delay_widget) = state.sections[1] {
@@ -195,8 +195,8 @@ fn update_cli(state: &mut AppState, cli: &Arc<Mutex<Cli>>, statistics: &Arc<RwLo
                 delay_widget.update_data(&stats.delay_stats);
             }
             if !delay_widget.is_active() { cli.packet_manipulation_settings.delay.duration = None }
-            else if let Some(Ok(parsed_value)) = delay_widget.delay_duration.lines().get(0).map(|line| line.parse::<u64>()) {
-                cli.packet_manipulation_settings.delay.duration = Some(parsed_value);
+            else {
+                cli.packet_manipulation_settings.delay.duration = u64::from_text_area(&delay_widget.delay_duration);
             }
         }
         if let CustomWidget::Throttle(ref mut throttle_widget) = state.sections[2] {
@@ -206,10 +206,8 @@ fn update_cli(state: &mut AppState, cli: &Arc<Mutex<Cli>>, statistics: &Arc<RwLo
             }
             if !throttle_widget.is_active() { cli.packet_manipulation_settings.throttle.probability = None }
             else {
-                if let Some(Ok(parsed_value)) = throttle_widget.probability_text_area.lines().get(0).map(|line| line.parse::<f64>()) {
-                    cli.packet_manipulation_settings.throttle.probability = Probability::new(parsed_value).ok();
-                }
-                if let Some(Ok(parsed_value)) = throttle_widget.throttle_duration.lines().get(0).map(|line| line.parse::<u64>()) {
+                cli.packet_manipulation_settings.throttle.probability = Probability::from_text_area(&throttle_widget.probability_text_area);
+                if let Some(parsed_value) = u64::from_text_area(&throttle_widget.throttle_duration) {
                     cli.packet_manipulation_settings.throttle.duration = parsed_value;
                 }
                 cli.packet_manipulation_settings.throttle.drop = throttle_widget.drop;
@@ -217,18 +215,16 @@ fn update_cli(state: &mut AppState, cli: &Arc<Mutex<Cli>>, statistics: &Arc<RwLo
         }
         if let CustomWidget::Reorder(ref reorder_widget) = state.sections[3] {
             if !reorder_widget.is_active() { cli.packet_manipulation_settings.reorder.max_delay = None }
-            else if let Some(Ok(parsed_value)) = reorder_widget.delay_duration.lines().get(0).map(|line| line.parse::<u64>()) {
-                cli.packet_manipulation_settings.reorder.max_delay = Some(parsed_value);
+            else {
+                cli.packet_manipulation_settings.reorder.max_delay = u64::from_text_area(&reorder_widget.delay_duration);
             }
         }
         if let CustomWidget::Tamper(ref tamper_widget) = state.sections[4] {
             if !tamper_widget.is_active() { cli.packet_manipulation_settings.tamper.probability = None }
             else {
-                if let Some(Ok(parsed_value)) = tamper_widget.probability_text_area.lines().get(0).map(|line| line.parse::<f64>()) {
-                    cli.packet_manipulation_settings.tamper.probability = Probability::new(parsed_value).ok();
-                }
-                if let Some(Ok(parsed_value)) = tamper_widget.tamper_amount.lines().get(0).map(|line| line.parse::<f64>()) {
-                    cli.packet_manipulation_settings.tamper.amount = Probability::new(parsed_value).unwrap();
+                cli.packet_manipulation_settings.tamper.probability = Probability::from_text_area(&tamper_widget.probability_text_area);
+                if let Some(probability) = Probability::from_text_area(&tamper_widget.tamper_amount) {
+                    cli.packet_manipulation_settings.tamper.amount = probability;
                 }
                 cli.packet_manipulation_settings.tamper.recalculate_checksums = Some(tamper_widget.recalculate_checksums);
             }
@@ -236,18 +232,16 @@ fn update_cli(state: &mut AppState, cli: &Arc<Mutex<Cli>>, statistics: &Arc<RwLo
         if let CustomWidget::Duplicate(ref duplicate_widget) = state.sections[5] {
             if !duplicate_widget.is_active() { cli.packet_manipulation_settings.duplicate.probability = None }
             else {
-                if let Some(Ok(parsed_value)) = duplicate_widget.probability_text_area.lines().get(0).map(|line| line.parse::<f64>()) {
-                    cli.packet_manipulation_settings.duplicate.probability = Probability::new(parsed_value).ok();
-                }
-                if let Some(Ok(parsed_value)) = duplicate_widget.duplicate_count.lines().get(0).map(|line| line.parse::<usize>()) {
+                cli.packet_manipulation_settings.duplicate.probability = Probability::from_text_area(&duplicate_widget.probability_text_area);
+                if let Some(parsed_value) = usize::from_text_area(&duplicate_widget.duplicate_count) {
                     cli.packet_manipulation_settings.duplicate.count = parsed_value;
                 }
             }
         }
         if let CustomWidget::Bandwidth(ref bandwidth_widget) = state.sections[6] {
             if !bandwidth_widget.is_active() { cli.packet_manipulation_settings.bandwidth.limit = None }
-            else if let Some(Ok(parsed_value)) = bandwidth_widget.limit.lines().get(0).map(|line| line.parse::<usize>()) {
-                cli.packet_manipulation_settings.bandwidth.limit = Some(parsed_value);
+            else {
+                cli.packet_manipulation_settings.bandwidth.limit = usize::from_text_area(&bandwidth_widget.limit);
             }
         }
     } else {
