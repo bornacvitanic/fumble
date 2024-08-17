@@ -10,7 +10,7 @@ use crate::cli::tui::widgets::reorder_widget::ReorderWidget;
 use crate::cli::tui::widgets::tamper_widget::TamperWidget;
 use crate::cli::tui::widgets::throttle_widget::ThrottleWidget;
 
-pub struct AppState<'a> {
+pub struct TuiState<'a> {
     pub filter_widget: FilterWidget<'a>,
     pub sections:  Vec<CustomWidget<'a>>,
     pub logs_widget: LogsWidget,
@@ -19,9 +19,9 @@ pub struct AppState<'a> {
     pub focused: LayoutSection
 }
 
-impl<'a> AppState<'a> {
+impl<'a> TuiState<'a> {
     pub fn new() -> Self {
-        AppState {
+        TuiState {
             filter_widget: FilterWidget::new(),
             sections: vec![
                 CustomWidget::Drop(DropWidget::new()),

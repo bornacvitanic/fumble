@@ -6,4 +6,4 @@ pub mod terminal;
 pub mod traits;
 pub mod ui;
 pub mod widgets;
-pub mod cli;
+pub mod cli_ext;

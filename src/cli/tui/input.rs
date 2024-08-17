@@ -1,11 +1,11 @@
 use std::io;
 use ratatui::crossterm::event;
 use ratatui::crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind};
-use crate::cli::tui::state::AppState;
+use crate::cli::tui::state::TuiState;
 use crate::cli::tui::traits::{HandleInput, IsActive};
 
 // Main input handler function
-pub fn handle_input(state: &mut AppState) -> io::Result<bool> {
+pub fn handle_input(state: &mut TuiState) -> io::Result<bool> {
     if event::poll(std::time::Duration::from_millis(50))? {
         if let Event::Key(key) = event::read()? {
             if key.kind != KeyEventKind::Press {
@@ -32,7 +32,7 @@ pub fn handle_input(state: &mut AppState) -> io::Result<bool> {
 }
 
 // Function to handle input for sections
-fn handle_section_input(state: &mut AppState, key: KeyEvent) -> bool {
+fn handle_section_input(state: &mut TuiState, key: KeyEvent) -> bool {
     for (i, section) in state.sections.iter_mut().enumerate() {
         if i != state.selected {
             continue;
@@ -48,7 +48,7 @@ fn handle_section_input(state: &mut AppState, key: KeyEvent) -> bool {
 }
 
 // Function to handle input for widgets (filter and logs)
-fn handle_widget_input(state: &mut AppState, key: KeyEvent) -> bool {
+fn handle_widget_input(state: &mut TuiState, key: KeyEvent) -> bool {
     if key.kind == KeyEventKind::Press {
         if state.filter_widget.inputting {
             state.filter_widget.input(key);
@@ -62,7 +62,7 @@ fn handle_widget_input(state: &mut AppState, key: KeyEvent) -> bool {
 }
 
 // Function to handle main menu navigation and commands
-fn handle_main_menu_input(state: &mut AppState, key: KeyEvent) -> bool {
+fn handle_main_menu_input(state: &mut TuiState, key: KeyEvent) -> bool {
     match key.code {
         KeyCode::Char('q') => return true,
         KeyCode::Up => {

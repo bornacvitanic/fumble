@@ -3,11 +3,11 @@ use ratatui::Frame;
 use ratatui::layout::{Constraint, Layout, Margin, Rect};
 use ratatui::widgets::{Block, Paragraph, Scrollbar, ScrollbarOrientation, ScrollbarState};
 use ratatui::prelude::{Color, Line, Style, Stylize};
-use crate::cli::tui::state::AppState;
+use crate::cli::tui::state::TuiState;
 use crate::cli::tui::traits::{DisplayName, IsActive, KeyBindings};
 use crate::cli::tui::widgets::utils::RoundedBlockExt;
 
-pub fn ui(frame: &mut Frame, state: &mut AppState) {
+pub fn ui(frame: &mut Frame, state: &mut TuiState) {
     update_focus(state);
     let (filter_area, middle_area, key_bind_area) = setup_layout(frame);
     let (main_area, log_area) = arrange_middle_area(state, middle_area);
@@ -25,7 +25,7 @@ pub enum LayoutSection {
     Logging
 }
 
-fn update_focus(state: &mut AppState) {
+fn update_focus(state: &mut TuiState) {
     if state.filter_widget.inputting {
         state.focused = LayoutSection::Filter;
     } else if state.logs_widget.focused {
@@ -44,7 +44,7 @@ fn setup_layout(frame: &mut Frame) -> (Rect, Rect, Rect) {
     (filter_area, middle_area, key_bind_area)
 }
 
-fn arrange_middle_area(state: &mut AppState, middle_area: Rect) -> (Rect, Rect) {
+fn arrange_middle_area(state: &mut TuiState, middle_area: Rect) -> (Rect, Rect) {
     let [main_area, log_area] = if middle_area.height + 60 >= middle_area.width || !state.logs_widget.open {
         Layout::vertical([
             Constraint::Max(500),
@@ -59,7 +59,7 @@ fn arrange_middle_area(state: &mut AppState, middle_area: Rect) -> (Rect, Rect) 
     (main_area, log_area)
 }
 
-fn render_sections(frame: &mut Frame, state: &mut AppState, main_area: Rect) {
+fn render_sections(frame: &mut Frame, state: &mut TuiState, main_area: Rect) {
     let total_sections = state.sections.len();
     let default_height = 5;
     let available_rect = main_area.inner(Margin { horizontal: 1, vertical: 1 });
@@ -138,7 +138,7 @@ fn render_sections(frame: &mut Frame, state: &mut AppState, main_area: Rect) {
     }
 }
 
-fn render_keybindings(frame: &mut Frame, state: &mut AppState, key_bind_area: Rect) {
+fn render_keybindings(frame: &mut Frame, state: &mut TuiState, key_bind_area: Rect) {
     let mut keybinds = "Quit: q | Toggle: Space | Navigation: Up and Down".to_string();
     if let Some(index) = state.interacting {
         keybinds = (&mut state.sections[index]).key_bindings();

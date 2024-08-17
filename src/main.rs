@@ -13,10 +13,10 @@ use std::thread;
 use std::thread::JoinHandle;
 use windivert::error::WinDivertError;
 use fumble::cli::tui::custom_logger::init_logger;
-use fumble::cli::tui::state::AppState;
+use fumble::cli::tui::state::TuiState;
 use fumble::cli::tui::terminal::TerminalManager;
 use fumble::cli::tui::{input, ui};
-use fumble::cli::tui::cli::{init_widgets_from_cli, update_cli_from_state, update_widgets_from_stats};
+use fumble::cli::tui::cli_ext::{CliExt, TuiStateExt};
 use fumble::network::modules::stats::{initialize_statistics, PacketProcessingStatistics};
 
 fn main() -> Result<(), WinDivertError> {
@@ -104,15 +104,14 @@ fn main() -> Result<(), WinDivertError> {
 fn tui(running: Arc<AtomicBool>, cli: Arc<Mutex<Cli>>, statistics: Arc<RwLock<PacketProcessingStatistics>>) -> Result<(), WinDivertError> {
     let mut terminal_manager = TerminalManager::new()?;
 
-    let mut state = AppState::new();
-    init_widgets_from_cli(&cli, &mut state);
+    let mut tui_state = TuiState::from_cli(&cli);
 
     while running.load(Ordering::SeqCst) {
-        terminal_manager.draw(|f| ui::ui(f, &mut state))?;
-        let should_quit = input::handle_input(&mut state)?;
+        terminal_manager.draw(|f| ui::ui(f, &mut tui_state))?;
+        let should_quit = input::handle_input(&mut tui_state)?;
         if should_quit { running.store(false, Ordering::SeqCst); }
-        update_cli_from_state(&mut state, &cli, );
-        update_widgets_from_stats(&mut state, &statistics);
+        cli.update_from(&mut tui_state);
+        tui_state.update_from(&statistics);
     }
     Ok(())
 }

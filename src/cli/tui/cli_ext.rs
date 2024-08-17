@@ -1,14 +1,41 @@
 use std::sync::{Arc, Mutex, RwLock};
 use log::error;
 use crate::cli::Cli;
-use crate::cli::tui::state::AppState;
+use crate::cli::tui::state::TuiState;
 use crate::cli::tui::traits::IsActive;
 use crate::cli::tui::widgets::custom_widget::CustomWidget;
 use crate::cli::tui::widgets::utils::{ParseFromTextArea, TextAreaExt};
 use crate::network::modules::stats::PacketProcessingStatistics;
 use crate::network::types::Probability;
 
-pub fn init_widgets_from_cli(cli: &Arc<Mutex<Cli>>, state: &mut AppState) {
+pub trait TuiStateExt {
+    fn from_cli(cli: &Arc<Mutex<Cli>>) -> Self;
+    fn update_from(&mut self, statistics: &Arc<RwLock<PacketProcessingStatistics>>);
+}
+
+impl TuiStateExt for TuiState<'_> {
+    fn from_cli(cli: &Arc<Mutex<Cli>>) -> Self {
+        let mut state = TuiState::new();
+        init_tui_state_from_cli(&mut state, &cli);
+        state
+    }
+
+    fn update_from(&mut self, statistics: &Arc<RwLock<PacketProcessingStatistics>>) {
+        update_tui_state_from_statistics(self, statistics);
+    }
+}
+
+pub trait CliExt {
+    fn update_from(&self, state: &mut TuiState);
+}
+
+impl CliExt for Arc<Mutex<Cli>> {
+    fn update_from(&self, state: &mut TuiState) {
+        update_cli_from_tui_state(state, &self);
+    }
+}
+
+fn init_tui_state_from_cli(state: &mut TuiState, cli: &Arc<Mutex<Cli>>) {
     match cli.lock() {
         Ok(cli) => {
             if let Some(filter) = &cli.filter {
@@ -70,7 +97,7 @@ pub fn init_widgets_from_cli(cli: &Arc<Mutex<Cli>>, state: &mut AppState) {
     }
 }
 
-pub fn update_cli_from_state(state: &mut AppState, cli: &Arc<Mutex<Cli>>) {
+fn update_cli_from_tui_state(state: &mut TuiState, cli: &Arc<Mutex<Cli>>) {
     if let Ok(mut cli) = cli.lock() {
         if let CustomWidget::Drop(ref mut drop_widget) = state.sections[0] {
             if !drop_widget.is_active() { cli.packet_manipulation_settings.drop.probability = None }
@@ -131,7 +158,7 @@ pub fn update_cli_from_state(state: &mut AppState, cli: &Arc<Mutex<Cli>>) {
     }
 }
 
-pub fn update_widgets_from_stats(state: &mut AppState, statistics: &Arc<RwLock<PacketProcessingStatistics>>) {
+fn update_tui_state_from_statistics(state: &mut TuiState, statistics: &Arc<RwLock<PacketProcessingStatistics>>) {
     match statistics.read() {
         Ok(stats) => {
             if let CustomWidget::Drop(ref mut drop_widget) = state.sections[0] {
@@ -154,5 +181,4 @@ pub fn update_widgets_from_stats(state: &mut AppState, statistics: &Arc<RwLock<P
             error!("Failed to lock statistics read RwLock. {}", e);
         }
     }
-
 }
