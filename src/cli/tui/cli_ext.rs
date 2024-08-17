@@ -9,7 +9,12 @@ use crate::network::modules::stats::PacketProcessingStatistics;
 use crate::network::types::Probability;
 
 pub trait TuiStateExt {
+    /// Creates a `TuiState` instance from the current state of the `Cli` object.
+    /// This function initializes the `TuiState` based on the settings stored in the `Cli`.
     fn from_cli(cli: &Arc<Mutex<Cli>>) -> Self;
+
+    /// Updates the `TuiState` with the latest statistics from the packet processing.
+    /// This function refreshes the widgets in the `TuiState` using data from the provided `PacketProcessingStatistics`.
     fn update_from(&mut self, statistics: &Arc<RwLock<PacketProcessingStatistics>>);
 }
 
@@ -26,6 +31,8 @@ impl TuiStateExt for TuiState<'_> {
 }
 
 pub trait CliExt {
+    /// Updates the `Cli` object based on the current state of the `TuiState`.
+    /// This function applies the user inputs from the TUI to the `Cli`, synchronizing its settings with the interface state.
     fn update_from(&self, state: &mut TuiState);
 }
 
