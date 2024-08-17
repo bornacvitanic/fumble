@@ -5,3 +5,4 @@ pub mod duplicate;
 pub mod reorder;
 pub mod tamper;
 pub mod throttle;
+pub mod stats;

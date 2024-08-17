@@ -8,23 +8,25 @@ use crate::network::modules::duplicate::duplicate_packets;
 use crate::network::modules::reorder::reorder_packets;
 use crate::network::modules::tamper::tamper_packets;
 use crate::network::modules::throttle::throttle_packages;
-use crate::network::processing::packet_processing_state::PacketProcessingState;
+use crate::network::processing::packet_processing_state::{PacketProcessingState};
 use crate::utils::log_statistics;
 use log::{error, info};
 use std::collections::{BinaryHeap, VecDeque};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc::Receiver;
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, Mutex, RwLock};
 use std::time::{Duration, Instant};
 use windivert::error::WinDivertError;
 use windivert::layer::NetworkLayer;
 use windivert::WinDivert;
 use windivert_sys::WinDivertFlags;
+use crate::network::modules::stats::PacketProcessingStatistics;
 
 pub fn start_packet_processing(
     cli: Arc<Mutex<Cli>>,
     packet_receiver: Receiver<PacketData>,
     running: Arc<AtomicBool>,
+    statistics: Arc<RwLock<PacketProcessingStatistics>>,
 ) -> Result<(), WinDivertError> {
     let wd = WinDivert::<NetworkLayer>::network(
         cli.lock().unwrap().filter.clone().unwrap_or_default(),
@@ -63,7 +65,7 @@ pub fn start_packet_processing(
         }
 
         if let Ok(cli) = cli.lock() {
-            process_packets(&cli.packet_manipulation_settings, &mut packets, &mut state);
+            process_packets(&cli.packet_manipulation_settings, &mut packets, &mut state, &statistics);
         }
 
         for packet_data in &packets {
@@ -88,9 +90,10 @@ pub fn process_packets<'a>(
     settings: &PacketManipulationSettings,
     packets: &mut Vec<PacketData<'a>>,
     state: &mut PacketProcessingState<'a>,
+    statistics: &Arc<RwLock<PacketProcessingStatistics>>,
 ) {
     if let Some(drop_probability) = settings.drop.probability {
-        drop_packets(packets, drop_probability);
+        drop_packets(packets, drop_probability, &mut statistics.write().unwrap().drop_stats);
     }
 
     if let Some(delay) = settings.delay.duration {

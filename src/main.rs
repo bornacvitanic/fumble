@@ -8,7 +8,7 @@ use fumble::network::processing::packet_receiving::receive_packets;
 use log::{debug, error, info};
 use std::process::exit;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::{mpsc, Arc, Mutex};
+use std::sync::{mpsc, Arc, Mutex, RwLock};
 use std::thread;
 use std::thread::JoinHandle;
 use windivert::error::WinDivertError;
@@ -19,6 +19,7 @@ use fumble::cli::tui::{input, ui};
 use fumble::cli::tui::traits::IsActive;
 use fumble::cli::tui::widgets::custom_widget::CustomWidget;
 use fumble::cli::tui::widgets::utils::TextAreaExt;
+use fumble::network::modules::stats::{initialize_statistics, PacketProcessingStatistics};
 use fumble::network::types::Probability;
 
 fn main() -> Result<(), WinDivertError> {
@@ -80,17 +81,19 @@ fn main() -> Result<(), WinDivertError> {
     });
 
     // Start packet processing thread
+    let statistics = initialize_statistics();
     let cli_thread_safe = Arc::new(Mutex::new(cli));
 
     // Clone the Arc for the packet processing thread
     let cli_for_processing = cli_thread_safe.clone();
+    let statistics_for_processing = statistics.clone();
     let packet_sender_handle = thread::spawn({
         let running = running.clone();
-        move || start_packet_processing(cli_for_processing, packet_receiver, running)
+        move || start_packet_processing(cli_for_processing, packet_receiver, running, statistics_for_processing)
     });
 
     if should_start_tui {
-        tui(running, cli_thread_safe)?;
+        tui(running, cli_thread_safe, statistics)?;
     }
 
     wait_for_thread(packet_sender_handle, "Packet sending");
@@ -101,7 +104,7 @@ fn main() -> Result<(), WinDivertError> {
     Ok(())
 }
 
-fn tui(running: Arc<AtomicBool>, cli: Arc<Mutex<Cli>>) -> Result<(), WinDivertError> {
+fn tui(running: Arc<AtomicBool>, cli: Arc<Mutex<Cli>>, statistics: Arc<RwLock<PacketProcessingStatistics>>) -> Result<(), WinDivertError> {
     let mut terminal_manager = TerminalManager::new()?;
 
     let mut state = AppState::new();
@@ -169,14 +172,18 @@ fn tui(running: Arc<AtomicBool>, cli: Arc<Mutex<Cli>>) -> Result<(), WinDivertEr
         terminal_manager.draw(|f| ui::ui(f, &mut state))?;
         let should_quit = input::handle_input(&mut state)?;
         if should_quit { running.store(false, Ordering::SeqCst); }
-        update_cli(&state, &cli)
+        update_cli(&mut state, &cli, &statistics)
     }
     Ok(())
 }
 
-fn update_cli(state: &AppState, cli: &Arc<Mutex<Cli>>) {
+fn update_cli(state: &mut AppState, cli: &Arc<Mutex<Cli>>, statistics: &Arc<RwLock<PacketProcessingStatistics>>) {
     if let Ok(mut cli) = cli.lock() {
-        if let CustomWidget::Drop(ref drop_widget) = state.sections[0] {
+        if let CustomWidget::Drop(ref mut drop_widget) = state.sections[0] {
+            if drop_widget.is_active() {
+                let stats = statistics.read().unwrap();
+                drop_widget.update_data(&stats.drop_stats);
+            }
             if !drop_widget.is_active() { cli.packet_manipulation_settings.drop.probability = None }
             else if let Some(Ok(parsed_value)) = drop_widget.probability_text_area.lines().get(0).map(|line| line.parse::<f64>()) {
                 cli.packet_manipulation_settings.drop.probability = Probability::new(parsed_value).ok();

@@ -7,12 +7,16 @@ use tui_textarea::TextArea;
 use crate::cli::tui::traits::{DisplayName, HandleInput, IsActive, KeyBindings};
 use crate::cli::tui::widgets::utils::{auto_hide_cursor, RoundedBlockExt};
 use crate::cli::tui::widgets::utils;
+use crate::network::modules::stats::drop_stats::DropStats;
 
 pub struct DropWidget<'a> {
     title: String,
     pub probability_text_area: TextArea<'a>,
     is_active: bool,
     interacting: bool,
+    drop_rate: f64,
+    dropped_packets: usize,
+    total_packets: usize,
 }
 
 impl DropWidget<'_> {
@@ -21,8 +25,17 @@ impl DropWidget<'_> {
             title: "Drop".to_string(),
             probability_text_area: TextArea::default(),
             is_active: false,
-            interacting: false
+            interacting: false,
+            drop_rate: 0.0,
+            dropped_packets: 0,
+            total_packets: 0
         }
+    }
+
+    pub fn update_data(&mut self, drop_stats: &DropStats) {
+        self.drop_rate = drop_stats.recent_drop_rate();
+        self.dropped_packets = drop_stats.total_dropped;
+        self.total_packets = drop_stats.total_packets;
     }
 }
 
@@ -85,6 +98,12 @@ impl Widget for &mut DropWidget<'_> {
         if self.probability_text_area.block() == None { self.probability_text_area.set_block(Block::roundedt("Probability")); }
         self.probability_text_area.render(drop_probability_area, buf);
 
-        Paragraph::new("Drop rate: 45%").block(Block::invisible()).render(info_area, buf);
+        let [drop_rate_info, drop_count_info, _excess_info] = Layout::horizontal([
+            Constraint::Max(15),
+            Constraint::Max(20),
+            Constraint::Fill(1)
+        ]).areas(info_area);
+        Paragraph::new(format!("{:.2}%", self.drop_rate * 100.0)).block(Block::bordered().title("Drop rate")).render(drop_rate_info, buf);
+        Paragraph::new(format!("{}/{}", self.dropped_packets, self.total_packets)).right_aligned().block(Block::bordered().title("Drop count")).render(drop_count_info, buf);
     }
 }
