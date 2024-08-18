@@ -13,7 +13,7 @@
 /// # Example
 ///
 /// ```rust
-/// use fumble::network::modules::stats::ewma::Ewma;
+/// use fumble::network::modules::stats::util::ewma::Ewma;
 /// let mut ewma = Ewma::new(0.5);
 /// ewma.update(10.0);
 /// assert_eq!(ewma.get(), Some(10.0));
@@ -40,7 +40,7 @@ impl Ewma {
     /// # Example
     ///
     /// ```rust
-    /// use fumble::network::modules::stats::ewma::Ewma;
+    /// use fumble::network::modules::stats::util::ewma::Ewma;
     /// let ewma = Ewma::new(0.3);
     /// ```
     pub fn new(alpha: f64) -> Self {
@@ -64,7 +64,7 @@ impl Ewma {
     /// # Example
     ///
     /// ```rust
-    /// use fumble::network::modules::stats::ewma::Ewma;
+    /// use fumble::network::modules::stats::util::ewma::Ewma;
     /// let mut ewma = Ewma::new(0.5);
     /// ewma.update(10.0);
     /// assert_eq!(ewma.get(), Some(10.0));
@@ -89,7 +89,7 @@ impl Ewma {
     /// # Example
     ///
     /// ```rust
-    /// use fumble::network::modules::stats::ewma::Ewma;
+    /// use fumble::network::modules::stats::util::ewma::Ewma;
     /// let mut ewma = Ewma::new(0.5);
     /// assert_eq!(ewma.get(), None);
     /// ewma.update(10.0);

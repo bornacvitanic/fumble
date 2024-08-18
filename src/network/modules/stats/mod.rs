@@ -3,10 +3,10 @@ use crate::network::modules::stats::delay_stats::DelayStats;
 use crate::network::modules::stats::drop_stats::DropStats;
 use crate::network::modules::stats::throttle_stats::ThrottleStats;
 
-pub mod ewma;
 pub mod drop_stats;
 pub mod delay_stats;
 pub mod throttle_stats;
+pub mod util;
 
 pub struct PacketProcessingStatistics {
     pub drop_stats: DropStats,

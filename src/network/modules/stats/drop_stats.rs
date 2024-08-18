@@ -1,4 +1,4 @@
-use crate::network::modules::stats::ewma::Ewma;
+use crate::network::modules::stats::util::ewma::Ewma;
 
 pub struct DropStats {
     pub total_packets: usize,
