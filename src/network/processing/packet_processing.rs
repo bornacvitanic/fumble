@@ -1,13 +1,13 @@
 use crate::cli::settings::packet_manipulation::PacketManipulationSettings;
 use crate::cli::Cli;
 use crate::network::core::packet_data::PacketData;
-use crate::network::modules::bandwidth::bandwidth_limiter;
-use crate::network::modules::delay::delay_packets;
 use crate::network::modules::drop::drop_packets;
-use crate::network::modules::duplicate::duplicate_packets;
+use crate::network::modules::delay::delay_packets;
+use crate::network::modules::throttle::throttle_packages;
 use crate::network::modules::reorder::reorder_packets;
 use crate::network::modules::tamper::tamper_packets;
-use crate::network::modules::throttle::throttle_packages;
+use crate::network::modules::duplicate::duplicate_packets;
+use crate::network::modules::bandwidth::bandwidth_limiter;
 use crate::network::processing::packet_processing_state::{PacketProcessingState};
 use crate::utils::log_statistics;
 use log::{error, info};
@@ -145,6 +145,7 @@ pub fn process_packets<'a>(
                 packets,
                 duplicate.count,
                 duplicate.probability,
+                &mut statistics.write().unwrap().duplicate_stats
             );
         }
     }

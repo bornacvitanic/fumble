@@ -7,6 +7,7 @@ use tui_textarea::TextArea;
 use crate::cli::tui::traits::{DisplayName, HandleInput, IsActive, KeyBindings};
 use crate::cli::tui::widgets::utils::{auto_hide_cursor, RoundedBlockExt};
 use crate::cli::tui::widgets::utils;
+use crate::network::modules::stats::duplicate_stats::DuplicateStats;
 
 pub struct DuplicateWidget<'a> {
     title: String,
@@ -14,7 +15,8 @@ pub struct DuplicateWidget<'a> {
     pub duplicate_count: TextArea<'a>,
     is_active: bool,
     interacting: bool,
-    selected: usize
+    selected: usize,
+    duplication_multiplier: f64
 }
 
 impl DuplicateWidget<'_> {
@@ -25,8 +27,13 @@ impl DuplicateWidget<'_> {
             duplicate_count: TextArea::default(),
             is_active: false,
             interacting: false,
-            selected: 0
+            selected: 0,
+            duplication_multiplier: 1.0,
         }
+    }
+
+    pub(crate) fn update_data(&mut self, stats: &DuplicateStats) {
+        self.duplication_multiplier = stats.recent_duplication_multiplier();
     }
 }
 
@@ -99,7 +106,7 @@ impl Widget for &mut DuplicateWidget<'_> {
     where
         Self: Sized
     {
-        let [probability_area, duration_area, drop_info_area] = Layout::horizontal([
+        let [probability_area, duration_area, info_area] = Layout::horizontal([
             Constraint::Max(10),
             Constraint::Max(10),
             Constraint::Min(25),
@@ -117,6 +124,10 @@ impl Widget for &mut DuplicateWidget<'_> {
         if self.duplicate_count.block() == None { self.duplicate_count.set_block(Block::roundedt("Count")); }
         self.duplicate_count.render(duration_area, buf);
 
-        Paragraph::new("Duplicating XX% of packets Y times").block(Block::invisible()).render(drop_info_area, buf);
+        let [duplication_multiplier_info, _excess_info] = Layout::horizontal([
+            Constraint::Max(20),
+            Constraint::Fill(1)
+        ]).areas(info_area);
+        Paragraph::new(format!("{:.2}x", self.duplication_multiplier)).block(Block::bordered().title("I/O Multiplier")).render(duplication_multiplier_info, buf);
     }
 }
