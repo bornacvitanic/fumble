@@ -5,41 +5,42 @@ pub fn log_initialization_info(filter: &Option<String>, settings: &PacketManipul
     if let Some(traffic_filter) = &filter {
         info!("Traffic filer: {}", traffic_filter);
     }
-    if let Some(drop_probability) = &settings.drop.probability {
-        info!("Dropping packets with probability: {}", drop_probability);
+    if let Some(drop) = &settings.drop {
+        info!("Dropping packets with probability: {}", drop.probability);
     }
-    if let Some(delay) = &settings.delay.duration {
-        info!("Delaying packets for: {} ms", delay)
+    if let Some(delay) = &settings.delay {
+        info!("Delaying packets for: {} ms", delay.duration)
     }
-    if let Some(throttle_probability) = &settings.throttle.probability {
+    if let Some(throttle) = &settings.throttle {
         info!(
             "Throttling packets with probability of {} ms with a throttle duration of {}. \
         Throttle packet dropping: {}",
-            throttle_probability, &settings.throttle.duration, &settings.throttle.drop
+            throttle.probability, throttle.duration, throttle.drop
         )
     }
-    if let Some(max_delay) = &settings.reorder.max_delay {
+    if let Some(reorder) = &settings.reorder {
         info!(
-            "Reordering packets with maximum random delay of: {} ms",
-            max_delay
+            "Reordering packets with probability {} and maximum random delay of: {} ms",
+            reorder.probability, reorder.max_delay
         )
     }
-    if let Some(tamper_probability) = &settings.tamper.probability {
+    if let Some(tamper) = &settings.tamper {
         info!(
             "Tampering packets with probability {} and amount {}. Recalculating checksums: {}",
-            tamper_probability,
-            &settings.tamper.amount,
-            &settings.tamper.recalculate_checksums.unwrap_or(true)
+            tamper.probability,
+            tamper.amount,
+            tamper.recalculate_checksums.unwrap_or(true)
         )
     }
-    let duplicate_probability = settings.duplicate.probability.unwrap_or_default();
-    if settings.duplicate.count > 1usize && duplicate_probability.value() > 0.0 {
-        info!(
+    if let Some(duplicate) = &settings.duplicate {
+        if duplicate.count > 1usize && duplicate.probability.value() > 0.0 {
+            info!(
             "Duplicating packets {} times with probability: {}",
-            &settings.duplicate.count, duplicate_probability
+            duplicate.count, duplicate.probability
         );
+        }
     }
-    if let Some(bandwidth_limit) = &settings.bandwidth.limit {
-        info!("Limiting bandwidth to: {} KB/s", bandwidth_limit)
+    if let Some(bandwidth) = &settings.bandwidth {
+        info!("Limiting bandwidth to: {} KB/s", bandwidth.limit)
     }
 }

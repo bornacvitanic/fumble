@@ -10,18 +10,22 @@ use crate::cli::tui::widgets::utils;
 
 pub struct ReorderWidget<'a> {
     title: String,
+    pub probability_text_area: TextArea<'a>,
     pub delay_duration: TextArea<'a>,
     is_active: bool,
     interacting: bool,
+    selected: usize,
 }
 
 impl ReorderWidget<'_> {
     pub fn new() -> Self {
         ReorderWidget {
             title: "Reorder".to_string(),
+            probability_text_area: TextArea::default(),
             delay_duration: TextArea::default(),
             is_active: false,
-            interacting: false
+            interacting: false,
+            selected: 0,
         }
     }
 }
@@ -38,9 +42,30 @@ impl HandleInput for ReorderWidget<'_> {
                 self.interacting = false;
                 return false;
             }
-            if self.delay_duration.input(key) {
-                let _valid = utils::validate_usize(&mut self.delay_duration);
+            if key.code == KeyCode::Right {
+                if self.selected < 1 {
+                    self.selected += 1;
+                }
             }
+            if key.code == KeyCode::Left {
+                if self.selected > 0 {
+                    self.selected -= 1;
+                }
+            }
+            match self.selected {
+                0 => {
+                    if self.probability_text_area.input(key) {
+                        let _valid = utils::validate_probability(&mut self.probability_text_area);
+                    }
+                }
+                1 => {
+                    if self.delay_duration.input(key) {
+                        let _valid = utils::validate_usize(&mut self.delay_duration);
+                    }
+                }
+                _ => {}
+            }
+
             return true;
         }
         return false;
@@ -74,10 +99,17 @@ impl Widget for &mut ReorderWidget<'_> {
     where
         Self: Sized
     {
-        let [delay_duration_area, info_area] = Layout::horizontal([
+        let [probability_area,delay_duration_area, info_area] = Layout::horizontal([
+            Constraint::Max(12),
             Constraint::Max(10),
             Constraint::Min(25),
         ]).areas(area.inner(Margin { horizontal: 1, vertical: 1 }));
+
+        auto_hide_cursor(&mut self.probability_text_area, self.interacting && self.selected == 0);
+        self.probability_text_area.set_placeholder_text("0.1");
+        self.probability_text_area.set_cursor_line_style(Style::default());
+        if self.probability_text_area.block() == None { self.probability_text_area.set_block(Block::roundedt("Probability")); }
+        self.probability_text_area.render(probability_area, buf);
 
         auto_hide_cursor(&mut self.delay_duration, self.interacting);
         self.delay_duration.set_placeholder_text("30");

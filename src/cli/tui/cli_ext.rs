@@ -1,6 +1,13 @@
 use std::sync::{Arc, Mutex, RwLock};
 use log::error;
 use crate::cli::Cli;
+use crate::cli::settings::bandwidth::BandwidthOptions;
+use crate::cli::settings::delay::DelayOptions;
+use crate::cli::settings::drop::DropOptions;
+use crate::cli::settings::duplicate::DuplicateOptions;
+use crate::cli::settings::reorder::ReorderOptions;
+use crate::cli::settings::tamper::TamperOptions;
+use crate::cli::settings::throttle::ThrottleOptions;
 use crate::cli::tui::state::TuiState;
 use crate::cli::tui::traits::IsActive;
 use crate::cli::tui::widgets::custom_widget::CustomWidget;
@@ -57,51 +64,51 @@ fn init_tui_state_from_cli(state: &mut TuiState, cli: &Arc<Mutex<Cli>>) {
     for section in state.sections.iter_mut() {
         match section {
             CustomWidget::Drop(ref mut drop_widget) => {
-                if let Some(probability) = cli.packet_manipulation_settings.drop.probability {
-                    drop_widget.probability_text_area.set_text(&probability.value().to_string());
+                if let Some(drop) = &cli.packet_manipulation_settings.drop {
+                    drop_widget.probability_text_area.set_text(&drop.probability.value().to_string());
                     drop_widget.set_active(true);
                 }
             }
             CustomWidget::Delay(ref mut delay_widget) => {
-                if let Some(duration) = cli.packet_manipulation_settings.delay.duration {
-                    delay_widget.delay_duration.set_text(&duration.to_string());
+                if let Some(delay) = &cli.packet_manipulation_settings.delay {
+                    delay_widget.delay_duration.set_text(&delay.duration.to_string());
                     delay_widget.set_active(true);
                 }
             }
             CustomWidget::Throttle(ref mut throttle_widget) => {
-                if let Some(probability) = cli.packet_manipulation_settings.throttle.probability {
-                    throttle_widget.probability_text_area.set_text(&probability.to_string());
+                if let Some(throttle) = &cli.packet_manipulation_settings.throttle {
+                    throttle_widget.probability_text_area.set_text(&throttle.probability.to_string());
+                    throttle_widget.throttle_duration.set_text(&throttle.duration.to_string());
+                    throttle_widget.drop = throttle.drop;
                     throttle_widget.set_active(true);
                 }
-                throttle_widget.throttle_duration.set_text(&cli.packet_manipulation_settings.throttle.duration.to_string());
-                throttle_widget.drop = cli.packet_manipulation_settings.throttle.drop;
             }
             CustomWidget::Reorder(ref mut reorder_widget) => {
-                if let Some(duration) = cli.packet_manipulation_settings.reorder.max_delay {
-                    reorder_widget.delay_duration.set_text(&duration.to_string());
+                if let Some(reorder) = &cli.packet_manipulation_settings.reorder {
+                    reorder_widget.delay_duration.set_text(&reorder.max_delay.to_string());
                     reorder_widget.set_active(true);
                 }
             }
             CustomWidget::Tamper(ref mut tamper_widget) => {
-                if let Some(probability) = cli.packet_manipulation_settings.tamper.probability {
-                    tamper_widget.probability_text_area.set_text(&probability.to_string());
+                if let Some(tamper) = &cli.packet_manipulation_settings.tamper {
+                    tamper_widget.probability_text_area.set_text(&tamper.probability.to_string());
+                    tamper_widget.tamper_amount.set_text(&tamper.amount.to_string());
+                    if let Some(recalculate_checksums) = tamper.recalculate_checksums {
+                        tamper_widget.recalculate_checksums = recalculate_checksums;
+                    }
                     tamper_widget.set_active(true);
-                }
-                tamper_widget.tamper_amount.set_text(&cli.packet_manipulation_settings.tamper.amount.to_string());
-                if let Some(recalculate_checksums) = cli.packet_manipulation_settings.tamper.recalculate_checksums {
-                    tamper_widget.recalculate_checksums = recalculate_checksums;
                 }
             }
             CustomWidget::Duplicate(ref mut duplicate_widget) => {
-                if let Some(probability) = cli.packet_manipulation_settings.duplicate.probability {
-                    duplicate_widget.probability_text_area.set_text(&probability.to_string());
+                if let Some(duplicate) = &cli.packet_manipulation_settings.duplicate {
+                    duplicate_widget.probability_text_area.set_text(&duplicate.probability.to_string());
+                    duplicate_widget.duplicate_count.set_text(&duplicate.count.to_string());
                     duplicate_widget.set_active(true);
                 }
-                duplicate_widget.duplicate_count.set_text(&cli.packet_manipulation_settings.duplicate.count.to_string());
             }
             CustomWidget::Bandwidth(ref mut bandwidth_widget) => {
-                if let Some(duration) = cli.packet_manipulation_settings.bandwidth.limit {
-                    bandwidth_widget.limit.set_text(&duration.to_string());
+                if let Some(bandwidth) = &cli.packet_manipulation_settings.bandwidth {
+                    bandwidth_widget.limit.set_text(&bandwidth.limit.to_string());
                     bandwidth_widget.set_active(true);
                 }
             }
@@ -121,56 +128,80 @@ fn update_cli_from_tui_state(state: &mut TuiState, cli: &Arc<Mutex<Cli>>) {
     for section in state.sections.iter_mut() {
         match section {
             CustomWidget::Drop(ref mut drop_widget) => {
-                if !drop_widget.is_active() { cli.packet_manipulation_settings.drop.probability = None }
+                cli.packet_manipulation_settings.drop = if !drop_widget.is_active() { None }
                 else {
-                    cli.packet_manipulation_settings.drop.probability = Probability::from_text_area(&drop_widget.probability_text_area);
+                    Probability::from_text_area(&drop_widget.probability_text_area)
+                        .map(|probability| DropOptions { probability })
                 }
             }
             CustomWidget::Delay(ref mut delay_widget) => {
-                if !delay_widget.is_active() { cli.packet_manipulation_settings.delay.duration = None }
+                cli.packet_manipulation_settings.delay = if !delay_widget.is_active() { None }
                 else {
-                    cli.packet_manipulation_settings.delay.duration = u64::from_text_area(&delay_widget.delay_duration);
+                    u64::from_text_area(&delay_widget.delay_duration)
+                        .map(|duration| DelayOptions { duration })
                 }
             }
             CustomWidget::Throttle(ref mut throttle_widget) => {
-                if !throttle_widget.is_active() { cli.packet_manipulation_settings.throttle.probability = None }
+                cli.packet_manipulation_settings.throttle = if !throttle_widget.is_active() { None }
                 else {
-                    cli.packet_manipulation_settings.throttle.probability = Probability::from_text_area(&throttle_widget.probability_text_area);
-                    if let Some(parsed_value) = u64::from_text_area(&throttle_widget.throttle_duration) {
-                        cli.packet_manipulation_settings.throttle.duration = parsed_value;
-                    }
-                    cli.packet_manipulation_settings.throttle.drop = throttle_widget.drop;
+                    Probability::from_text_area(&throttle_widget.probability_text_area)
+                        .and_then(|probability| {
+                            u64::from_text_area(&throttle_widget.throttle_duration)
+                                .map(|duration| ThrottleOptions {
+                                    probability,
+                                    duration,
+                                    drop: throttle_widget.drop,
+                                })
+                        })
                 }
             }
             CustomWidget::Reorder(ref reorder_widget) => {
-                if !reorder_widget.is_active() { cli.packet_manipulation_settings.reorder.max_delay = None }
-                else {
-                    cli.packet_manipulation_settings.reorder.max_delay = u64::from_text_area(&reorder_widget.delay_duration);
+                cli.packet_manipulation_settings.reorder = if !reorder_widget.is_active() {
+                    None
+                } else {
+                    Probability::from_text_area(&reorder_widget.probability_text_area)
+                        .and_then(|probability| {
+                            u64::from_text_area(&reorder_widget.delay_duration)
+                                .map(|max_delay| ReorderOptions {
+                                    probability,
+                                    max_delay,
+                                })
+                        })
                 }
             }
+
             CustomWidget::Tamper(ref tamper_widget) => {
-                if !tamper_widget.is_active() { cli.packet_manipulation_settings.tamper.probability = None }
+                cli.packet_manipulation_settings.tamper = if !tamper_widget.is_active() { None }
                 else {
-                    cli.packet_manipulation_settings.tamper.probability = Probability::from_text_area(&tamper_widget.probability_text_area);
-                    if let Some(probability) = Probability::from_text_area(&tamper_widget.tamper_amount) {
-                        cli.packet_manipulation_settings.tamper.amount = probability;
-                    }
-                    cli.packet_manipulation_settings.tamper.recalculate_checksums = Some(tamper_widget.recalculate_checksums);
+                    Probability::from_text_area(&tamper_widget.probability_text_area)
+                        .and_then(|probability| {
+                            Probability::from_text_area(&tamper_widget.tamper_amount)
+                                .map(|amount| TamperOptions {
+                                    probability,
+                                    amount,
+                                    recalculate_checksums: Some(tamper_widget.recalculate_checksums),
+                                })
+                        })
                 }
             }
             CustomWidget::Duplicate(ref duplicate_widget) => {
-                if !duplicate_widget.is_active() { cli.packet_manipulation_settings.duplicate.probability = None }
+                cli.packet_manipulation_settings.duplicate = if !duplicate_widget.is_active() { None }
                 else {
-                    cli.packet_manipulation_settings.duplicate.probability = Probability::from_text_area(&duplicate_widget.probability_text_area);
-                    if let Some(parsed_value) = usize::from_text_area(&duplicate_widget.duplicate_count) {
-                        cli.packet_manipulation_settings.duplicate.count = parsed_value;
-                    }
+                    Probability::from_text_area(&duplicate_widget.probability_text_area)
+                        .and_then(|probability| {
+                            usize::from_text_area(&duplicate_widget.duplicate_count)
+                                .map(|count| DuplicateOptions {
+                                    probability,
+                                    count,
+                                })
+                        })
                 }
             }
             CustomWidget::Bandwidth(ref bandwidth_widget) => {
-                if !bandwidth_widget.is_active() { cli.packet_manipulation_settings.bandwidth.limit = None }
+                cli.packet_manipulation_settings.bandwidth = if !bandwidth_widget.is_active() { None }
                 else {
-                    cli.packet_manipulation_settings.bandwidth.limit = usize::from_text_area(&bandwidth_widget.limit);
+                    usize::from_text_area(&bandwidth_widget.limit)
+                        .map(|limit| BandwidthOptions { limit })
                 }
             }
         }

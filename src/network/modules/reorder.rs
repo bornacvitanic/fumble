@@ -3,6 +3,7 @@ use log::{error, warn};
 use std::cmp::Ordering;
 use std::collections::BinaryHeap;
 use std::time::{Duration, Instant};
+use crate::network::types::Probability;
 
 pub struct DelayedPacket<'a> {
     pub packet: PacketData<'a>,
@@ -43,17 +44,28 @@ impl<'a> DelayedPacket<'a> {
 pub fn reorder_packets<'a>(
     packets: &mut Vec<PacketData<'a>>,
     storage: &mut BinaryHeap<DelayedPacket<'a>>,
+    reorder_probability: Probability,
     max_delay: Duration,
 ) {
     if max_delay.as_millis() == 0 {
         warn!("Max delay cannot be zero. Skipping packet reordering.");
         return;
     }
+
+    let mut skipped_packets = Vec::new(); // Temporary storage for packets to be skipped
+
     for packet in packets.drain(..) {
+        if rand::random::<f64>() >= reorder_probability.value() {
+            skipped_packets.push(packet); // Store skipped packets
+            continue;
+        }
+
         let delay = Duration::from_millis((rand::random::<u128>() % max_delay.as_millis()) as u64);
         let delayed_packet = DelayedPacket::new(packet, delay);
         storage.push(delayed_packet);
     }
+
+    packets.append(&mut skipped_packets); // Append skipped packets back to the original packets vector
 
     let now = Instant::now();
     while let Some(delayed_packet) = storage.peek() {

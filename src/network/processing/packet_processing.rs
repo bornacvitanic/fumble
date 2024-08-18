@@ -92,65 +92,68 @@ pub fn process_packets<'a>(
     state: &mut PacketProcessingState<'a>,
     statistics: &Arc<RwLock<PacketProcessingStatistics>>,
 ) {
-    if let Some(drop_probability) = settings.drop.probability {
-        drop_packets(packets, drop_probability, &mut statistics.write().unwrap().drop_stats);
+    if let Some(drop) = &settings.drop {
+        drop_packets(packets, drop.probability, &mut statistics.write().unwrap().drop_stats);
     }
 
-    if let Some(delay) = settings.delay.duration {
+    if let Some(delay) = &settings.delay {
         delay_packets(
             packets,
             &mut state.delay_storage,
-            Duration::from_millis(delay),
+            Duration::from_millis(delay.duration),
             &mut statistics.write().unwrap().delay_stats
         );
     }
 
-    if let Some(throttle_probability) = settings.throttle.probability {
+    if let Some(throttle) = &settings.throttle {
         throttle_packages(
             packets,
             &mut state.throttle_storage,
             &mut state.throttled_start_time,
-            throttle_probability,
-            Duration::from_millis(settings.throttle.duration),
-            settings.throttle.drop,
+            throttle.probability,
+            Duration::from_millis(throttle.duration),
+            throttle.drop,
             &mut statistics.write().unwrap().throttle_stats
         );
     }
 
-    if let Some(delay) = settings.reorder.max_delay {
+    if let Some(reorder) = &settings.reorder {
         reorder_packets(
             packets,
             &mut state.reorder_storage,
-            Duration::from_millis(delay),
+            reorder.probability,
+            Duration::from_millis(reorder.max_delay),
         );
     }
 
-    if let Some(tamper_probability) = settings.tamper.probability {
+    if let Some(tamper) = &settings.tamper {
         tamper_packets(
             packets,
-            tamper_probability,
-            settings.tamper.amount,
-            settings.tamper.recalculate_checksums.unwrap_or(true),
+            tamper.probability,
+            tamper.amount,
+            tamper.recalculate_checksums.unwrap_or(true),
         );
     }
 
-    if settings.duplicate.count > 1
-        && settings.duplicate.probability.unwrap_or_default().value() > 0.0
-    {
-        duplicate_packets(
-            packets,
-            settings.duplicate.count,
-            settings.duplicate.probability.unwrap_or_default(),
-        );
+    if let Some(duplicate) = &settings.duplicate {
+        if duplicate.count > 1
+            && duplicate.probability.value() > 0.0
+        {
+            duplicate_packets(
+                packets,
+                duplicate.count,
+                duplicate.probability,
+            );
+        }
     }
 
-    if let Some(bandwidth_limit) = settings.bandwidth.limit {
+    if let Some(bandwidth) = &settings.bandwidth {
         bandwidth_limiter(
             packets,
             &mut state.bandwidth_limit_storage,
             &mut state.bandwidth_storage_total_size,
             &mut state.last_sent_package_time,
-            bandwidth_limit,
+            bandwidth.limit,
         );
     }
 }
