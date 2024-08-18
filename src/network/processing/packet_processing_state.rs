@@ -1,5 +1,5 @@
 use crate::network::core::packet_data::PacketData;
-use crate::network::modules::reorder::DelayedPacket;
+use crate::network::types::delayed_packet::DelayedPacket;
 use std::collections::{BinaryHeap, VecDeque};
 use std::time::Instant;
 

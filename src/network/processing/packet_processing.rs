@@ -123,6 +123,7 @@ pub fn process_packets<'a>(
             &mut state.reorder_storage,
             reorder.probability,
             Duration::from_millis(reorder.max_delay),
+            &mut statistics.write().unwrap().reorder_stats
         );
     }
 

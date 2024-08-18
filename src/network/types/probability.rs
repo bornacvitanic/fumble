@@ -1,6 +1,6 @@
-use serde::{Deserialize, Serialize};
 use std::fmt;
 use std::fmt::Formatter;
+use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 
 #[derive(Debug, Copy, Clone, PartialEq, Serialize, Deserialize)]

@@ -1,5 +1,5 @@
 use crate::network::core::packet_data::PacketData;
-use crate::network::types::Probability;
+use crate::network::types::probability::Probability;
 use log::error;
 use std::collections::HashSet;
 use windivert_sys::ChecksumFlags;

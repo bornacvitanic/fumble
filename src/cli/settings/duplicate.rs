@@ -1,4 +1,4 @@
-use crate::network::types::Probability;
+use crate::network::types::probability::Probability;
 use clap::Parser;
 use serde::{Deserialize, Serialize};
 

@@ -1,7 +1,7 @@
 use tui_textarea::TextArea;
 use ratatui::prelude::{Color, Modifier, Style};
 use ratatui::widgets::{Block, Borders, BorderType};
-use crate::network::types::Probability;
+use crate::network::types::probability::Probability;
 
 pub fn validate_probability(textarea: &mut TextArea) -> bool {
     let res = textarea.lines()[0].parse::<f64>();

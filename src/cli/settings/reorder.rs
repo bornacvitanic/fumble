@@ -1,6 +1,6 @@
 use clap::Parser;
 use serde::{Deserialize, Serialize};
-use crate::network::types::Probability;
+use crate::network::types::probability::Probability;
 
 #[derive(Parser, Debug, Serialize, Deserialize)]
 pub struct ReorderOptions {

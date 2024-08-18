@@ -1,5 +1,5 @@
 use crate::network::core::packet_data::PacketData;
-use crate::network::types::Probability;
+use crate::network::types::probability::Probability;
 use rand::{thread_rng, Rng};
 use std::collections::VecDeque;
 use std::time::{Duration, Instant};

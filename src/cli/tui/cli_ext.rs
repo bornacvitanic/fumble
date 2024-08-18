@@ -13,7 +13,7 @@ use crate::cli::tui::traits::IsActive;
 use crate::cli::tui::widgets::custom_widget::CustomWidget;
 use crate::cli::tui::widgets::utils::{ParseFromTextArea, TextAreaExt};
 use crate::network::modules::stats::PacketProcessingStatistics;
-use crate::network::types::Probability;
+use crate::network::types::probability::Probability;
 
 pub trait TuiStateExt {
     /// Creates a `TuiState` instance from the current state of the `Cli` object.
@@ -223,7 +223,7 @@ fn update_tui_state_from_statistics(state: &mut TuiState, statistics: &Arc<RwLoc
                 CustomWidget::Drop(ref mut drop_widget) => {drop_widget.update_data(&stats.drop_stats);}
                 CustomWidget::Delay(ref mut delay_widget) => {delay_widget.update_data(&stats.delay_stats);}
                 CustomWidget::Throttle(ref mut throttle_widget) => {throttle_widget.update_data(&stats.throttle_stats);}
-                CustomWidget::Reorder(_) => {}
+                CustomWidget::Reorder(ref mut reorder_widget) => {reorder_widget.update_data(&stats.reorder_stats)}
                 CustomWidget::Tamper(_) => {}
                 CustomWidget::Duplicate(_) => {}
                 CustomWidget::Bandwidth(_) => {}

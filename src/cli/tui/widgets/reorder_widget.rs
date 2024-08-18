@@ -7,6 +7,7 @@ use tui_textarea::TextArea;
 use crate::cli::tui::traits::{DisplayName, HandleInput, IsActive, KeyBindings};
 use crate::cli::tui::widgets::utils::{auto_hide_cursor, RoundedBlockExt};
 use crate::cli::tui::widgets::utils;
+use crate::network::modules::stats::reorder_stats::ReorderStats;
 
 pub struct ReorderWidget<'a> {
     title: String,
@@ -15,6 +16,8 @@ pub struct ReorderWidget<'a> {
     is_active: bool,
     interacting: bool,
     selected: usize,
+    reorder_rate: f64,
+    delayed_packets: usize,
 }
 
 impl ReorderWidget<'_> {
@@ -26,7 +29,14 @@ impl ReorderWidget<'_> {
             is_active: false,
             interacting: false,
             selected: 0,
+            reorder_rate: 0.0,
+            delayed_packets: 0,
         }
+    }
+
+    pub(crate) fn update_data(&mut self, stats: &ReorderStats) {
+        self.reorder_rate = stats.recent_reorder_rate();
+        self.delayed_packets = stats.delayed_packets;
     }
 }
 
@@ -117,6 +127,12 @@ impl Widget for &mut ReorderWidget<'_> {
         if self.delay_duration.block() == None { self.delay_duration.set_block(Block::roundedt("Duration")); }
         self.delay_duration.render(delay_duration_area, buf);
 
-        Paragraph::new("Reordering packets by delaying by random value between 0 and X").block(Block::invisible()).render(info_area, buf);
+        let [reorder_percentage_info, delayed_count_info, _excess_info] = Layout::horizontal([
+            Constraint::Max(10),
+            Constraint::Max(10),
+            Constraint::Fill(1)
+        ]).areas(info_area);
+        Paragraph::new(format!("{:.2}%", self.reorder_rate*100.0)).block(Block::bordered().title("Reorder rate")).render(reorder_percentage_info, buf);
+        Paragraph::new(format!("{}", self.delayed_packets)).block(Block::bordered().title("Delayed")).render(delayed_count_info, buf);
     }
 }
