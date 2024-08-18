@@ -147,8 +147,9 @@ impl Widget for &mut TamperWidget<'_> {
         let checksum_paragraph = Paragraph::new(checksum_span).block(Block::roundedt("Recalculate Checksums"));
         checksum_paragraph.render(checksum_area, buf);
 
-        let border_color = if self.checksum_valid { Color::Green } else { Color::Red };
-        Paragraph::new(Line::from(highlight_tampered_data(self.data.clone(), info_area.width, self.tamper_flags.clone()))).block(Block::bordered().border_style(Style::new().fg(border_color))).render(info_area, buf);
+        let mut info_block = Block::bordered();
+        if !self.checksum_valid { info_block = info_block.border_style(Style::new().fg(Color::LightRed))};
+        Paragraph::new(Line::from(highlight_tampered_data(self.data.clone(), info_area.width, self.tamper_flags.clone()))).block(info_block).render(info_area, buf);
     }
 }
 
