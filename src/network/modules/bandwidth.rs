@@ -2,6 +2,7 @@ use crate::network::core::packet_data::PacketData;
 use log::trace;
 use std::collections::VecDeque;
 use std::time::Instant;
+use crate::network::modules::stats::bandwidth_stats::BandwidthStats;
 
 const MAX_BUFFER_SIZE: usize = 10 * 1024 * 1024; // 10 MB in bytes
 
@@ -11,10 +12,12 @@ pub fn bandwidth_limiter<'a>(
     total_buffer_size: &mut usize,
     last_send_time: &mut Instant,
     bandwidth_limit_kbps: usize,
+    stats: &mut BandwidthStats
 ) {
     let incoming_packet_count = packets.len();
+    stats.storage_packet_count += incoming_packet_count;
     add_packets_to_buffer(buffer, packets, total_buffer_size);
-    maintain_buffer_size(buffer, total_buffer_size);
+    maintain_buffer_size(buffer, total_buffer_size, stats);
 
     let now = Instant::now();
     let elapsed = now.duration_since(*last_send_time).as_secs_f64();
@@ -29,17 +32,17 @@ pub fn bandwidth_limiter<'a>(
             break;
         }
         bytes_sent += packet_size;
-        if let Some(packet) = remove_packet_from_buffer(buffer, total_buffer_size) {
-            to_send.push(packet)
+        if let Some(packet) = remove_packet_from_buffer(buffer, total_buffer_size, stats) {
+            to_send.push(packet);
         }
     }
 
     packets.extend(to_send);
 
-    trace!("Limit: {}, Bytes Allowed {}, Incoming Packets: {}, Packets Sent: {}, Buffer Element Count: {}, Total Buffer Size: {}, Bytes Sent: {}",
-           bandwidth_limit_kbps, bytes_allowed, incoming_packet_count, packets.len(), buffer.len(), total_buffer_size, bytes_sent);
-
     if bytes_sent > 0 {
+        trace!("Limit: {}, Bytes Allowed {}, Incoming Packets: {}, Packets Sent: {}, Buffer Element Count: {}, Total Buffer Size: {}, Bytes Sent: {}",
+           bandwidth_limit_kbps, bytes_allowed, incoming_packet_count, packets.len(), buffer.len(), total_buffer_size, bytes_sent);
+        stats.record(bytes_sent);
         *last_send_time = now;
     }
 }
@@ -66,18 +69,23 @@ fn add_packets_to_buffer<'a>(
 fn remove_packet_from_buffer<'a>(
     buffer: &mut VecDeque<PacketData<'a>>,
     total_size: &mut usize,
+    stats: &mut BandwidthStats,
 ) -> Option<PacketData<'a>> {
     if let Some(packet) = buffer.pop_front() {
         *total_size -= packet.packet.data.len();
+        stats.storage_packet_count -= 1;
         Some(packet)
     } else {
         None
     }
 }
 
-fn maintain_buffer_size(buffer: &mut VecDeque<PacketData<'_>>, total_size: &mut usize) {
+fn maintain_buffer_size(
+    buffer: &mut VecDeque<PacketData<'_>>,
+    total_size: &mut usize,
+    stats: &mut BandwidthStats,) {
     while *total_size > MAX_BUFFER_SIZE {
-        if remove_packet_from_buffer(buffer, total_size).is_some() {
+        if remove_packet_from_buffer(buffer, total_size, stats).is_some() {
             // Packet removed from buffer to maintain size limit
         } else {
             break; // No more packets to remove
@@ -115,6 +123,7 @@ mod tests {
         let total_buffer_size: &mut usize = &mut 0usize;
         let mut last_send_time = Instant::now() - Duration::from_secs(1);
         let bandwidth_limit = 1; // 1 KB/s
+        let mut stats = BandwidthStats::new(0.5);
 
         bandwidth_limiter(
             &mut packets,
@@ -122,6 +131,7 @@ mod tests {
             total_buffer_size,
             &mut last_send_time,
             bandwidth_limit,
+            &mut stats
         );
 
         assert!(packets.len() <= 1);
@@ -141,6 +151,7 @@ mod tests {
         }
         let mut last_send_time = Instant::now();
         let bandwidth_limit = 100; // High enough to not limit the test
+        let mut stats = BandwidthStats::new(0.5);
 
         bandwidth_limiter(
             &mut packets,
@@ -148,6 +159,7 @@ mod tests {
             &mut total_buffer_size,
             &mut last_send_time,
             bandwidth_limit,
+            &mut stats
         );
 
         let actual_total_size: usize = buffer.iter().map(|p| p.packet.data.len()).sum();
@@ -164,6 +176,7 @@ mod tests {
         let mut total_buffer_size = 0;
         let mut last_send_time = Instant::now() - Duration::from_secs(1);
         let bandwidth_limit = 10_000; // 10 MB/s
+        let mut stats = BandwidthStats::new(0.5);
 
         bandwidth_limiter(
             &mut packets,
@@ -171,6 +184,7 @@ mod tests {
             &mut total_buffer_size,
             &mut last_send_time,
             bandwidth_limit,
+            &mut stats
         );
 
         assert_eq!(packets.len(), 2);
@@ -186,6 +200,7 @@ mod tests {
         let mut total_buffer_size = 0;
         let mut last_send_time = Instant::now();
         let bandwidth_limit = 0; // 0 KB/s
+        let mut stats = BandwidthStats::new(0.5);
 
         bandwidth_limiter(
             &mut packets,
@@ -193,6 +208,7 @@ mod tests {
             &mut total_buffer_size,
             &mut last_send_time,
             bandwidth_limit,
+            &mut stats
         );
 
         assert!(packets.is_empty());
@@ -206,6 +222,7 @@ mod tests {
         let mut total_buffer_size = 0;
         let mut last_send_time = Instant::now();
         let bandwidth_limit = 10_000; // 10 MB/s
+        let mut stats = BandwidthStats::new(0.5);
 
         bandwidth_limiter(
             &mut packets,
@@ -213,6 +230,7 @@ mod tests {
             &mut total_buffer_size,
             &mut last_send_time,
             bandwidth_limit,
+            &mut stats
         );
 
         // Since the packets vector was empty, buffer should remain empty and nothing should be sent
@@ -256,8 +274,9 @@ mod tests {
         let mut total_size = 0;
         let packet = PacketData::from(create_dummy_packet(1000));
         add_packet_to_buffer(&mut buffer, packet.clone(), &mut total_size);
+        let mut stats = BandwidthStats::new(0.5);
 
-        let removed_packet = remove_packet_from_buffer(&mut buffer, &mut total_size);
+        let removed_packet = remove_packet_from_buffer(&mut buffer, &mut total_size, &mut stats);
 
         assert_eq!(removed_packet.unwrap().packet.data.len(), 1000);
         assert_eq!(buffer.len(), 0);
@@ -268,8 +287,9 @@ mod tests {
     fn test_remove_packet_from_empty_buffer() {
         let mut buffer = VecDeque::new();
         let mut total_size = 0;
+        let mut stats = BandwidthStats::new(0.5);
 
-        let removed_packet = remove_packet_from_buffer(&mut buffer, &mut total_size);
+        let removed_packet = remove_packet_from_buffer(&mut buffer, &mut total_size, &mut stats);
 
         assert!(removed_packet.is_none());
         assert_eq!(buffer.len(), 0);

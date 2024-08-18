@@ -157,6 +157,7 @@ pub fn process_packets<'a>(
             &mut state.bandwidth_storage_total_size,
             &mut state.last_sent_package_time,
             bandwidth.limit,
+            &mut statistics.write().unwrap().bandwidth_stats
         );
     }
 }

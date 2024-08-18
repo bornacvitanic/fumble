@@ -7,12 +7,15 @@ use tui_textarea::TextArea;
 use crate::cli::tui::traits::{DisplayName, HandleInput, IsActive, KeyBindings};
 use crate::cli::tui::widgets::utils;
 use crate::cli::tui::widgets::utils::{auto_hide_cursor, RoundedBlockExt};
+use crate::network::modules::stats::bandwidth_stats::BandwidthStats;
 
 pub struct BandwidthWidget<'a> {
     title: String,
     pub limit: TextArea<'a>,
     is_active: bool,
     interacting: bool,
+    throughput: f64,
+    stored_packet_count: usize,
 }
 
 impl BandwidthWidget<'_> {
@@ -21,8 +24,15 @@ impl BandwidthWidget<'_> {
             title: "Bandwidth".to_string(),
             limit: TextArea::default(),
             is_active: false,
-            interacting: false
+            interacting: false,
+            throughput: 0.0,
+            stored_packet_count: 0,
         }
+    }
+
+    pub(crate) fn update_data(&mut self, stats: &BandwidthStats) {
+        self.throughput = stats.recent_throughput();
+        self.stored_packet_count = stats.storage_packet_count;
     }
 }
 
@@ -85,6 +95,12 @@ impl Widget for &mut BandwidthWidget<'_> {
         if self.limit.block() == None { self.limit.set_block(Block::roundedt("KBps Limit")); }
         self.limit.render(delay_duration_area, buf);
 
-        Paragraph::new("Limiting to XXX KBps").block(Block::invisible()).render(info_area, buf);
+        let [throughput_info, storage_packet_count_info, _excess_info] = Layout::horizontal([
+            Constraint::Max(15),
+            Constraint::Max(15),
+            Constraint::Fill(1)
+        ]).areas(info_area);
+        Paragraph::new(format!("{:.2} KBps", self.throughput)).block(Block::bordered().title("Throughput")).render(throughput_info, buf);
+        Paragraph::new(format!("{}", self.stored_packet_count)).block(Block::bordered().title("Stored packets")).render(storage_packet_count_info, buf);
     }
 }
