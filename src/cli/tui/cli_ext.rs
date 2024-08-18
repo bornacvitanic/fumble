@@ -224,7 +224,7 @@ fn update_tui_state_from_statistics(state: &mut TuiState, statistics: &Arc<RwLoc
                 CustomWidget::Delay(ref mut delay_widget) => {delay_widget.update_data(&stats.delay_stats);}
                 CustomWidget::Throttle(ref mut throttle_widget) => {throttle_widget.update_data(&stats.throttle_stats);}
                 CustomWidget::Reorder(ref mut reorder_widget) => {reorder_widget.update_data(&stats.reorder_stats)}
-                CustomWidget::Tamper(_) => {}
+                CustomWidget::Tamper(ref mut tamper_widget) => {tamper_widget.update_data(&stats.tamper_stats)}
                 CustomWidget::Duplicate(_) => {}
                 CustomWidget::Bandwidth(_) => {}
             }

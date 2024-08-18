@@ -2,12 +2,14 @@ use ratatui::buffer::Buffer;
 use ratatui::crossterm::event::{KeyCode, KeyEvent, KeyEventKind};
 use ratatui::layout::{Constraint, Layout, Margin, Rect};
 use ratatui::prelude::{Modifier, Span};
-use ratatui::style::{Style, Stylize};
+use ratatui::style::{Color, Style, Stylize};
+use ratatui::text::Line;
 use ratatui::widgets::{Block, Paragraph, Widget};
 use tui_textarea::TextArea;
 use crate::cli::tui::traits::{DisplayName, HandleInput, IsActive, KeyBindings};
 use crate::cli::tui::widgets::utils::{auto_hide_cursor, RoundedBlockExt};
 use crate::cli::tui::widgets::utils;
+use crate::network::modules::stats::tamper_stats::TamperStats;
 
 pub struct TamperWidget<'a> {
     title: String,
@@ -17,6 +19,9 @@ pub struct TamperWidget<'a> {
     is_active: bool,
     interacting: bool,
     selected: usize,
+    data: Vec<u8>,
+    tamper_flags: Vec<bool>,
+    checksum_valid: bool
 }
 
 impl TamperWidget<'_> {
@@ -29,7 +34,16 @@ impl TamperWidget<'_> {
             is_active: false,
             interacting: false,
             selected: 0,
+            data: vec![],
+            tamper_flags: vec![],
+            checksum_valid: true,
         }
+    }
+
+    pub(crate) fn update_data(&mut self, stats: &TamperStats) {
+        self.data = stats.data.clone();
+        self.tamper_flags = stats.tamper_flags.clone();
+        self.checksum_valid = stats.checksum_valid;
     }
 }
 
@@ -107,7 +121,7 @@ impl Widget for &mut TamperWidget<'_> {
     where
         Self: Sized
     {
-        let [probability_area, duration_area, checksum_area, drop_info_area] = Layout::horizontal([
+        let [probability_area, duration_area, checksum_area, info_area] = Layout::horizontal([
             Constraint::Max(10),
             Constraint::Max(10),
             Constraint::Max(25),
@@ -133,6 +147,26 @@ impl Widget for &mut TamperWidget<'_> {
         let checksum_paragraph = Paragraph::new(checksum_span).block(Block::roundedt("Recalculate Checksums"));
         checksum_paragraph.render(checksum_area, buf);
 
-        Paragraph::new("Tampering with XX% of packets, YY% of their data").block(Block::invisible()).render(drop_info_area, buf);
+        let border_color = if self.checksum_valid { Color::Green } else { Color::Red };
+        Paragraph::new(Line::from(highlight_tampered_data(self.data.clone(), info_area.width, self.tamper_flags.clone()))).block(Block::bordered().border_style(Style::new().fg(border_color))).render(info_area, buf);
     }
+}
+
+fn highlight_tampered_data(data: Vec<u8>, width: u16, flags: Vec<bool>) -> Vec<Span<'static>> {
+    data.into_iter()
+        .zip(flags.into_iter())
+        .take(width as usize)
+        .map(|(byte, is_tampered)| {
+            let symbol = char::try_from(byte);
+            let symbol = match symbol {
+                Ok(c) if c.is_ascii_alphanumeric() || [' ', '.', ',', '!', '?', ':', ';', '-'].contains(&c) => c,
+                _ => '�',
+            };
+            if is_tampered {
+                Span::styled(symbol.to_string(), Style::default().fg(Color::LightRed))
+            } else {
+                Span::styled(symbol.to_string(), Style::default())
+            }
+        })
+        .collect()
 }

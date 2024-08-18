@@ -133,6 +133,7 @@ pub fn process_packets<'a>(
             tamper.probability,
             tamper.amount,
             tamper.recalculate_checksums.unwrap_or(true),
+            &mut statistics.write().unwrap().tamper_stats
         );
     }
 
