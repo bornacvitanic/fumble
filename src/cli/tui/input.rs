@@ -3,6 +3,7 @@ use ratatui::crossterm::event;
 use ratatui::crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind};
 use crate::cli::tui::state::TuiState;
 use crate::cli::tui::traits::{HandleInput, IsActive};
+use crate::cli::tui::ui::LayoutSection;
 
 // Main input handler function
 pub fn handle_input(state: &mut TuiState) -> io::Result<bool> {
@@ -12,19 +13,22 @@ pub fn handle_input(state: &mut TuiState) -> io::Result<bool> {
                 return Ok(false);
             }
 
-            // Handle widget input
-            if handle_widget_input(state, key) {
-                return Ok(false);
-            }
+            match state.focused {
+                LayoutSection::Filter | LayoutSection::Logging => {
+                    if handle_widget_input(state, key) {
+                        return Ok(false);
+                    }
+                }
+                LayoutSection::Main => {
+                    // Handle section input
+                    if handle_section_input(state, key) {
+                        return Ok(false);
+                    }
 
-            // Handle section input
-            if handle_section_input(state, key) {
-                return Ok(false);
-            }
-
-            // Handle main menu input
-            if handle_main_menu_input(state, key) {
-                return Ok(true);
+                    if handle_main_menu_input(state, key) {
+                        return Ok(true);
+                    }
+                }
             }
         }
     }
