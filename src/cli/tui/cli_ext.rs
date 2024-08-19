@@ -77,8 +77,8 @@ fn init_tui_state_from_cli(state: &mut TuiState, cli: &Arc<Mutex<Cli>>) {
             }
             CustomWidget::Throttle(ref mut throttle_widget) => {
                 if let Some(throttle) = &cli.packet_manipulation_settings.throttle {
-                    throttle_widget.probability_text_area.set_text(&throttle.probability.to_string());
-                    throttle_widget.throttle_duration.set_text(&throttle.duration.to_string());
+                    throttle_widget.set_probability(throttle.probability);
+                    throttle_widget.set_throttle_duration(throttle.duration);
                     throttle_widget.drop = throttle.drop;
                     throttle_widget.set_active(true);
                 }
@@ -152,12 +152,12 @@ fn update_cli_from_tui_state(state: &mut TuiState, cli: &Arc<Mutex<Cli>>) {
             CustomWidget::Throttle(ref mut throttle_widget) => {
                 cli.packet_manipulation_settings.throttle = if !throttle_widget.is_active() { None }
                 else {
-                    Probability::from_text_area(&throttle_widget.probability_text_area)
+                    throttle_widget.probability.as_ref().ok()
                         .and_then(|probability| {
-                            u64::from_text_area(&throttle_widget.throttle_duration)
+                            throttle_widget.throttle_duration.as_ref().ok()
                                 .map(|duration| ThrottleOptions {
-                                    probability,
-                                    duration,
+                                    probability: probability.clone(),
+                                    duration: duration.clone(),
                                     drop: throttle_widget.drop,
                                 })
                         })
