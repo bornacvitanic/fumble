@@ -7,18 +7,20 @@ use ratatui::text::Line;
 use ratatui::widgets::{Block, Paragraph, Widget};
 use tui_textarea::TextArea;
 use crate::cli::tui::traits::{DisplayName, HandleInput, IsActive, KeyBindings};
-use crate::cli::tui::widgets::utils::{auto_hide_cursor, RoundedBlockExt};
-use crate::cli::tui::widgets::utils;
+use crate::cli::tui::widgets::utils::{auto_hide_cursor, display_validity, ParseFromTextArea, RoundedBlockExt, TextAreaExt};
 use crate::network::modules::stats::tamper_stats::TamperStats;
+use crate::network::types::probability::Probability;
 
 pub struct TamperWidget<'a> {
     title: String,
-    pub probability_text_area: TextArea<'a>,
-    pub tamper_amount: TextArea<'a>,
+    probability_text_area: TextArea<'a>,
+    tamper_amount_text_area: TextArea<'a>,
     pub recalculate_checksums: bool,
     is_active: bool,
     interacting: bool,
     selected: usize,
+    pub probability: Result<Probability, String>,
+    pub tamper_amount: Result<Probability, String>,
     data: Vec<u8>,
     tamper_flags: Vec<bool>,
     checksum_valid: bool
@@ -29,15 +31,27 @@ impl TamperWidget<'_> {
         TamperWidget {
             title: "Tamper".to_string(),
             probability_text_area: TextArea::default(),
-            tamper_amount: TextArea::default(),
+            tamper_amount_text_area: TextArea::default(),
             recalculate_checksums: true,
             is_active: false,
             interacting: false,
             selected: 0,
+            probability: Ok(Probability::default()),
+            tamper_amount: Ok(Probability::default()),
             data: vec![],
             tamper_flags: vec![],
             checksum_valid: true,
         }
+    }
+
+    pub fn set_tamper_amount(&mut self, tamper_amount: Probability) {
+        self.tamper_amount_text_area.set_text(&tamper_amount.to_string());
+        self.tamper_amount = Ok(tamper_amount);
+    }
+
+    pub fn set_probability(&mut self, probability: Probability) {
+        self.probability_text_area.set_text(&probability.to_string());
+        self.probability = Ok(probability);
     }
 
     pub(crate) fn update_data(&mut self, stats: &TamperStats) {
@@ -72,12 +86,12 @@ impl HandleInput for TamperWidget<'_> {
             match self.selected {
                 0 => {
                     if self.probability_text_area.input(key) {
-                        let _valid = utils::validate_probability(&mut self.probability_text_area);
+                        self.probability = Probability::parse_from_text_area(&self.probability_text_area);
                     }
                 }
                 1 => {
-                    if self.tamper_amount.input(key) {
-                        let _valid = utils::validate_probability(&mut self.tamper_amount);
+                    if self.tamper_amount_text_area.input(key) {
+                        self.tamper_amount = Probability::parse_from_text_area(&self.tamper_amount_text_area);
                     }
                 }
                 2 => {
@@ -131,14 +145,16 @@ impl Widget for &mut TamperWidget<'_> {
         auto_hide_cursor(&mut self.probability_text_area, self.interacting && self.selected == 0);
         self.probability_text_area.set_placeholder_text("0.1");
         self.probability_text_area.set_cursor_line_style(Style::default());
-        if self.probability_text_area.block() == None { self.probability_text_area.set_block(Block::roundedt("Probability")); }
+        self.probability_text_area.set_block(Block::roundedt("Probability"));
+        if !self.probability_text_area.lines()[0].is_empty() { display_validity(&mut self.probability_text_area, &self.probability); }
         self.probability_text_area.render(probability_area, buf);
 
-        auto_hide_cursor(&mut self.tamper_amount, self.interacting && self.selected == 1);
-        self.tamper_amount.set_placeholder_text("0.1");
-        self.tamper_amount.set_cursor_line_style(Style::default());
-        if self.tamper_amount.block() == None { self.tamper_amount.set_block(Block::roundedt("Amount")); }
-        self.tamper_amount.render(duration_area, buf);
+        auto_hide_cursor(&mut self.tamper_amount_text_area, self.interacting && self.selected == 1);
+        self.tamper_amount_text_area.set_placeholder_text("0.1");
+        self.tamper_amount_text_area.set_cursor_line_style(Style::default());
+        self.tamper_amount_text_area.set_block(Block::roundedt("Amount"));
+        if !self.tamper_amount_text_area.lines()[0].is_empty() { display_validity(&mut self.probability_text_area, &self.tamper_amount); }
+        self.tamper_amount_text_area.render(duration_area, buf);
 
         let mut checksum_span = Span::from(self.recalculate_checksums.to_string());
         if self.selected == 2 && self.interacting {

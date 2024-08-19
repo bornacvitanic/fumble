@@ -11,9 +11,7 @@ use crate::cli::settings::throttle::ThrottleOptions;
 use crate::cli::tui::state::TuiState;
 use crate::cli::tui::traits::IsActive;
 use crate::cli::tui::widgets::custom_widget::CustomWidget;
-use crate::cli::tui::widgets::utils::{ParseFromTextArea, TextAreaExt};
 use crate::network::modules::stats::PacketProcessingStatistics;
-use crate::network::types::probability::Probability;
 
 pub trait TuiStateExt {
     /// Creates a `TuiState` instance from the current state of the `Cli` object.
@@ -92,8 +90,8 @@ fn init_tui_state_from_cli(state: &mut TuiState, cli: &Arc<Mutex<Cli>>) {
             }
             CustomWidget::Tamper(ref mut tamper_widget) => {
                 if let Some(tamper) = &cli.packet_manipulation_settings.tamper {
-                    tamper_widget.probability_text_area.set_text(&tamper.probability.to_string());
-                    tamper_widget.tamper_amount.set_text(&tamper.amount.to_string());
+                    tamper_widget.set_probability(tamper.probability);
+                    tamper_widget.set_tamper_amount(tamper.amount);
                     if let Some(recalculate_checksums) = tamper.recalculate_checksums {
                         tamper_widget.recalculate_checksums = recalculate_checksums;
                     }
@@ -182,12 +180,12 @@ fn update_cli_from_tui_state(state: &mut TuiState, cli: &Arc<Mutex<Cli>>) {
             CustomWidget::Tamper(ref tamper_widget) => {
                 cli.packet_manipulation_settings.tamper = if !tamper_widget.is_active() { None }
                 else {
-                    Probability::from_text_area(&tamper_widget.probability_text_area)
+                    tamper_widget.probability.as_ref().ok()
                         .and_then(|probability| {
-                            Probability::from_text_area(&tamper_widget.tamper_amount)
+                            tamper_widget.tamper_amount.as_ref().ok()
                                 .map(|amount| TamperOptions {
-                                    probability,
-                                    amount,
+                                    probability: probability.clone(),
+                                    amount: amount.clone(),
                                     recalculate_checksums: Some(tamper_widget.recalculate_checksums),
                                 })
                         })
