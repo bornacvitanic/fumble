@@ -5,15 +5,15 @@ use ratatui::style::Style;
 use ratatui::widgets::{Block, Paragraph, Widget};
 use tui_textarea::TextArea;
 use crate::cli::tui::traits::{DisplayName, HandleInput, IsActive, KeyBindings};
-use crate::cli::tui::widgets::utils;
-use crate::cli::tui::widgets::utils::{auto_hide_cursor, RoundedBlockExt};
+use crate::cli::tui::widgets::utils::{auto_hide_cursor, display_validity, ParseFromTextArea, RoundedBlockExt, TextAreaExt};
 use crate::network::modules::stats::delay_stats::DelayStats;
 
 pub struct DelayWidget<'a> {
     title: String,
-    pub delay_duration: TextArea<'a>,
+    delay_duration: TextArea<'a>,
     is_active: bool,
     interacting: bool,
+    pub delay: Result<u64, String>,
     delayed_packet_count: usize,
 }
 
@@ -24,8 +24,14 @@ impl DelayWidget<'_> {
             delay_duration: TextArea::default(),
             is_active: false,
             interacting: false,
+            delay: Ok(0),
             delayed_packet_count: 0,
         }
+    }
+
+    pub fn set_delay(&mut self, duration_ms: u64) {
+        self.delay_duration.set_text(&duration_ms.to_string());
+        self.delay = Ok(duration_ms);
     }
 
     pub fn update_data(&mut self, stats: &DelayStats) {
@@ -46,7 +52,7 @@ impl HandleInput for DelayWidget<'_> {
                 return false;
             }
             if self.delay_duration.input(key) {
-                let _valid = utils::validate_usize(&mut self.delay_duration);
+                self.delay = u64::parse_from_text_area(&self.delay_duration);
             }
             return true;
         }
@@ -89,7 +95,8 @@ impl Widget for &mut DelayWidget<'_> {
         auto_hide_cursor(&mut self.delay_duration, self.interacting);
         self.delay_duration.set_placeholder_text("500");
         self.delay_duration.set_cursor_line_style(Style::default());
-        if self.delay_duration.block() == None { self.delay_duration.set_block(Block::roundedt("Duration")); }
+        self.delay_duration.set_block(Block::roundedt("Duration"));
+        if !self.delay_duration.lines()[0].is_empty() { display_validity(&mut self.delay_duration, &self.delay); }
         self.delay_duration.render(delay_duration_area, buf);
 
         let [delay_count_info, _excess_info] = Layout::horizontal([

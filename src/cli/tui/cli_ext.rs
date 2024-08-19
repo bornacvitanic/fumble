@@ -71,7 +71,7 @@ fn init_tui_state_from_cli(state: &mut TuiState, cli: &Arc<Mutex<Cli>>) {
             }
             CustomWidget::Delay(ref mut delay_widget) => {
                 if let Some(delay) = &cli.packet_manipulation_settings.delay {
-                    delay_widget.delay_duration.set_text(&delay.duration.to_string());
+                    delay_widget.set_delay(delay.duration);
                     delay_widget.set_active(true);
                 }
             }
@@ -141,8 +141,10 @@ fn update_cli_from_tui_state(state: &mut TuiState, cli: &Arc<Mutex<Cli>>) {
             CustomWidget::Delay(ref mut delay_widget) => {
                 cli.packet_manipulation_settings.delay = if !delay_widget.is_active() { None }
                 else {
-                    u64::from_text_area(&delay_widget.delay_duration)
-                        .map(|duration| DelayOptions { duration })
+                    match delay_widget.delay {
+                        Ok(duration) => { Some(DelayOptions { duration }) }
+                        Err(_) => { None }
+                    }
                 }
             }
             CustomWidget::Throttle(ref mut throttle_widget) => {
