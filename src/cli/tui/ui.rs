@@ -101,7 +101,7 @@ fn render_sections(frame: &mut Frame, state: &mut TuiState, main_area: Rect) {
     let section_areas: [Rect; 7] = Layout::vertical(constraints).areas(available_rect);
 
     let mut main_block = Block::roundedt("Main").title_bottom(Line::from("This is the main area").right_aligned());
-    if state.focused == LayoutSection::Main { main_block = main_block.border_style(Style::default().fg(Color::Yellow)) }
+    main_block = main_block.highlight_if(state.focused == LayoutSection::Main);
     frame.render_widget(main_block, main_area);
 
     for (i, option) in state.sections.iter_mut().enumerate() {
@@ -110,11 +110,9 @@ fn render_sections(frame: &mut Frame, state: &mut TuiState, main_area: Rect) {
             area_block = area_block.fg(Color::DarkGray);
         }
         if state.selected == i {
-            area_block = area_block.fg(Color::Green);
+            area_block = area_block.border_style(Style::default().fg(Color::Green));
         }
-        if state.interacting == Some(i) {
-            area_block = area_block.fg(Color::Yellow);
-        }
+        area_block = area_block.highlight_if(state.interacting == Some(i));
         frame.render_widget(area_block, section_areas[i]);
         frame.render_widget(option, section_areas[i]);
     }

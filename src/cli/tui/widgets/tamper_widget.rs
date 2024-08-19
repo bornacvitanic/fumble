@@ -148,14 +148,14 @@ impl Widget for &mut TamperWidget<'_> {
         self.probability_text_area.set_cursor_visibility(self.interacting && self.selected == 0);
         self.probability_text_area.set_placeholder_text("0.1");
         self.probability_text_area.set_cursor_line_style(Style::default());
-        self.probability_text_area.set_block(Block::roundedt("Probability"));
+        self.probability_text_area.set_block(Block::roundedt("Probability").highlight_if(self.interacting && self.selected == 0));
         if !self.probability_text_area.lines()[0].is_empty() { style_textarea_based_on_validation(&mut self.probability_text_area, &self.probability); }
         self.probability_text_area.render(probability_area, buf);
 
         self.tamper_amount_text_area.set_cursor_visibility(self.interacting && self.selected == 1);
         self.tamper_amount_text_area.set_placeholder_text("0.1");
         self.tamper_amount_text_area.set_cursor_line_style(Style::default());
-        self.tamper_amount_text_area.set_block(Block::roundedt("Amount"));
+        self.tamper_amount_text_area.set_block(Block::roundedt("Amount").highlight_if(self.interacting && self.selected == 1));
         if !self.tamper_amount_text_area.lines()[0].is_empty() { style_textarea_based_on_validation(&mut self.probability_text_area, &self.tamper_amount); }
         self.tamper_amount_text_area.render(duration_area, buf);
 

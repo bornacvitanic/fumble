@@ -105,7 +105,7 @@ impl Widget for &mut DropWidget<'_> {
         self.probability_text_area.set_cursor_visibility(self.interacting);
         self.probability_text_area.set_placeholder_text("0.1");
         self.probability_text_area.set_cursor_line_style(Style::default());
-        self.probability_text_area.set_block(Block::roundedt("Probability"));
+        self.probability_text_area.set_block(Block::roundedt("Probability").highlight_if(self.interacting));
         if !self.probability_text_area.lines()[0].is_empty() { style_textarea_based_on_validation(&mut self.probability_text_area, &self.probability); }
         self.probability_text_area.render(drop_probability_area, buf);
 

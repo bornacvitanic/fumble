@@ -6,6 +6,7 @@ use ratatui::prelude::{Line, Span, Style};
 use ratatui::style::{Color, Modifier, Stylize};
 use ratatui::widgets::{Block, Borders, List, ListItem, Widget};
 use crate::cli::tui::custom_logger::{LOG_BUFFER, LogEntry, set_logger_level_filter};
+use crate::cli::tui::widgets::utils::block_ext::RoundedBlockExt;
 
 pub struct LogsWidget {
     pub(crate) open: bool,
@@ -78,7 +79,7 @@ impl Widget for &mut LogsWidget {
             let recent_logs = &logs[start..];
             let items: Vec<ListItem> = format_logs_for_tui(recent_logs);
             let mut logging_area_block = Block::bordered().title("[L]-Logs");
-            if self.focused { logging_area_block = logging_area_block.fg(Color::Yellow); }
+            logging_area_block = logging_area_block.highlight_if(self.focused);
             let list = List::new(items).add_modifier(Modifier::ITALIC).block(logging_area_block);
             list.render(area, buf);
         } else {

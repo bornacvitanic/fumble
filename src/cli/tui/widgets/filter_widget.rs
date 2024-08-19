@@ -1,7 +1,7 @@
 use ratatui::buffer::Buffer;
 use ratatui::crossterm::event::{KeyCode, KeyEvent};
 use ratatui::layout::Rect;
-use ratatui::style::{Color, Style, Stylize};
+use ratatui::style::{Style};
 use ratatui::widgets::{Block, Widget};
 use tui_textarea::TextArea;
 use crate::cli::tui::widgets::utils::style_textarea_based_on_validation;
@@ -73,9 +73,7 @@ impl Widget for &mut FilterWidget<'_> {
         self.textarea.set_cursor_visibility(self.inputting);
         self.textarea.set_cursor_line_style(Style::default());
         let mut text_area_block = Block::roundedt("[F]-Filter");
-        if self.inputting {
-            text_area_block = text_area_block.fg(Color::Yellow);
-        }
+        text_area_block = text_area_block.highlight_if(self.inputting);
         self.textarea.set_block(text_area_block);
         style_textarea_based_on_validation(&mut self.textarea, &self.validation_filter);
         self.textarea.render(area, buf);

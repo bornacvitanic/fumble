@@ -5,6 +5,7 @@ pub trait RoundedBlockExt<'a> {
     fn rounded() -> Block<'a>;
     fn roundedt(title: &'a str) -> Block<'a>;
     fn invisible() -> Block<'a>;
+    fn highlight_if(self, active: bool) -> Self;
 }
 
 impl<'a> RoundedBlockExt<'a> for Block<'a> {
@@ -21,5 +22,13 @@ impl<'a> RoundedBlockExt<'a> for Block<'a> {
     /// Creates a new block with invisible borders
     fn invisible() -> Block<'a> {
         Block::bordered().border_style(Style::new().fg(Color::Black))
+    }
+
+    fn highlight_if(self, condition: bool) -> Self {
+        if condition {
+            self.border_style(Style::default().fg(Color::Yellow))
+        }else {
+            self
+        }
     }
 }

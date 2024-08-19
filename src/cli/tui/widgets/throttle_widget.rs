@@ -144,14 +144,14 @@ impl Widget for &mut ThrottleWidget<'_> {
         self.probability_text_area.set_cursor_visibility(self.interacting && self.selected == 0);
         self.probability_text_area.set_placeholder_text("0.1");
         self.probability_text_area.set_cursor_line_style(Style::default());
-        self.probability_text_area.set_block(Block::roundedt("Probability"));
+        self.probability_text_area.set_block(Block::roundedt("Probability").highlight_if(self.interacting && self.selected == 0));
         if !self.probability_text_area.lines()[0].is_empty() { style_textarea_based_on_validation(&mut self.probability_text_area, &self.probability); }
         self.probability_text_area.render(probability_area, buf);
 
         self.throttle_duration_text_area.set_cursor_visibility(self.interacting && self.selected == 1);
         self.throttle_duration_text_area.set_placeholder_text("30");
         self.throttle_duration_text_area.set_cursor_line_style(Style::default());
-        self.throttle_duration_text_area.set_block(Block::roundedt("Duration"));
+        self.throttle_duration_text_area.set_block(Block::roundedt("Duration").highlight_if(self.interacting && self.selected == 1));
         if !self.throttle_duration_text_area.lines()[0].is_empty() { style_textarea_based_on_validation(&mut self.throttle_duration_text_area, &self.throttle_duration); }
         self.throttle_duration_text_area.render(duration_area, buf);
 
@@ -159,7 +159,7 @@ impl Widget for &mut ThrottleWidget<'_> {
         if self.selected == 2 && self.interacting {
             drop_span = drop_span.add_modifier(Modifier::RAPID_BLINK);
         }
-        let drop_paragraph = Paragraph::new(drop_span).block(Block::roundedt("Drop"));
+        let drop_paragraph = Paragraph::new(drop_span).block(Block::roundedt("Drop").highlight_if(self.interacting && self.selected == 2));
         drop_paragraph.render(drop_area, buf);
 
         let [is_throttling_info, drop_count, _excess_info] = Layout::horizontal([

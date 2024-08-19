@@ -132,14 +132,14 @@ impl Widget for &mut DuplicateWidget<'_> {
         self.probability_text_area.set_cursor_visibility(self.interacting && self.selected == 0);
         self.probability_text_area.set_placeholder_text("0.1");
         self.probability_text_area.set_cursor_line_style(Style::default());
-        self.probability_text_area.set_block(Block::roundedt("Probability"));
+        self.probability_text_area.set_block(Block::roundedt("Probability").highlight_if(self.interacting && self.selected == 0));
         if !self.probability_text_area.lines()[0].is_empty() { style_textarea_based_on_validation(&mut self.probability_text_area, &self.probability); }
         self.probability_text_area.render(probability_area, buf);
 
         self.duplicate_count_text_area.set_cursor_visibility(self.interacting && self.selected == 1);
         self.duplicate_count_text_area.set_placeholder_text("1");
         self.duplicate_count_text_area.set_cursor_line_style(Style::default());
-        self.duplicate_count_text_area.set_block(Block::roundedt("Count"));
+        self.duplicate_count_text_area.set_block(Block::roundedt("Count").highlight_if(self.interacting && self.selected == 1));
         if !self.duplicate_count_text_area.lines()[0].is_empty() { style_textarea_based_on_validation(&mut self.duplicate_count_text_area, &self.duplicate_count); }
         self.duplicate_count_text_area.render(duration_area, buf);
 
