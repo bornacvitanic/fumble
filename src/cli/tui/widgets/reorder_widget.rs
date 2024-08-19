@@ -5,7 +5,10 @@ use ratatui::style::Style;
 use ratatui::widgets::{Block, Paragraph, Widget};
 use tui_textarea::TextArea;
 use crate::cli::tui::traits::{DisplayName, HandleInput, IsActive, KeyBindings};
-use crate::cli::tui::widgets::utils::{auto_hide_cursor, display_validity, ParseFromTextArea, RoundedBlockExt, TextAreaExt};
+use crate::cli::tui::widgets::utils::style_textarea_based_on_validation;
+use crate::cli::tui::widgets::utils::block_ext::RoundedBlockExt;
+use crate::cli::tui::widgets::utils::textarea_ext::{TextAreaExt};
+use crate::cli::tui::widgets::utils::textarea_parsing::ParseFromTextArea;
 use crate::network::modules::stats::reorder_stats::ReorderStats;
 use crate::network::types::probability::Probability;
 
@@ -129,18 +132,18 @@ impl Widget for &mut ReorderWidget<'_> {
             Constraint::Min(25),
         ]).areas(area.inner(Margin { horizontal: 1, vertical: 1 }));
 
-        auto_hide_cursor(&mut self.probability_text_area, self.interacting && self.selected == 0);
+        self.probability_text_area.set_cursor_visibility(self.interacting && self.selected == 0);
         self.probability_text_area.set_placeholder_text("0.1");
         self.probability_text_area.set_cursor_line_style(Style::default());
         self.probability_text_area.set_block(Block::roundedt("Probability"));
-        if !self.probability_text_area.lines()[0].is_empty() { display_validity(&mut self.probability_text_area, &self.probability); }
+        if !self.probability_text_area.lines()[0].is_empty() { style_textarea_based_on_validation(&mut self.probability_text_area, &self.probability); }
         self.probability_text_area.render(probability_area, buf);
 
-        auto_hide_cursor(&mut self.delay_duration_text_area, self.interacting);
+        self.delay_duration_text_area.set_cursor_visibility(self.interacting);
         self.delay_duration_text_area.set_placeholder_text("30");
         self.delay_duration_text_area.set_cursor_line_style(Style::default());
         self.delay_duration_text_area.set_block(Block::roundedt("Duration"));
-        if !self.delay_duration_text_area.lines()[0].is_empty() { display_validity(&mut self.delay_duration_text_area, &self.delay_duration); }
+        if !self.delay_duration_text_area.lines()[0].is_empty() { style_textarea_based_on_validation(&mut self.delay_duration_text_area, &self.delay_duration); }
         self.delay_duration_text_area.render(delay_duration_area, buf);
 
         let [reorder_percentage_info, delayed_count_info, _excess_info] = Layout::horizontal([

@@ -7,7 +7,10 @@ use ratatui::text::Line;
 use ratatui::widgets::{Block, Paragraph, Widget};
 use tui_textarea::TextArea;
 use crate::cli::tui::traits::{DisplayName, HandleInput, IsActive, KeyBindings};
-use crate::cli::tui::widgets::utils::{auto_hide_cursor, display_validity, ParseFromTextArea, RoundedBlockExt, TextAreaExt};
+use crate::cli::tui::widgets::utils::style_textarea_based_on_validation;
+use crate::cli::tui::widgets::utils::block_ext::RoundedBlockExt;
+use crate::cli::tui::widgets::utils::textarea_ext::{TextAreaExt};
+use crate::cli::tui::widgets::utils::textarea_parsing::ParseFromTextArea;
 use crate::network::modules::stats::tamper_stats::TamperStats;
 use crate::network::types::probability::Probability;
 
@@ -142,18 +145,18 @@ impl Widget for &mut TamperWidget<'_> {
             Constraint::Min(25),
         ]).areas(area.inner(Margin { horizontal: 1, vertical: 1 }));
 
-        auto_hide_cursor(&mut self.probability_text_area, self.interacting && self.selected == 0);
+        self.probability_text_area.set_cursor_visibility(self.interacting && self.selected == 0);
         self.probability_text_area.set_placeholder_text("0.1");
         self.probability_text_area.set_cursor_line_style(Style::default());
         self.probability_text_area.set_block(Block::roundedt("Probability"));
-        if !self.probability_text_area.lines()[0].is_empty() { display_validity(&mut self.probability_text_area, &self.probability); }
+        if !self.probability_text_area.lines()[0].is_empty() { style_textarea_based_on_validation(&mut self.probability_text_area, &self.probability); }
         self.probability_text_area.render(probability_area, buf);
 
-        auto_hide_cursor(&mut self.tamper_amount_text_area, self.interacting && self.selected == 1);
+        self.tamper_amount_text_area.set_cursor_visibility(self.interacting && self.selected == 1);
         self.tamper_amount_text_area.set_placeholder_text("0.1");
         self.tamper_amount_text_area.set_cursor_line_style(Style::default());
         self.tamper_amount_text_area.set_block(Block::roundedt("Amount"));
-        if !self.tamper_amount_text_area.lines()[0].is_empty() { display_validity(&mut self.probability_text_area, &self.tamper_amount); }
+        if !self.tamper_amount_text_area.lines()[0].is_empty() { style_textarea_based_on_validation(&mut self.probability_text_area, &self.tamper_amount); }
         self.tamper_amount_text_area.render(duration_area, buf);
 
         let mut checksum_span = Span::from(self.recalculate_checksums.to_string());

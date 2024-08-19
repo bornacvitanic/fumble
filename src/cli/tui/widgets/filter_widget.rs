@@ -4,7 +4,9 @@ use ratatui::layout::Rect;
 use ratatui::style::{Color, Style, Stylize};
 use ratatui::widgets::{Block, Widget};
 use tui_textarea::TextArea;
-use crate::cli::tui::widgets::utils::{auto_hide_cursor, display_validity, RoundedBlockExt, TextAreaExt};
+use crate::cli::tui::widgets::utils::style_textarea_based_on_validation;
+use crate::cli::tui::widgets::utils::block_ext::RoundedBlockExt;
+use crate::cli::tui::widgets::utils::textarea_ext::{TextAreaExt};
 use crate::network::utils::filter::{FilterError, validate_filter};
 
 pub struct FilterWidget<'a> {
@@ -56,9 +58,9 @@ impl Widget for &mut FilterWidget<'_> {
         if self.inputting {
             text_area_block = text_area_block.fg(Color::Yellow);
         }
-        auto_hide_cursor(&mut self.textarea, self.inputting);
+        self.textarea.set_cursor_visibility(self.inputting);
         self.textarea.set_cursor_line_style(Style::default());
-        display_validity(&mut self.textarea, &self.filter);
+        style_textarea_based_on_validation(&mut self.textarea, &self.filter);
         if self.filter.is_ok() { self.textarea.set_block(text_area_block); }
         self.textarea.render(area, buf);
     }

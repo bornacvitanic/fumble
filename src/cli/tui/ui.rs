@@ -5,7 +5,7 @@ use ratatui::widgets::{Block, Paragraph, Scrollbar, ScrollbarOrientation, Scroll
 use ratatui::prelude::{Color, Line, Style, Stylize};
 use crate::cli::tui::state::TuiState;
 use crate::cli::tui::traits::{DisplayName, IsActive, KeyBindings};
-use crate::cli::tui::widgets::utils::RoundedBlockExt;
+use crate::cli::tui::widgets::utils::block_ext::RoundedBlockExt;
 
 pub fn ui(frame: &mut Frame, state: &mut TuiState) {
     update_focus(state);

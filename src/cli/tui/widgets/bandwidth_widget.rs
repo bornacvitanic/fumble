@@ -1,11 +1,14 @@
 use ratatui::buffer::Buffer;
 use ratatui::crossterm::event::{KeyCode, KeyEvent, KeyEventKind};
 use ratatui::layout::{Constraint, Layout, Margin, Rect};
-use ratatui::style::{Style};
+use ratatui::style::Style;
 use ratatui::widgets::{Block, Paragraph, Widget};
 use tui_textarea::TextArea;
 use crate::cli::tui::traits::{DisplayName, HandleInput, IsActive, KeyBindings};
-use crate::cli::tui::widgets::utils::{auto_hide_cursor, display_validity, ParseFromTextArea, RoundedBlockExt, TextAreaExt};
+use crate::cli::tui::widgets::utils::style_textarea_based_on_validation;
+use crate::cli::tui::widgets::utils::block_ext::RoundedBlockExt;
+use crate::cli::tui::widgets::utils::textarea_ext::{TextAreaExt};
+use crate::cli::tui::widgets::utils::textarea_parsing::ParseFromTextArea;
 use crate::network::modules::stats::bandwidth_stats::BandwidthStats;
 
 pub struct BandwidthWidget<'a> {
@@ -95,11 +98,11 @@ impl Widget for &mut BandwidthWidget<'_> {
             Constraint::Min(25),
         ]).areas(area.inner(Margin { horizontal: 1, vertical: 1 }));
 
-        auto_hide_cursor(&mut self.limit_text_area, self.interacting);
+        self.limit_text_area.set_cursor_visibility(self.interacting);
         self.limit_text_area.set_placeholder_text("No limit");
         self.limit_text_area.set_cursor_line_style(Style::default());
         self.limit_text_area.set_block(Block::roundedt("KBps Limit"));
-        if !self.limit_text_area.lines()[0].is_empty() { display_validity(&mut self.limit_text_area, &self.limit); }
+        if !self.limit_text_area.lines()[0].is_empty() { style_textarea_based_on_validation(&mut self.limit_text_area, &self.limit); }
         self.limit_text_area.render(delay_duration_area, buf);
 
         let [throughput_info, storage_packet_count_info, _excess_info] = Layout::horizontal([
