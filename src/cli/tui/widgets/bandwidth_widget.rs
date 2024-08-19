@@ -5,15 +5,15 @@ use ratatui::style::{Style};
 use ratatui::widgets::{Block, Paragraph, Widget};
 use tui_textarea::TextArea;
 use crate::cli::tui::traits::{DisplayName, HandleInput, IsActive, KeyBindings};
-use crate::cli::tui::widgets::utils;
-use crate::cli::tui::widgets::utils::{auto_hide_cursor, RoundedBlockExt};
+use crate::cli::tui::widgets::utils::{auto_hide_cursor, display_validity, ParseFromTextArea, RoundedBlockExt, TextAreaExt};
 use crate::network::modules::stats::bandwidth_stats::BandwidthStats;
 
 pub struct BandwidthWidget<'a> {
     title: String,
-    pub limit: TextArea<'a>,
+    limit_text_area: TextArea<'a>,
     is_active: bool,
     interacting: bool,
+    pub limit: Result<usize, String>,
     throughput: f64,
     stored_packet_count: usize,
 }
@@ -22,12 +22,18 @@ impl BandwidthWidget<'_> {
     pub fn new() -> Self {
         BandwidthWidget {
             title: "Bandwidth".to_string(),
-            limit: TextArea::default(),
+            limit_text_area: TextArea::default(),
             is_active: false,
             interacting: false,
+            limit: Ok(0),
             throughput: 0.0,
             stored_packet_count: 0,
         }
+    }
+
+    pub fn set_limit(&mut self, limit: usize) {
+        self.limit_text_area.set_text(&limit.to_string());
+        self.limit =  Ok(limit);
     }
 
     pub(crate) fn update_data(&mut self, stats: &BandwidthStats) {
@@ -48,8 +54,8 @@ impl HandleInput for BandwidthWidget<'_> {
                 self.interacting = false;
                 return false;
             }
-            if self.limit.input(key) {
-                let _valid = utils::validate_usize(&mut self.limit);
+            if self.limit_text_area.input(key) {
+                self.limit =  usize::parse_from_text_area(&self.limit_text_area);
             }
             return true;
         }
@@ -85,15 +91,16 @@ impl Widget for &mut BandwidthWidget<'_> {
         Self: Sized
     {
         let [delay_duration_area, info_area] = Layout::horizontal([
-            Constraint::Max(10),
+            Constraint::Max(15),
             Constraint::Min(25),
         ]).areas(area.inner(Margin { horizontal: 1, vertical: 1 }));
 
-        auto_hide_cursor(&mut self.limit, self.interacting);
-        self.limit.set_placeholder_text("500");
-        self.limit.set_cursor_line_style(Style::default());
-        if self.limit.block() == None { self.limit.set_block(Block::roundedt("KBps Limit")); }
-        self.limit.render(delay_duration_area, buf);
+        auto_hide_cursor(&mut self.limit_text_area, self.interacting);
+        self.limit_text_area.set_placeholder_text("No limit");
+        self.limit_text_area.set_cursor_line_style(Style::default());
+        self.limit_text_area.set_block(Block::roundedt("KBps Limit"));
+        if !self.limit_text_area.lines()[0].is_empty() { display_validity(&mut self.limit_text_area, &self.limit); }
+        self.limit_text_area.render(delay_duration_area, buf);
 
         let [throughput_info, storage_packet_count_info, _excess_info] = Layout::horizontal([
             Constraint::Max(15),

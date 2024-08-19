@@ -108,7 +108,7 @@ fn init_tui_state_from_cli(state: &mut TuiState, cli: &Arc<Mutex<Cli>>) {
             }
             CustomWidget::Bandwidth(ref mut bandwidth_widget) => {
                 if let Some(bandwidth) = &cli.packet_manipulation_settings.bandwidth {
-                    bandwidth_widget.limit.set_text(&bandwidth.limit.to_string());
+                    bandwidth_widget.set_limit(bandwidth.limit);
                     bandwidth_widget.set_active(true);
                 }
             }
@@ -204,8 +204,10 @@ fn update_cli_from_tui_state(state: &mut TuiState, cli: &Arc<Mutex<Cli>>) {
             CustomWidget::Bandwidth(ref bandwidth_widget) => {
                 cli.packet_manipulation_settings.bandwidth = if !bandwidth_widget.is_active() { None }
                 else {
-                    usize::from_text_area(&bandwidth_widget.limit)
-                        .map(|limit| BandwidthOptions { limit })
+                    match bandwidth_widget.limit {
+                        Ok(limit) => { Some(BandwidthOptions { limit }) }
+                        Err(_) => { None }
+                    }
                 }
             }
         }

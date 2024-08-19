@@ -1,8 +1,8 @@
 use std::fmt::Display;
+use std::str::FromStr;
 use tui_textarea::TextArea;
 use ratatui::prelude::{Color, Modifier, Style};
 use ratatui::widgets::{Block, Borders, BorderType};
-use crate::network::types::probability::Probability;
 
 pub fn validate_probability(textarea: &mut TextArea) -> bool {
     let res = textarea.lines()[0].parse::<f64>();
@@ -74,7 +74,6 @@ where
         }
         Ok(_) => {
             textarea.set_style(Style::default());
-            textarea.remove_block();
             true
         }
     }
@@ -118,34 +117,23 @@ impl<'a> TextAreaExt for TextArea<'a> {
     }
 }
 
-pub trait ParseFromTextArea {
-    fn from_text_area(widget: &TextArea) -> Option<Self>
-    where
-        Self: Sized;
-}
-
-impl ParseFromTextArea for f64 {
+pub trait ParseFromTextArea: Sized {
     fn from_text_area(widget: &TextArea) -> Option<Self> {
-        widget.lines().first().and_then(|line| line.parse::<f64>().ok())
+        Self::parse_from_text_area(widget).ok()
     }
+
+    fn parse_from_text_area(widget: &TextArea) -> Result<Self, String>;
 }
 
-impl ParseFromTextArea for u64 {
-    fn from_text_area(widget: &TextArea) -> Option<Self> {
-        widget.lines().first().and_then(|line| line.parse::<u64>().ok())
-    }
-}
-
-impl ParseFromTextArea for usize {
-    fn from_text_area(widget: &TextArea) -> Option<Self> {
-        widget.lines().first().and_then(|line| line.parse::<usize>().ok())
-    }
-}
-
-impl ParseFromTextArea for Probability {
-    fn from_text_area(widget: &TextArea) -> Option<Self> {
-        widget.lines().first()
-            .and_then(|line| line.parse::<f64>().ok())
-            .and_then(|num| Probability::new(num).ok())
+impl<T> ParseFromTextArea for T
+where
+    <T as FromStr>::Err: Display, T: FromStr
+{
+    fn parse_from_text_area(widget: &TextArea) -> Result<Self, String> {
+        widget
+            .lines()
+            .first()
+            .ok_or_else(|| "No input found".to_string())
+            .and_then(|line| line.parse::<T>().map_err(|e| format!("Failed to parse input: {}", e)))
     }
 }
