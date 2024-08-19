@@ -1,4 +1,4 @@
-use log::{Level, LevelFilter};
+use log::{debug, error, info, Level, LevelFilter, trace, warn};
 use ratatui::buffer::Buffer;
 use ratatui::crossterm::event::{KeyCode, KeyEvent};
 use ratatui::layout::Rect;
@@ -43,18 +43,23 @@ impl LogsWidget {
         match key.code {
             KeyCode::Char('t') => {
                 set_logger_level_filter(LevelFilter::Trace);
+                trace!("Logging level set to trace.")
             }
             KeyCode::Char('d') => {
                 set_logger_level_filter(LevelFilter::Debug);
+                debug!("Logging level set to debug.")
             }
             KeyCode::Char('i') => {
                 set_logger_level_filter(LevelFilter::Info);
+                info!("Logging level set to info.")
             }
             KeyCode::Char('w') => {
                 set_logger_level_filter(LevelFilter::Warn);
+                warn!("Logging level set to warning.")
             }
             KeyCode::Char('e') => {
                 set_logger_level_filter(LevelFilter::Error);
+                error!("Logging level set to error.")
             }
             _ => {}
         }
