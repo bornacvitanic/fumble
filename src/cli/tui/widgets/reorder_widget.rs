@@ -65,7 +65,7 @@ impl HandleInput for ReorderWidget<'_> {
                 return true;
             }
         } else {
-            if key.code == KeyCode::Esc {
+            if let KeyCode::Enter | KeyCode::Esc = key.code {
                 self.interacting = false;
                 return false;
             }
@@ -139,7 +139,7 @@ impl Widget for &mut ReorderWidget<'_> {
         if !self.probability_text_area.lines()[0].is_empty() { style_textarea_based_on_validation(&mut self.probability_text_area, &self.probability); }
         self.probability_text_area.render(probability_area, buf);
 
-        self.delay_duration_text_area.set_cursor_visibility(self.interacting);
+        self.delay_duration_text_area.set_cursor_visibility(self.interacting && self.selected == 1);
         self.delay_duration_text_area.set_placeholder_text("30");
         self.delay_duration_text_area.set_cursor_line_style(Style::default());
         self.delay_duration_text_area.set_block(Block::roundedt("Duration"));

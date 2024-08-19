@@ -68,7 +68,7 @@ impl HandleInput for ThrottleWidget<'_> {
                 return true;
             }
         } else {
-            if key.code == KeyCode::Esc {
+            if let KeyCode::Enter | KeyCode::Esc = key.code {
                 self.interacting = false;
                 return false;
             }

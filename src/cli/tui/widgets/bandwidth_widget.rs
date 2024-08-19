@@ -53,7 +53,7 @@ impl HandleInput for BandwidthWidget<'_> {
                 return true;
             }
         } else {
-            if key.code == KeyCode::Esc {
+            if let KeyCode::Enter | KeyCode::Esc = key.code {
                 self.interacting = false;
                 return false;
             }
