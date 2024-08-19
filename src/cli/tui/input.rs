@@ -12,13 +12,13 @@ pub fn handle_input(state: &mut TuiState) -> io::Result<bool> {
                 return Ok(false);
             }
 
-            // Handle section input
-            if handle_section_input(state, key) {
+            // Handle widget input
+            if handle_widget_input(state, key) {
                 return Ok(false);
             }
 
-            // Handle widget input
-            if handle_widget_input(state, key) {
+            // Handle section input
+            if handle_section_input(state, key) {
                 return Ok(false);
             }
 

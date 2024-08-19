@@ -13,6 +13,7 @@ pub struct FilterWidget<'a> {
     textarea: TextArea<'a>,
     pub inputting: bool,
     pub filter: Result<String, FilterError>,
+    validation_filter: Result<String, FilterError>,
 }
 
 impl FilterWidget<'_> {
@@ -21,11 +22,13 @@ impl FilterWidget<'_> {
             textarea: TextArea::default(),
             inputting: false,
             filter: Err(FilterError::InvalidSyntax("No filter provided".to_string())),
+            validation_filter: Err(FilterError::InvalidSyntax("No filter provided".to_string())),
         }
     }
 
     pub fn set_filter(&mut self, filter: &str) {
         self.filter = validate_filter(filter);
+        self.validation_filter = self.filter.clone();
         if self.filter.is_ok() {
             self.textarea.set_text(filter)
         }
@@ -37,13 +40,26 @@ impl FilterWidget<'_> {
                 self.inputting = true;
             }
         } else {
-            if let KeyCode::Enter | KeyCode::Esc = key.code {
+            if let KeyCode::Esc = key.code {
                 self.inputting = false;
+                if let Ok(filter) = &self.filter {
+                    self.set_filter(&filter.to_string());
+                }
+
+                return;
+            }
+            if let KeyCode::Enter = key.code {
+                if let Ok(filter) = &self.validation_filter {
+                    self.set_filter(&filter.to_string());
+                }
+                if self.validation_filter.is_ok() {
+                    self.inputting = false;
+                }
 
                 return;
             }
             if self.textarea.input(key) {
-                self.filter = validate_filter(&self.textarea.lines()[0]);
+                self.validation_filter = validate_filter(&self.textarea.lines()[0]);
             }
         }
     }
@@ -54,14 +70,14 @@ impl Widget for &mut FilterWidget<'_> {
     where
         Self: Sized
     {
+        self.textarea.set_cursor_visibility(self.inputting);
+        self.textarea.set_cursor_line_style(Style::default());
         let mut text_area_block = Block::roundedt("[F]-Filter");
         if self.inputting {
             text_area_block = text_area_block.fg(Color::Yellow);
         }
-        self.textarea.set_cursor_visibility(self.inputting);
-        self.textarea.set_cursor_line_style(Style::default());
-        style_textarea_based_on_validation(&mut self.textarea, &self.filter);
-        if self.filter.is_ok() { self.textarea.set_block(text_area_block); }
+        self.textarea.set_block(text_area_block);
+        style_textarea_based_on_validation(&mut self.textarea, &self.validation_filter);
         self.textarea.render(area, buf);
     }
 }

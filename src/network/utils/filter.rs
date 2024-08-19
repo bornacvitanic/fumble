@@ -4,7 +4,7 @@ use windivert::layer::NetworkLayer;
 use windivert::prelude::WinDivertFlags;
 use windivert::{CloseAction, WinDivert};
 
-#[derive(Debug, Error)]
+#[derive(Debug, Error, Clone)]
 pub enum FilterError {
     #[error("Invalid filter syntax: {0}")]
     InvalidSyntax(String),
