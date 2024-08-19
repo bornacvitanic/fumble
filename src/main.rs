@@ -69,17 +69,19 @@ fn main() -> Result<(), WinDivertError> {
     setup_ctrlc_handler(running.clone(), shutdown_triggered.clone());
 
     let (packet_sender, packet_receiver) = mpsc::channel();
-    let traffic_filter = cli.filter.clone().unwrap_or_default();
+
+    let cli_thread_safe = Arc::new(Mutex::new(cli));
 
     // Start the packet receiving thread
+    let cli_for_reading = cli_thread_safe.clone();
     let packet_receiver_handle = thread::spawn({
         let running = running.clone();
-        move || receive_packets(traffic_filter, packet_sender, running)
+        move || receive_packets(packet_sender, running, cli_for_reading)
     });
 
     // Start packet processing thread
     let statistics = initialize_statistics();
-    let cli_thread_safe = Arc::new(Mutex::new(cli));
+
 
     // Clone the Arc for the packet processing thread
     let cli_for_processing = cli_thread_safe.clone();

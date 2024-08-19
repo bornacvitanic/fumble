@@ -29,7 +29,7 @@ pub fn start_packet_processing(
     statistics: Arc<RwLock<PacketProcessingStatistics>>,
 ) -> Result<(), WinDivertError> {
     let wd = WinDivert::<NetworkLayer>::network(
-        cli.lock().unwrap().filter.clone().unwrap_or_default(),
+        "false",
         0,
         WinDivertFlags::set_send_only(WinDivertFlags::new()),
     )
@@ -37,7 +37,7 @@ pub fn start_packet_processing(
             error!("Failed to initialize WinDiver: {}", e);
             e
         })?;
-    
+
     let log_interval = Duration::from_secs(5);
     let mut last_log_time = Instant::now();
 

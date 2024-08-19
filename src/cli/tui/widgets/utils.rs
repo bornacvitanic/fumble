@@ -1,3 +1,4 @@
+use std::fmt::Display;
 use tui_textarea::TextArea;
 use ratatui::prelude::{Color, Modifier, Style};
 use ratatui::widgets::{Block, Borders, BorderType};
@@ -44,6 +45,29 @@ pub(crate) fn validate_usize(textarea: &mut TextArea) -> bool {
                 Block::default()
                     .borders(Borders::ALL)
                     .border_style(Color::LightRed)
+                    .title(format!("ERROR: {}", err)),
+            );
+            false
+        }
+        Ok(_) => {
+            textarea.set_style(Style::default());
+            textarea.remove_block();
+            true
+        }
+    }
+}
+
+pub(crate) fn display_validity<T, E>(textarea: &mut TextArea, res: &Result<T, E>) -> bool
+where
+    E: Display,
+{
+    match res {
+        Err(err) => {
+            textarea.set_style(Style::default().fg(Color::LightRed));
+            textarea.set_block(
+                Block::default()
+                    .borders(Borders::ALL)
+                    .border_style(Style::default().fg(Color::LightRed))
                     .title(format!("ERROR: {}", err)),
             );
             false

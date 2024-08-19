@@ -59,7 +59,7 @@ fn init_tui_state_from_cli(state: &mut TuiState, cli: &Arc<Mutex<Cli>>) {
     };
 
     if let Some(filter) = &cli.filter {
-        state.filter_widget.textarea.set_text(filter);
+        state.filter_widget.set_filter(filter);
     }
     for section in state.sections.iter_mut() {
         match section {
@@ -124,6 +124,10 @@ fn update_cli_from_tui_state(state: &mut TuiState, cli: &Arc<Mutex<Cli>>) {
             return;
         }
     };
+
+    if let Ok(filter) = &state.filter_widget.filter {
+        cli.filter = Some(filter.to_string());
+    }
 
     for section in state.sections.iter_mut() {
         match section {
