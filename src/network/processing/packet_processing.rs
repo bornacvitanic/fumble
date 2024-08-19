@@ -31,14 +31,13 @@ pub fn start_packet_processing(
     let wd = WinDivert::<NetworkLayer>::network(
         cli.lock().unwrap().filter.clone().unwrap_or_default(),
         0,
-        WinDivertFlags::new(),
+        WinDivertFlags::set_send_only(WinDivertFlags::new()),
     )
         .map_err(|e| {
             error!("Failed to initialize WinDiver: {}", e);
             e
         })?;
-
-
+    
     let log_interval = Duration::from_secs(5);
     let mut last_log_time = Instant::now();
 
