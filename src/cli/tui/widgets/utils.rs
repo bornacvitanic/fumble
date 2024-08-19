@@ -36,27 +36,6 @@ pub fn validate_probability(textarea: &mut TextArea) -> bool {
     }
 }
 
-pub(crate) fn validate_usize(textarea: &mut TextArea) -> bool {
-    let res = textarea.lines()[0].parse::<usize>();
-    match res {
-        Err(err) => {
-            textarea.set_style(Style::default().fg(Color::LightRed));
-            textarea.set_block(
-                Block::default()
-                    .borders(Borders::ALL)
-                    .border_style(Color::LightRed)
-                    .title(format!("ERROR: {}", err)),
-            );
-            false
-        }
-        Ok(_) => {
-            textarea.set_style(Style::default());
-            textarea.remove_block();
-            true
-        }
-    }
-}
-
 pub(crate) fn display_validity<T, E>(textarea: &mut TextArea, res: &Result<T, E>) -> bool
 where
     E: Display,
