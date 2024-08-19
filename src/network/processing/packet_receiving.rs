@@ -12,7 +12,7 @@ pub fn receive_packets(
     packet_sender: mpsc::Sender<PacketData<'_>>,
     running: Arc<AtomicBool>,
 ) -> Result<(), WinDivertError> {
-    let wd = WinDivert::<NetworkLayer>::network(traffic_filter, 0, WinDivertFlags::new()).map_err(
+    let wd = WinDivert::<NetworkLayer>::network(traffic_filter, 1, WinDivertFlags::new()).map_err(
         |e| {
             error!("Failed to initialize WinDivert: {}", e);
             e
