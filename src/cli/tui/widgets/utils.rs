@@ -4,38 +4,6 @@ use tui_textarea::TextArea;
 use ratatui::prelude::{Color, Modifier, Style};
 use ratatui::widgets::{Block, Borders, BorderType};
 
-pub fn validate_probability(textarea: &mut TextArea) -> bool {
-    let res = textarea.lines()[0].parse::<f64>();
-    match res {
-        Err(err) => {
-            textarea.set_style(Style::default().fg(Color::LightRed));
-            textarea.set_block(
-                Block::default()
-                    .borders(Borders::ALL)
-                    .border_style(Color::LightRed)
-                    .title(format!("ERROR: {}", err)),
-            );
-            false
-        }
-        Ok(num) => {
-            if num < 0f64 || num > 1.0 {
-                textarea.set_style(Style::default().fg(Color::LightRed));
-                textarea.set_block(
-                    Block::default()
-                        .borders(Borders::ALL)
-                        .border_style(Color::LightRed)
-                        .title(format!("ERROR: {}", "Not a valid probability (0-1)")),
-                );
-                false
-            } else {
-                textarea.set_style(Style::default());
-                textarea.remove_block();
-                true
-            }
-        }
-    }
-}
-
 pub(crate) fn display_validity<T, E>(textarea: &mut TextArea, res: &Result<T, E>) -> bool
 where
     E: Display,
