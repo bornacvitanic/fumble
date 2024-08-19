@@ -5,15 +5,16 @@ use ratatui::style::Style;
 use ratatui::widgets::{Block, Paragraph, Widget};
 use tui_textarea::TextArea;
 use crate::cli::tui::traits::{DisplayName, HandleInput, IsActive, KeyBindings};
-use crate::cli::tui::widgets::utils::{auto_hide_cursor, RoundedBlockExt};
-use crate::cli::tui::widgets::utils;
+use crate::cli::tui::widgets::utils::{auto_hide_cursor, display_validity, ParseFromTextArea, RoundedBlockExt, TextAreaExt};
 use crate::network::modules::stats::drop_stats::DropStats;
+use crate::network::types::probability::Probability;
 
 pub struct DropWidget<'a> {
     title: String,
-    pub probability_text_area: TextArea<'a>,
+    probability_text_area: TextArea<'a>,
     is_active: bool,
     interacting: bool,
+    pub probability: Result<Probability, String>,
     drop_rate: f64,
     dropped_packets: usize,
     total_packets: usize,
@@ -26,10 +27,16 @@ impl DropWidget<'_> {
             probability_text_area: TextArea::default(),
             is_active: false,
             interacting: false,
+            probability: Ok(Probability::default()),
             drop_rate: 0.0,
             dropped_packets: 0,
             total_packets: 0
         }
+    }
+
+    pub fn set_probability(&mut self, probability: Probability) {
+        self.probability_text_area.set_text(&probability.to_string());
+        self.probability = Ok(probability);
     }
 
     pub fn update_data(&mut self, stats: &DropStats) {
@@ -52,7 +59,7 @@ impl HandleInput for DropWidget<'_> {
                 return false;
             }
             if self.probability_text_area.input(key) {
-                let _valid = utils::validate_probability(&mut self.probability_text_area);
+                self.probability = Probability::parse_from_text_area(&self.probability_text_area);
             }
             return true;
         }
@@ -95,7 +102,8 @@ impl Widget for &mut DropWidget<'_> {
         auto_hide_cursor(&mut self.probability_text_area, self.interacting);
         self.probability_text_area.set_placeholder_text("0.1");
         self.probability_text_area.set_cursor_line_style(Style::default());
-        if self.probability_text_area.block() == None { self.probability_text_area.set_block(Block::roundedt("Probability")); }
+        self.probability_text_area.set_block(Block::roundedt("Probability"));
+        if !self.probability_text_area.lines()[0].is_empty() {display_validity(&mut self.probability_text_area, &self.probability); }
         self.probability_text_area.render(drop_probability_area, buf);
 
         let [drop_rate_info, drop_count_info, _excess_info] = Layout::horizontal([

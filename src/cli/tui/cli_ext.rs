@@ -65,7 +65,7 @@ fn init_tui_state_from_cli(state: &mut TuiState, cli: &Arc<Mutex<Cli>>) {
         match section {
             CustomWidget::Drop(ref mut drop_widget) => {
                 if let Some(drop) = &cli.packet_manipulation_settings.drop {
-                    drop_widget.probability_text_area.set_text(&drop.probability.value().to_string());
+                    drop_widget.set_probability(drop.probability);
                     drop_widget.set_active(true);
                 }
             }
@@ -134,8 +134,10 @@ fn update_cli_from_tui_state(state: &mut TuiState, cli: &Arc<Mutex<Cli>>) {
             CustomWidget::Drop(ref mut drop_widget) => {
                 cli.packet_manipulation_settings.drop = if !drop_widget.is_active() { None }
                 else {
-                    Probability::from_text_area(&drop_widget.probability_text_area)
-                        .map(|probability| DropOptions { probability })
+                    match drop_widget.probability {
+                        Ok(probability) => { Some(DropOptions { probability }) }
+                        Err(_) => { None }
+                    }
                 }
             }
             CustomWidget::Delay(ref mut delay_widget) => {
