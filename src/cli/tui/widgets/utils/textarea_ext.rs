@@ -9,6 +9,7 @@ pub trait TextAreaExt {
 impl<'a> TextAreaExt for TextArea<'a> {
     fn set_text(&mut self, text: &str) {
         self.set_yank_text(text);
+        self.select_all();
         self.paste();
     }
 
