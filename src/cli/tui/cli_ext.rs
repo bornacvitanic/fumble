@@ -85,7 +85,8 @@ fn init_tui_state_from_cli(state: &mut TuiState, cli: &Arc<Mutex<Cli>>) {
             }
             CustomWidget::Reorder(ref mut reorder_widget) => {
                 if let Some(reorder) = &cli.packet_manipulation_settings.reorder {
-                    reorder_widget.delay_duration.set_text(&reorder.max_delay.to_string());
+                    reorder_widget.set_probability(reorder.probability);
+                    reorder_widget.set_delay_duration(reorder.max_delay);
                     reorder_widget.set_active(true);
                 }
             }
@@ -167,12 +168,12 @@ fn update_cli_from_tui_state(state: &mut TuiState, cli: &Arc<Mutex<Cli>>) {
                 cli.packet_manipulation_settings.reorder = if !reorder_widget.is_active() {
                     None
                 } else {
-                    Probability::from_text_area(&reorder_widget.probability_text_area)
+                    reorder_widget.probability.as_ref().ok()
                         .and_then(|probability| {
-                            u64::from_text_area(&reorder_widget.delay_duration)
+                            reorder_widget.delay_duration.as_ref().ok()
                                 .map(|max_delay| ReorderOptions {
-                                    probability,
-                                    max_delay,
+                                    probability: probability.clone(),
+                                    max_delay: max_delay.clone(),
                                 })
                         })
                 }

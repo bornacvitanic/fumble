@@ -5,16 +5,18 @@ use ratatui::style::Style;
 use ratatui::widgets::{Block, Paragraph, Widget};
 use tui_textarea::TextArea;
 use crate::cli::tui::traits::{DisplayName, HandleInput, IsActive, KeyBindings};
-use crate::cli::tui::widgets::utils::{auto_hide_cursor, RoundedBlockExt};
-use crate::cli::tui::widgets::utils;
+use crate::cli::tui::widgets::utils::{auto_hide_cursor, display_validity, ParseFromTextArea, RoundedBlockExt, TextAreaExt};
 use crate::network::modules::stats::reorder_stats::ReorderStats;
+use crate::network::types::probability::Probability;
 
 pub struct ReorderWidget<'a> {
     title: String,
-    pub probability_text_area: TextArea<'a>,
-    pub delay_duration: TextArea<'a>,
+    probability_text_area: TextArea<'a>,
+    delay_duration_text_area: TextArea<'a>,
     is_active: bool,
     interacting: bool,
+    pub probability: Result<Probability, String>,
+    pub delay_duration: Result<u64, String>,
     selected: usize,
     reorder_rate: f64,
     delayed_packets: usize,
@@ -25,13 +27,25 @@ impl ReorderWidget<'_> {
         ReorderWidget {
             title: "Reorder".to_string(),
             probability_text_area: TextArea::default(),
-            delay_duration: TextArea::default(),
+            delay_duration_text_area: TextArea::default(),
             is_active: false,
             interacting: false,
+            probability: Ok(Probability::default()),
+            delay_duration: Ok(0),
             selected: 0,
             reorder_rate: 0.0,
             delayed_packets: 0,
         }
+    }
+
+    pub fn set_probability(&mut self, probability: Probability) {
+        self.probability_text_area.set_text(&probability.to_string());
+        self.probability = Ok(probability);
+    }
+
+    pub fn set_delay_duration(&mut self, delay_duration_ms: u64) {
+        self.delay_duration_text_area.set_text(&delay_duration_ms.to_string());
+        self.delay_duration = Ok(delay_duration_ms);
     }
 
     pub(crate) fn update_data(&mut self, stats: &ReorderStats) {
@@ -65,12 +79,12 @@ impl HandleInput for ReorderWidget<'_> {
             match self.selected {
                 0 => {
                     if self.probability_text_area.input(key) {
-                        let _valid = utils::validate_probability(&mut self.probability_text_area);
+                        self.probability = Probability::parse_from_text_area(&self.probability_text_area);
                     }
                 }
                 1 => {
-                    if self.delay_duration.input(key) {
-                        let _valid = utils::validate_usize(&mut self.delay_duration);
+                    if self.delay_duration_text_area.input(key) {
+                        self.delay_duration = u64::parse_from_text_area(&self.delay_duration_text_area);
                     }
                 }
                 _ => {}
@@ -118,14 +132,16 @@ impl Widget for &mut ReorderWidget<'_> {
         auto_hide_cursor(&mut self.probability_text_area, self.interacting && self.selected == 0);
         self.probability_text_area.set_placeholder_text("0.1");
         self.probability_text_area.set_cursor_line_style(Style::default());
-        if self.probability_text_area.block() == None { self.probability_text_area.set_block(Block::roundedt("Probability")); }
+        self.probability_text_area.set_block(Block::roundedt("Probability"));
+        if !self.probability_text_area.lines()[0].is_empty() { display_validity(&mut self.probability_text_area, &self.probability); }
         self.probability_text_area.render(probability_area, buf);
 
-        auto_hide_cursor(&mut self.delay_duration, self.interacting);
-        self.delay_duration.set_placeholder_text("30");
-        self.delay_duration.set_cursor_line_style(Style::default());
-        if self.delay_duration.block() == None { self.delay_duration.set_block(Block::roundedt("Duration")); }
-        self.delay_duration.render(delay_duration_area, buf);
+        auto_hide_cursor(&mut self.delay_duration_text_area, self.interacting);
+        self.delay_duration_text_area.set_placeholder_text("30");
+        self.delay_duration_text_area.set_cursor_line_style(Style::default());
+        self.delay_duration_text_area.set_block(Block::roundedt("Duration"));
+        if !self.delay_duration_text_area.lines()[0].is_empty() { display_validity(&mut self.delay_duration_text_area, &self.delay_duration); }
+        self.delay_duration_text_area.render(delay_duration_area, buf);
 
         let [reorder_percentage_info, delayed_count_info, _excess_info] = Layout::horizontal([
             Constraint::Max(10),
