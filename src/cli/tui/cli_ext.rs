@@ -101,8 +101,8 @@ fn init_tui_state_from_cli(state: &mut TuiState, cli: &Arc<Mutex<Cli>>) {
             }
             CustomWidget::Duplicate(ref mut duplicate_widget) => {
                 if let Some(duplicate) = &cli.packet_manipulation_settings.duplicate {
-                    duplicate_widget.probability_text_area.set_text(&duplicate.probability.to_string());
-                    duplicate_widget.duplicate_count.set_text(&duplicate.count.to_string());
+                    duplicate_widget.set_probability(duplicate.probability);
+                    duplicate_widget.set_duplicate_count(duplicate.count);
                     duplicate_widget.set_active(true);
                 }
             }
@@ -195,12 +195,12 @@ fn update_cli_from_tui_state(state: &mut TuiState, cli: &Arc<Mutex<Cli>>) {
             CustomWidget::Duplicate(ref duplicate_widget) => {
                 cli.packet_manipulation_settings.duplicate = if !duplicate_widget.is_active() { None }
                 else {
-                    Probability::from_text_area(&duplicate_widget.probability_text_area)
+                    duplicate_widget.probability.as_ref().ok()
                         .and_then(|probability| {
-                            usize::from_text_area(&duplicate_widget.duplicate_count)
+                            duplicate_widget.duplicate_count.as_ref().ok()
                                 .map(|count| DuplicateOptions {
-                                    probability,
-                                    count,
+                                    probability: probability.clone(),
+                                    count: count.clone(),
                                 })
                         })
                 }

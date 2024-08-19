@@ -5,16 +5,18 @@ use ratatui::style::Style;
 use ratatui::widgets::{Block, Paragraph, Widget};
 use tui_textarea::TextArea;
 use crate::cli::tui::traits::{DisplayName, HandleInput, IsActive, KeyBindings};
-use crate::cli::tui::widgets::utils::{auto_hide_cursor, RoundedBlockExt};
-use crate::cli::tui::widgets::utils;
+use crate::cli::tui::widgets::utils::{auto_hide_cursor, display_validity, ParseFromTextArea, RoundedBlockExt, TextAreaExt};
 use crate::network::modules::stats::duplicate_stats::DuplicateStats;
+use crate::network::types::probability::Probability;
 
 pub struct DuplicateWidget<'a> {
     title: String,
-    pub probability_text_area: TextArea<'a>,
-    pub duplicate_count: TextArea<'a>,
+    probability_text_area: TextArea<'a>,
+    duplicate_count_text_area: TextArea<'a>,
     is_active: bool,
     interacting: bool,
+    pub probability: Result<Probability, String>,
+    pub duplicate_count: Result<usize, String>,
     selected: usize,
     duplication_multiplier: f64
 }
@@ -24,12 +26,24 @@ impl DuplicateWidget<'_> {
         DuplicateWidget {
             title: "Duplicate".to_string(),
             probability_text_area: TextArea::default(),
-            duplicate_count: TextArea::default(),
+            duplicate_count_text_area: TextArea::default(),
             is_active: false,
             interacting: false,
+            probability: Ok(Probability::default()),
+            duplicate_count: Ok(1),
             selected: 0,
             duplication_multiplier: 1.0,
         }
+    }
+
+    pub fn set_probability(&mut self, probability: Probability) {
+        self.probability_text_area.set_text(&probability.to_string());
+        self.probability = Ok(probability);
+    }
+
+    pub fn set_duplicate_count(&mut self, duplicate_count: usize) {
+        self.duplicate_count_text_area.set_text(&duplicate_count.to_string());
+        self.duplicate_count = Ok(duplicate_count);
     }
 
     pub(crate) fn update_data(&mut self, stats: &DuplicateStats) {
@@ -62,12 +76,12 @@ impl HandleInput for DuplicateWidget<'_> {
             match self.selected {
                 0 => {
                     if self.probability_text_area.input(key) {
-                        let _valid = utils::validate_probability(&mut self.probability_text_area);
+                        self.probability = Probability::parse_from_text_area(&self.probability_text_area);
                     }
                 }
                 1 => {
-                    if self.duplicate_count.input(key) {
-                        let _valid = utils::validate_usize(&mut self.duplicate_count);
+                    if self.duplicate_count_text_area.input(key) {
+                        self.duplicate_count = usize::parse_from_text_area(&self.duplicate_count_text_area);
                     }
                 }
                 _ => {}
@@ -115,14 +129,16 @@ impl Widget for &mut DuplicateWidget<'_> {
         auto_hide_cursor(&mut self.probability_text_area, self.interacting && self.selected == 0);
         self.probability_text_area.set_placeholder_text("0.1");
         self.probability_text_area.set_cursor_line_style(Style::default());
-        if self.probability_text_area.block() == None { self.probability_text_area.set_block(Block::roundedt("Probability")); }
+        self.probability_text_area.set_block(Block::roundedt("Probability"));
+        if !self.probability_text_area.lines()[0].is_empty() { display_validity(&mut self.probability_text_area, &self.probability); }
         self.probability_text_area.render(probability_area, buf);
 
-        auto_hide_cursor(&mut self.duplicate_count, self.interacting && self.selected == 1);
-        self.duplicate_count.set_placeholder_text("1");
-        self.duplicate_count.set_cursor_line_style(Style::default());
-        if self.duplicate_count.block() == None { self.duplicate_count.set_block(Block::roundedt("Count")); }
-        self.duplicate_count.render(duration_area, buf);
+        auto_hide_cursor(&mut self.duplicate_count_text_area, self.interacting && self.selected == 1);
+        self.duplicate_count_text_area.set_placeholder_text("1");
+        self.duplicate_count_text_area.set_cursor_line_style(Style::default());
+        self.duplicate_count_text_area.set_block(Block::roundedt("Count"));
+        if !self.duplicate_count_text_area.lines()[0].is_empty() { display_validity(&mut self.duplicate_count_text_area, &self.duplicate_count); }
+        self.duplicate_count_text_area.render(duration_area, buf);
 
         let [duplication_multiplier_info, _excess_info] = Layout::horizontal([
             Constraint::Max(20),
