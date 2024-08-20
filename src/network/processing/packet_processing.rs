@@ -38,11 +38,11 @@ pub fn start_packet_processing(
             e
         })?;
 
-    let log_interval = Duration::from_secs(5);
+    let log_interval = Duration::from_secs(2);
     let mut last_log_time = Instant::now();
 
-    let mut total_packets = 0;
-    let mut sent_packets = 0;
+    let mut received_packet_count = 0;
+    let mut sent_packet_count = 0;
 
     let mut state = PacketProcessingState {
         delay_storage: VecDeque::new(),
@@ -60,7 +60,7 @@ pub fn start_packet_processing(
         // Try to receive packets from the channel
         while let Ok(packet_data) = packet_receiver.try_recv() {
             packets.push(packet_data);
-            total_packets += 1;
+            received_packet_count += 1;
         }
 
         if let Ok(cli) = cli.lock() {
@@ -72,12 +72,14 @@ pub fn start_packet_processing(
                 error!("Failed to send packet: {}", e);
                 e
             })?;
-            sent_packets += 1;
+            sent_packet_count += 1;
         }
 
         // Periodically log the statistics
         if last_log_time.elapsed() >= log_interval {
-            log_statistics(total_packets, sent_packets);
+            log_statistics(received_packet_count, sent_packet_count);
+            received_packet_count = 0;
+            sent_packet_count = 0;
             last_log_time = Instant::now(); // Reset the timer
         }
     }
