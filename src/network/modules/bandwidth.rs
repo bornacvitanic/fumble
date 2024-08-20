@@ -73,7 +73,7 @@ fn remove_packet_from_buffer<'a>(
 ) -> Option<PacketData<'a>> {
     if let Some(packet) = buffer.pop_front() {
         *total_size -= packet.packet.data.len();
-        stats.storage_packet_count -= 1;
+        stats.storage_packet_count = stats.storage_packet_count.saturating_sub(1);
         Some(packet)
     } else {
         None
