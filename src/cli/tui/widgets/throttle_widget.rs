@@ -72,12 +72,12 @@ impl HandleInput for ThrottleWidget<'_> {
                 self.interacting = false;
                 return false;
             }
-            if key.code == KeyCode::Right {
+            if key.code == KeyCode::Down {
                 if self.selected < 2 {
                     self.selected += 1;
                 }
             }
-            if key.code == KeyCode::Left {
+            if key.code == KeyCode::Up {
                 if self.selected > 0 {
                     self.selected -= 1;
                 }
@@ -115,7 +115,7 @@ impl DisplayName for ThrottleWidget<'_> {
 
 impl KeyBindings for ThrottleWidget<'_> {
     fn key_bindings(&self) -> String {
-        "Exit: Esc | Navigation: Left and Right".to_string()
+        "Exit: Esc | Navigation: Up and Down".to_string()
     }
 }
 

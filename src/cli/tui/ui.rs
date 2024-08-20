@@ -141,5 +141,5 @@ fn render_keybindings(frame: &mut Frame, state: &mut TuiState, key_bind_area: Re
     if let Some(index) = state.interacting {
         keybinds = (&mut state.sections[index]).key_bindings();
     }
-    frame.render_widget(Paragraph::new(keybinds).style(Color::Blue), key_bind_area)
+    frame.render_widget(Paragraph::new(keybinds).style(Color::Cyan), key_bind_area)
 }
