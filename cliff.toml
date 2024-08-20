@@ -54,7 +54,7 @@ commit_parsers = [
   { message = "(?i)\\brename(d|s)?\\b", group = "Renames" },
   { message = "(?i)^style|(?i)\\b(clean|clippy|fmt)\\b", group = "Styling" },
   { message = "(?i)^chore|(?i)^ci", group = "Miscellaneous Tasks" },
-  { message = "(?i)^update", group = "Updates" },
+  { message = "(?i)^update|(?i)^improve", group = "Updates" },
 ]
 # protect breaking changes from being skipped due to matching a skipping commit_parser
 protect_breaking_commits = false

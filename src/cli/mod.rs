@@ -5,6 +5,7 @@ use clap::Parser;
 
 pub mod config;
 pub mod settings;
+pub mod tui;
 pub mod utils;
 
 #[derive(Parser, Debug)]
@@ -28,4 +29,7 @@ pub struct Cli {
 
     #[command(flatten)]
     pub packet_manipulation_settings: PacketManipulationSettings,
+
+    #[arg(short, long, default_value_t = false)]
+    pub tui: bool,
 }

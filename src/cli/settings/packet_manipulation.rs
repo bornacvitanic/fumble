@@ -5,6 +5,7 @@ use crate::cli::settings::duplicate::DuplicateOptions;
 use crate::cli::settings::reorder::ReorderOptions;
 use crate::cli::settings::tamper::TamperOptions;
 use crate::cli::settings::throttle::ThrottleOptions;
+use crate::cli::utils::serialization::serialize_option;
 use clap::Parser;
 use serde::{Deserialize, Serialize};
 use std::io::Write;
@@ -14,25 +15,32 @@ use std::{fs, io};
 #[derive(Parser, Debug, Serialize, Deserialize, Default)]
 pub struct PacketManipulationSettings {
     #[command(flatten)]
-    pub drop: DropOptions,
+    #[serde(serialize_with = "serialize_option")]
+    pub drop: Option<DropOptions>,
 
     #[command(flatten)]
-    pub delay: DelayOptions,
+    #[serde(default, serialize_with = "serialize_option")]
+    pub delay: Option<DelayOptions>,
 
     #[command(flatten)]
-    pub throttle: ThrottleOptions,
+    #[serde(serialize_with = "serialize_option")]
+    pub throttle: Option<ThrottleOptions>,
 
     #[command(flatten)]
-    pub reorder: ReorderOptions,
+    #[serde(serialize_with = "serialize_option")]
+    pub reorder: Option<ReorderOptions>,
 
     #[command(flatten)]
-    pub tamper: TamperOptions,
+    #[serde(serialize_with = "serialize_option")]
+    pub tamper: Option<TamperOptions>,
 
     #[command(flatten)]
-    pub duplicate: DuplicateOptions,
+    #[serde(serialize_with = "serialize_option")]
+    pub duplicate: Option<DuplicateOptions>,
 
     #[command(flatten)]
-    pub bandwidth: BandwidthOptions,
+    #[serde(serialize_with = "serialize_option")]
+    pub bandwidth: Option<BandwidthOptions>,
 }
 
 impl PacketManipulationSettings {

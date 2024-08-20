@@ -1,6 +1,8 @@
 use crate::network::core::packet_data::PacketData;
-use crate::network::types::Probability;
+use crate::network::modules::stats::tamper_stats::TamperStats;
+use crate::network::types::probability::Probability;
 use log::error;
+use rand::Rng;
 use std::collections::HashSet;
 use windivert_sys::ChecksumFlags;
 
@@ -9,9 +11,13 @@ pub fn tamper_packets(
     tamper_probability: Probability,
     tamper_amount: Probability,
     recalculate_checksums: bool,
+    stats: &mut TamperStats,
 ) {
+    let should_update_stats = stats.should_update();
     for packet_data in packets.iter_mut() {
-        if rand::random::<f64>() >= tamper_probability.value() {
+        let should_skip = rand::random::<f64>() >= tamper_probability.value();
+
+        if should_skip && !should_update_stats {
             continue;
         }
 
@@ -35,9 +41,26 @@ pub fn tamper_packets(
         let payload_offset = total_header_len;
         let payload_length = data.len() - payload_offset;
 
+        if should_skip {
+            if should_update_stats {
+                stats.data = data[payload_offset..].to_owned();
+                stats.tamper_flags = vec![false; stats.data.len()];
+                stats.checksum_valid = true;
+                stats.updated();
+            }
+            continue;
+        }
+
         if payload_length > 0 {
             let bytes_to_tamper = (payload_length as f64 * tamper_amount.value()).ceil() as usize;
-            apply_tampering(&mut data[payload_offset..], bytes_to_tamper);
+            let tampered_indices = apply_tampering(&mut data[payload_offset..], bytes_to_tamper);
+
+            if should_update_stats {
+                let tampered_flags = calculate_tampered_flags(data.len(), &tampered_indices);
+                stats.tamper_flags = tampered_flags;
+                stats.data = data[payload_offset..].to_owned();
+                stats.updated();
+            }
         }
 
         if recalculate_checksums {
@@ -48,10 +71,17 @@ pub fn tamper_packets(
                 error!("Error recalculating checksums: {}", e);
             }
         }
+
+        if should_update_stats {
+            stats.checksum_valid = packet_data.packet.address.ip_checksum()
+                && packet_data.packet.address.tcp_checksum()
+                && packet_data.packet.address.udp_checksum();
+            stats.updated();
+        }
     }
 }
 
-fn apply_tampering(data: &mut [u8], bytes_to_tamper: usize) {
+fn apply_tampering(data: &mut [u8], bytes_to_tamper: usize) -> HashSet<usize> {
     let mut tampered_indices = HashSet::new();
     let mut tampered_count = 0;
     let data_len = data.len();
@@ -61,17 +91,28 @@ fn apply_tampering(data: &mut [u8], bytes_to_tamper: usize) {
         let index = rng.gen_range(0..data.len());
         if tampered_indices.insert(index) {
             tampered_count += 1;
-            let tamper_type = rng.gen_range(0..5);
-            match tamper_type {
-                0 => bit_manipulation(&mut data[index..], 3, true),
-                1 => bit_flipping(&mut data[index..], 5),
-                2 => value_adjustment(&mut data[index..], 10, 3),
-                3 => data_substitution(&mut data[index..], 15, b"newdata"),
-                4 => random_data_injection(&mut data[index..], 20, 5),
-                _ => (),
-            }
+            let tamper_type = rng.gen_range(0..3);
+            let modified_indices = match tamper_type {
+                0 => bit_manipulation(data, index, rng.gen_range(0..8), true),
+                1 => bit_flipping(data, index, rng.gen_range(0..8)),
+                2 => value_adjustment(data, index, rng.gen_range(-64..64)),
+                _ => vec![],
+            };
+            tampered_indices.extend(modified_indices);
         }
     }
+
+    tampered_indices
+}
+
+fn calculate_tampered_flags(data_len: usize, tampered_indices: &HashSet<usize>) -> Vec<bool> {
+    let mut tampered_flags = vec![false; data_len];
+    for &index in tampered_indices.iter() {
+        if index < data_len {
+            tampered_flags[index] = true;
+        }
+    }
+    tampered_flags
 }
 
 fn get_ip_version(data: &[u8]) -> Option<(u8, &[u8])> {
@@ -104,45 +145,39 @@ fn parse_tcp_header(data: &[u8], ip_header_len: usize) -> usize {
     ip_header_len + tcp_data_offset as usize
 }
 
-fn bit_manipulation(data: &mut [u8], bit_index: usize, new_bit: bool) {
-    let byte_index = bit_index / 8;
-    let bit_position = bit_index % 8;
-    if byte_index < data.len() {
+fn bit_manipulation(
+    data: &mut [u8],
+    byte_index: usize,
+    bit_position: usize,
+    new_bit: bool,
+) -> Vec<usize> {
+    if byte_index < data.len() && bit_position < 8 {
         if new_bit {
             data[byte_index] |= 1 << bit_position; // Set the bit
         } else {
             data[byte_index] &= !(1 << bit_position); // Clear the bit
         }
+        vec![byte_index] // Return the modified index
+    } else {
+        vec![] // No modification
     }
 }
 
-fn bit_flipping(data: &mut [u8], bit_index: usize) {
-    let byte_index = bit_index / 8;
-    let bit_position = bit_index % 8;
-    if byte_index < data.len() {
+fn bit_flipping(data: &mut [u8], byte_index: usize, bit_position: usize) -> Vec<usize> {
+    if byte_index < data.len() && bit_position < 8 {
         data[byte_index] ^= 1 << bit_position; // Flip the bit
+        vec![byte_index] // Return the modified index
+    } else {
+        vec![] // No modification
     }
 }
 
-fn value_adjustment(data: &mut [u8], offset: usize, value: i8) {
+fn value_adjustment(data: &mut [u8], offset: usize, value: i8) -> Vec<usize> {
     if offset < data.len() {
         let adjusted_value = data[offset].wrapping_add(value as u8);
         data[offset] = adjusted_value;
-    }
-}
-
-fn data_substitution(data: &mut [u8], offset: usize, new_data: &[u8]) {
-    let end = std::cmp::min(data.len(), offset + new_data.len());
-    if offset < end {
-        data[offset..end].copy_from_slice(&new_data[..end - offset]);
-    }
-}
-
-use rand::Rng;
-
-fn random_data_injection(data: &mut [u8], offset: usize, length: usize) {
-    let mut rng = rand::thread_rng();
-    for i in offset..std::cmp::min(data.len(), offset + length) {
-        data[i] = rng.random();
+        vec![offset] // Return the modified index
+    } else {
+        vec![] // No modification
     }
 }

@@ -2,6 +2,135 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.0] - 2024-08-20
+
+### Bug Fixes
+
+- Fix start stop toggle input working while focus is on filter aswell
+
+- Fix TextArea set_text extension not overriding existing text
+
+- Fix sending and receiving windivert instances being ont he same priority causing one to randomly absorb all the packets
+
+
+### Documentation
+
+- Add docstrings to trait methods for CLI and TUI extension traits
+
+
+### Features
+
+- Add start and stop toggle to be able to toggle all processing
+
+- Add keybind info for filter and logs widgets
+
+- Add conditional block border highlight method to unify highlighting logic
+
+- Add BandwidthStats to track throughput and storage buffer packet count
+
+- Add DuplicateStats to track duplicate multiplier and display it in the tui
+
+- Add TamperStats to visualize the packet data being tampered
+
+- Add ReorderStats to keep track of reordering percentage and number of delayed packets
+
+- Add ThrottleStats to keep track of the throttling state and package drop count
+
+- Add DelayStats to keep track of the number of actively delayed packets
+
+- Add statistic tracking support
+
+- Add TUI support using ratatui
+
+- Update main to add a separate thread for packet processing
+
+
+### Moves
+
+- Move EWMA to util subfolder
+
+
+### Refactors
+
+- Refactor TUI widgets by modularazing utility functions and improving code organization
+
+- Refactor packet manipulation settings to use optional structs and improve code consistency
+
+This commit refactors various packet manipulation settings to
+encapsulate their fields within optional structs. This change improves
+code consistency by grouping related settings together and ensuring that
+they are either fully provided or omitted as a whole. Additionally, the
+code has been cleaned up to remove unnecessary unwraps and serialization
+logic, resulting in more robust and maintainable code. The update also
+includes improvements in how CLI state is initialized and updated,
+reducing redundancy and improving clarity.
+
+- Refactor tui cli methods to reduce nesting via early return unpacks
+
+- Refactor rest of tui cli methods to reduce repetition
+
+- Refactor tui updating from statistics method to reduce repetition
+
+- Refactor CLI and TUI state management: Rename AppState to TuiState, introduce extension traits for modular updates
+
+- Refactor main.rs to extract cli and tui state interaction to separate module
+
+- Refactor cli updating logic to extract text area parsing logic into extension methods
+
+
+### Removals
+
+- Remove validate_probability method for text areas
+
+- Remove validate_usize method for text areas which was doing both validation and block rendering updates
+
+
+### Styling
+
+- Style code using fmt
+
+- Clean up code using Clippy
+
+
+### Updates
+
+- Update TUI cli command to default to false
+
+- Improve console statistic logging
+
+- Improve custom logger to have the capabilities of the default logger
+
+- Update tui input to use tui state for better isolation
+
+- Improve FilterWidget validation logic by caching last valid filter state and reverting to it on escape
+
+- Update LogsWidget to give feedback upon chaning log level
+
+- Update Widgets to handle Enter the same as Esc as to prevent entering of new lines in text areas
+
+- Improve TamperWidget validation logic
+
+- Improve ReorderWidget validation logic
+
+- Improve DuplicateWidget validation logic
+
+- Improve ThrottleWidget validation logic
+
+- Improve DropWidget validation logic
+
+- Improve DelayWidget validation logic
+
+- Improve BandiwdthWidget validation logic
+
+- Update FilterWidget and packet receiving thread to be able to change the filter via the tui
+
+- Update sending and receiving windivert handles to set matching flags to send and read only
+
+- Update TamperWidget to change info block border color logic
+
+- Update main to unify thread joining methods
+
+
 ## [0.5.0] - 2024-08-07
 
 ### Bug Fixes
@@ -12,6 +141,8 @@ All notable changes to this project will be documented in this file.
 
 
 ### Documentation
+
+- Update CHANGELOG.md to contain 0.5.0 changes
 
 - Update README.md to be up to date with the latest changes
 

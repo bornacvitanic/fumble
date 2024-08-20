@@ -6,6 +6,7 @@ use crate::network::modules::delay::delay_packets;
 use crate::network::modules::drop::drop_packets;
 use crate::network::modules::duplicate::duplicate_packets;
 use crate::network::modules::reorder::reorder_packets;
+use crate::network::modules::stats::PacketProcessingStatistics;
 use crate::network::modules::tamper::tamper_packets;
 use crate::network::modules::throttle::throttle_packages;
 use crate::network::processing::packet_processing_state::PacketProcessingState;
@@ -14,7 +15,7 @@ use log::{error, info};
 use std::collections::{BinaryHeap, VecDeque};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc::Receiver;
-use std::sync::Arc;
+use std::sync::{Arc, Mutex, RwLock};
 use std::time::{Duration, Instant};
 use windivert::error::WinDivertError;
 use windivert::layer::NetworkLayer;
@@ -22,25 +23,26 @@ use windivert::WinDivert;
 use windivert_sys::WinDivertFlags;
 
 pub fn start_packet_processing(
-    cli: Cli,
+    cli: Arc<Mutex<Cli>>,
     packet_receiver: Receiver<PacketData>,
     running: Arc<AtomicBool>,
+    statistics: Arc<RwLock<PacketProcessingStatistics>>,
 ) -> Result<(), WinDivertError> {
     let wd = WinDivert::<NetworkLayer>::network(
-        cli.filter.clone().unwrap_or_default(),
+        "false",
         0,
-        WinDivertFlags::new(),
+        WinDivertFlags::set_send_only(WinDivertFlags::new()),
     )
     .map_err(|e| {
         error!("Failed to initialize WinDiver: {}", e);
         e
     })?;
 
-    let log_interval = Duration::from_secs(5);
+    let log_interval = Duration::from_secs(2);
     let mut last_log_time = Instant::now();
 
-    let mut total_packets = 0;
-    let mut sent_packets = 0;
+    let mut received_packet_count = 0;
+    let mut sent_packet_count = 0;
 
     let mut state = PacketProcessingState {
         delay_storage: VecDeque::new(),
@@ -58,22 +60,31 @@ pub fn start_packet_processing(
         // Try to receive packets from the channel
         while let Ok(packet_data) = packet_receiver.try_recv() {
             packets.push(packet_data);
-            total_packets += 1;
+            received_packet_count += 1;
         }
 
-        process_packets(&cli.packet_manipulation_settings, &mut packets, &mut state);
+        if let Ok(cli) = cli.lock() {
+            process_packets(
+                &cli.packet_manipulation_settings,
+                &mut packets,
+                &mut state,
+                &statistics,
+            );
+        }
 
         for packet_data in &packets {
             wd.send(&packet_data.packet).map_err(|e| {
                 error!("Failed to send packet: {}", e);
                 e
             })?;
-            sent_packets += 1;
+            sent_packet_count += 1;
         }
 
         // Periodically log the statistics
         if last_log_time.elapsed() >= log_interval {
-            log_statistics(total_packets, sent_packets);
+            log_statistics(received_packet_count, sent_packet_count);
+            received_packet_count = 0;
+            sent_packet_count = 0;
             last_log_time = Instant::now(); // Reset the timer
         }
     }
@@ -85,64 +96,76 @@ pub fn process_packets<'a>(
     settings: &PacketManipulationSettings,
     packets: &mut Vec<PacketData<'a>>,
     state: &mut PacketProcessingState<'a>,
+    statistics: &Arc<RwLock<PacketProcessingStatistics>>,
 ) {
-    if let Some(drop_probability) = settings.drop.probability {
-        drop_packets(packets, drop_probability);
-    }
-
-    if let Some(delay) = settings.delay.duration {
-        delay_packets(
+    if let Some(drop) = &settings.drop {
+        drop_packets(
             packets,
-            &mut state.delay_storage,
-            Duration::from_millis(delay),
+            drop.probability,
+            &mut statistics.write().unwrap().drop_stats,
         );
     }
 
-    if let Some(throttle_probability) = settings.throttle.probability {
+    if let Some(delay) = &settings.delay {
+        delay_packets(
+            packets,
+            &mut state.delay_storage,
+            Duration::from_millis(delay.duration),
+            &mut statistics.write().unwrap().delay_stats,
+        );
+    }
+
+    if let Some(throttle) = &settings.throttle {
         throttle_packages(
             packets,
             &mut state.throttle_storage,
             &mut state.throttled_start_time,
-            throttle_probability,
-            Duration::from_millis(settings.throttle.duration),
-            settings.throttle.drop,
+            throttle.probability,
+            Duration::from_millis(throttle.duration),
+            throttle.drop,
+            &mut statistics.write().unwrap().throttle_stats,
         );
     }
 
-    if let Some(delay) = settings.reorder.max_delay {
+    if let Some(reorder) = &settings.reorder {
         reorder_packets(
             packets,
             &mut state.reorder_storage,
-            Duration::from_millis(delay),
+            reorder.probability,
+            Duration::from_millis(reorder.max_delay),
+            &mut statistics.write().unwrap().reorder_stats,
         );
     }
 
-    if let Some(tamper_probability) = settings.tamper.probability {
+    if let Some(tamper) = &settings.tamper {
         tamper_packets(
             packets,
-            tamper_probability,
-            settings.tamper.amount,
-            settings.tamper.recalculate_checksums.unwrap_or(true),
+            tamper.probability,
+            tamper.amount,
+            tamper.recalculate_checksums.unwrap_or(true),
+            &mut statistics.write().unwrap().tamper_stats,
         );
     }
 
-    if settings.duplicate.count > 1
-        && settings.duplicate.probability.unwrap_or_default().value() > 0.0
-    {
-        duplicate_packets(
-            packets,
-            settings.duplicate.count,
-            settings.duplicate.probability.unwrap_or_default(),
-        );
+    if let Some(duplicate) = &settings.duplicate {
+        if duplicate.count > 1 && duplicate.probability.value() > 0.0 {
+            duplicate_packets(
+                packets,
+                duplicate.count,
+                duplicate.probability,
+                &mut statistics.write().unwrap().duplicate_stats,
+            );
+        }
     }
 
-    if let Some(bandwidth_limit) = settings.bandwidth.limit {
+    if let Some(bandwidth) = &settings.bandwidth {
         bandwidth_limiter(
             packets,
             &mut state.bandwidth_limit_storage,
             &mut state.bandwidth_storage_total_size,
             &mut state.last_sent_package_time,
-            bandwidth_limit,
+            bandwidth.limit,
+            &mut statistics.write().unwrap().bandwidth_stats,
         );
     }
 }
