@@ -6,6 +6,7 @@ use ratatui::prelude::{Line, Span, Style};
 use ratatui::style::{Color, Modifier, Stylize};
 use ratatui::widgets::{Block, Borders, List, ListItem, Widget};
 use crate::cli::tui::custom_logger::{LOG_BUFFER, LogEntry, set_logger_level_filter};
+use crate::cli::tui::traits::KeyBindings;
 use crate::cli::tui::widgets::utils::block_ext::RoundedBlockExt;
 
 pub struct LogsWidget {
@@ -64,6 +65,12 @@ impl LogsWidget {
             }
             _ => {}
         }
+    }
+}
+
+impl KeyBindings for LogsWidget {
+    fn key_bindings(&self) -> String {
+        "Exit: Esc | Trace: t | Debug: d | Info: i | Warn: w | Error: e".to_string()
     }
 }
 

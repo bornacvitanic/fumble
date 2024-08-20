@@ -4,6 +4,7 @@ use ratatui::layout::Rect;
 use ratatui::style::{Style};
 use ratatui::widgets::{Block, Widget};
 use tui_textarea::TextArea;
+use crate::cli::tui::traits::KeyBindings;
 use crate::cli::tui::widgets::utils::style_textarea_based_on_validation;
 use crate::cli::tui::widgets::utils::block_ext::RoundedBlockExt;
 use crate::cli::tui::widgets::utils::textarea_ext::{TextAreaExt};
@@ -62,6 +63,12 @@ impl FilterWidget<'_> {
                 self.validation_filter = validate_filter(&self.textarea.lines()[0]);
             }
         }
+    }
+}
+
+impl KeyBindings for FilterWidget<'_> {
+    fn key_bindings(&self) -> String {
+        "Exit: Esc | Confirm: Enter".to_string()
     }
 }
 

@@ -138,8 +138,19 @@ fn render_sections(frame: &mut Frame, state: &mut TuiState, main_area: Rect) {
 
 fn render_keybindings(frame: &mut Frame, state: &mut TuiState, key_bind_area: Rect) {
     let mut keybinds = "Quit: q | Toggle: Space | Navigation: Up and Down".to_string();
-    if let Some(index) = state.interacting {
-        keybinds = (&mut state.sections[index]).key_bindings();
+    match state.focused {
+        LayoutSection::Filter => {
+            keybinds = state.filter_widget.key_bindings();
+        }
+        LayoutSection::Main => {
+            if let Some(index) = state.interacting {
+                keybinds = (&mut state.sections[index]).key_bindings();
+            }
+        }
+        LayoutSection::Logging => {
+            keybinds = state.logs_widget.key_bindings();
+        }
     }
+
     frame.render_widget(Paragraph::new(keybinds).style(Color::Cyan), key_bind_area)
 }
