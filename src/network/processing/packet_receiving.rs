@@ -1,3 +1,4 @@
+use crate::cli::Cli;
 use crate::network::core::packet_data::PacketData;
 use log::{debug, error};
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -6,7 +7,6 @@ use windivert::error::WinDivertError;
 use windivert::layer::NetworkLayer;
 use windivert::{CloseAction, WinDivert};
 use windivert_sys::WinDivertFlags;
-use crate::cli::Cli;
 
 pub fn receive_packets(
     packet_sender: mpsc::Sender<PacketData<'_>>,
@@ -39,9 +39,16 @@ pub fn receive_packets(
 
             // Open a new WinDivert handle with the new filter
             last_filter = current_filter.clone();
-            wd = match WinDivert::<NetworkLayer>::network(&current_filter, 1, WinDivertFlags::set_recv_only(WinDivertFlags::new())) {
+            wd = match WinDivert::<NetworkLayer>::network(
+                &current_filter,
+                1,
+                WinDivertFlags::set_recv_only(WinDivertFlags::new()),
+            ) {
                 Ok(handle) => {
-                    debug!("WinDivert handle re-opened with new filter: {}", current_filter);
+                    debug!(
+                        "WinDivert handle re-opened with new filter: {}",
+                        current_filter
+                    );
                     Some(handle)
                 }
                 Err(e) => {

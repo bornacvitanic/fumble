@@ -1,6 +1,6 @@
+use crate::network::core::packet_data::PacketData;
 use std::cmp::Ordering;
 use std::time::{Duration, Instant};
-use crate::network::core::packet_data::PacketData;
 
 pub struct DelayedPacket<'a> {
     pub packet: PacketData<'a>,

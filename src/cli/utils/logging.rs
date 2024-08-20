@@ -35,9 +35,9 @@ pub fn log_initialization_info(filter: &Option<String>, settings: &PacketManipul
     if let Some(duplicate) = &settings.duplicate {
         if duplicate.count > 1usize && duplicate.probability.value() > 0.0 {
             info!(
-            "Duplicating packets {} times with probability: {}",
-            duplicate.count, duplicate.probability
-        );
+                "Duplicating packets {} times with probability: {}",
+                duplicate.count, duplicate.probability
+            );
         }
     }
     if let Some(bandwidth) = &settings.bandwidth {

@@ -1,17 +1,17 @@
-use std::sync::{Arc, Mutex, RwLock};
-use log::error;
-use crate::cli::Cli;
-use crate::cli::settings::drop::DropOptions;
+use crate::cli::settings::bandwidth::BandwidthOptions;
 use crate::cli::settings::delay::DelayOptions;
-use crate::cli::settings::throttle::ThrottleOptions;
+use crate::cli::settings::drop::DropOptions;
+use crate::cli::settings::duplicate::DuplicateOptions;
 use crate::cli::settings::reorder::ReorderOptions;
 use crate::cli::settings::tamper::TamperOptions;
-use crate::cli::settings::duplicate::DuplicateOptions;
-use crate::cli::settings::bandwidth::BandwidthOptions;
+use crate::cli::settings::throttle::ThrottleOptions;
 use crate::cli::tui::state::TuiState;
 use crate::cli::tui::traits::IsActive;
 use crate::cli::tui::widgets::custom_widget::CustomWidget;
+use crate::cli::Cli;
 use crate::network::modules::stats::PacketProcessingStatistics;
+use log::error;
+use std::sync::{Arc, Mutex, RwLock};
 
 pub trait TuiStateExt {
     /// Creates a `TuiState` instance from the current state of the `Cli` object.
@@ -151,29 +151,38 @@ fn update_cli_from_tui_state(state: &mut TuiState, cli: &Arc<Mutex<Cli>>) {
     for section in state.sections.iter_mut() {
         match section {
             CustomWidget::Drop(ref mut drop_widget) => {
-                cli.packet_manipulation_settings.drop = if !drop_widget.is_active() { None }
-                else {
+                cli.packet_manipulation_settings.drop = if !drop_widget.is_active() {
+                    None
+                } else {
                     match drop_widget.probability {
-                        Ok(probability) => { Some(DropOptions { probability }) }
-                        Err(_) => { None }
+                        Ok(probability) => Some(DropOptions { probability }),
+                        Err(_) => None,
                     }
                 }
             }
             CustomWidget::Delay(ref mut delay_widget) => {
-                cli.packet_manipulation_settings.delay = if !delay_widget.is_active() { None }
-                else {
+                cli.packet_manipulation_settings.delay = if !delay_widget.is_active() {
+                    None
+                } else {
                     match delay_widget.delay {
-                        Ok(duration) => { Some(DelayOptions { duration }) }
-                        Err(_) => { None }
+                        Ok(duration) => Some(DelayOptions { duration }),
+                        Err(_) => None,
                     }
                 }
             }
             CustomWidget::Throttle(ref mut throttle_widget) => {
-                cli.packet_manipulation_settings.throttle = if !throttle_widget.is_active() { None }
-                else {
-                    throttle_widget.probability.as_ref().ok()
+                cli.packet_manipulation_settings.throttle = if !throttle_widget.is_active() {
+                    None
+                } else {
+                    throttle_widget
+                        .probability
+                        .as_ref()
+                        .ok()
                         .and_then(|probability| {
-                            throttle_widget.throttle_duration.as_ref().ok()
+                            throttle_widget
+                                .throttle_duration
+                                .as_ref()
+                                .ok()
                                 .map(|duration| ThrottleOptions {
                                     probability: *probability,
                                     duration: *duration,
@@ -186,9 +195,15 @@ fn update_cli_from_tui_state(state: &mut TuiState, cli: &Arc<Mutex<Cli>>) {
                 cli.packet_manipulation_settings.reorder = if !reorder_widget.is_active() {
                     None
                 } else {
-                    reorder_widget.probability.as_ref().ok()
+                    reorder_widget
+                        .probability
+                        .as_ref()
+                        .ok()
                         .and_then(|probability| {
-                            reorder_widget.delay_duration.as_ref().ok()
+                            reorder_widget
+                                .delay_duration
+                                .as_ref()
+                                .ok()
                                 .map(|max_delay| ReorderOptions {
                                     probability: *probability,
                                     max_delay: *max_delay,
@@ -198,38 +213,52 @@ fn update_cli_from_tui_state(state: &mut TuiState, cli: &Arc<Mutex<Cli>>) {
             }
 
             CustomWidget::Tamper(ref tamper_widget) => {
-                cli.packet_manipulation_settings.tamper = if !tamper_widget.is_active() { None }
-                else {
-                    tamper_widget.probability.as_ref().ok()
-                        .and_then(|probability| {
-                            tamper_widget.tamper_amount.as_ref().ok()
-                                .map(|amount| TamperOptions {
-                                    probability: *probability,
-                                    amount: *amount,
-                                    recalculate_checksums: Some(tamper_widget.recalculate_checksums),
+                cli.packet_manipulation_settings.tamper =
+                    if !tamper_widget.is_active() {
+                        None
+                    } else {
+                        tamper_widget
+                            .probability
+                            .as_ref()
+                            .ok()
+                            .and_then(|probability| {
+                                tamper_widget.tamper_amount.as_ref().ok().map(|amount| {
+                                    TamperOptions {
+                                        probability: *probability,
+                                        amount: *amount,
+                                        recalculate_checksums: Some(
+                                            tamper_widget.recalculate_checksums,
+                                        ),
+                                    }
                                 })
-                        })
-                }
+                            })
+                    }
             }
             CustomWidget::Duplicate(ref duplicate_widget) => {
-                cli.packet_manipulation_settings.duplicate = if !duplicate_widget.is_active() { None }
-                else {
-                    duplicate_widget.probability.as_ref().ok()
+                cli.packet_manipulation_settings.duplicate = if !duplicate_widget.is_active() {
+                    None
+                } else {
+                    duplicate_widget
+                        .probability
+                        .as_ref()
+                        .ok()
                         .and_then(|probability| {
-                            duplicate_widget.duplicate_count.as_ref().ok()
-                                .map(|count| DuplicateOptions {
+                            duplicate_widget.duplicate_count.as_ref().ok().map(|count| {
+                                DuplicateOptions {
                                     probability: *probability,
                                     count: *count,
-                                })
+                                }
+                            })
                         })
                 }
             }
             CustomWidget::Bandwidth(ref bandwidth_widget) => {
-                cli.packet_manipulation_settings.bandwidth = if !bandwidth_widget.is_active() { None }
-                else {
+                cli.packet_manipulation_settings.bandwidth = if !bandwidth_widget.is_active() {
+                    None
+                } else {
                     match bandwidth_widget.limit {
-                        Ok(limit) => { Some(BandwidthOptions { limit }) }
-                        Err(_) => { None }
+                        Ok(limit) => Some(BandwidthOptions { limit }),
+                        Err(_) => None,
                     }
                 }
             }
@@ -237,7 +266,10 @@ fn update_cli_from_tui_state(state: &mut TuiState, cli: &Arc<Mutex<Cli>>) {
     }
 }
 
-fn update_tui_state_from_statistics(state: &mut TuiState, statistics: &Arc<RwLock<PacketProcessingStatistics>>) {
+fn update_tui_state_from_statistics(
+    state: &mut TuiState,
+    statistics: &Arc<RwLock<PacketProcessingStatistics>>,
+) {
     let stats = match statistics.read() {
         Ok(stats) => stats,
         Err(e) => {
@@ -249,13 +281,27 @@ fn update_tui_state_from_statistics(state: &mut TuiState, statistics: &Arc<RwLoc
     for section in state.sections.iter_mut() {
         if section.is_active() {
             match section {
-                CustomWidget::Drop(ref mut drop_widget) => {drop_widget.update_data(&stats.drop_stats);}
-                CustomWidget::Delay(ref mut delay_widget) => {delay_widget.update_data(&stats.delay_stats);}
-                CustomWidget::Throttle(ref mut throttle_widget) => {throttle_widget.update_data(&stats.throttle_stats);}
-                CustomWidget::Reorder(ref mut reorder_widget) => {reorder_widget.update_data(&stats.reorder_stats)}
-                CustomWidget::Tamper(ref mut tamper_widget) => {tamper_widget.update_data(&stats.tamper_stats)}
-                CustomWidget::Duplicate(ref mut duplicate_widget) => {duplicate_widget.update_data(&stats.duplicate_stats)}
-                CustomWidget::Bandwidth(ref mut bandwidth_widget) => {bandwidth_widget.update_data(&stats.bandwidth_stats)}
+                CustomWidget::Drop(ref mut drop_widget) => {
+                    drop_widget.update_data(&stats.drop_stats);
+                }
+                CustomWidget::Delay(ref mut delay_widget) => {
+                    delay_widget.update_data(&stats.delay_stats);
+                }
+                CustomWidget::Throttle(ref mut throttle_widget) => {
+                    throttle_widget.update_data(&stats.throttle_stats);
+                }
+                CustomWidget::Reorder(ref mut reorder_widget) => {
+                    reorder_widget.update_data(&stats.reorder_stats)
+                }
+                CustomWidget::Tamper(ref mut tamper_widget) => {
+                    tamper_widget.update_data(&stats.tamper_stats)
+                }
+                CustomWidget::Duplicate(ref mut duplicate_widget) => {
+                    duplicate_widget.update_data(&stats.duplicate_stats)
+                }
+                CustomWidget::Bandwidth(ref mut bandwidth_widget) => {
+                    bandwidth_widget.update_data(&stats.bandwidth_stats)
+                }
             }
         }
     }

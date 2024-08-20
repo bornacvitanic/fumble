@@ -1,8 +1,8 @@
 use crate::network::core::packet_data::PacketData;
+use crate::network::modules::stats::bandwidth_stats::BandwidthStats;
 use log::trace;
 use std::collections::VecDeque;
 use std::time::Instant;
-use crate::network::modules::stats::bandwidth_stats::BandwidthStats;
 
 const MAX_BUFFER_SIZE: usize = 10 * 1024 * 1024; // 10 MB in bytes
 
@@ -12,7 +12,7 @@ pub fn bandwidth_limiter<'a>(
     total_buffer_size: &mut usize,
     last_send_time: &mut Instant,
     bandwidth_limit_kbps: usize,
-    stats: &mut BandwidthStats
+    stats: &mut BandwidthStats,
 ) {
     let incoming_packet_count = packets.len();
     stats.storage_packet_count += incoming_packet_count;
@@ -83,7 +83,8 @@ fn remove_packet_from_buffer<'a>(
 fn maintain_buffer_size(
     buffer: &mut VecDeque<PacketData<'_>>,
     total_size: &mut usize,
-    stats: &mut BandwidthStats,) {
+    stats: &mut BandwidthStats,
+) {
     while *total_size > MAX_BUFFER_SIZE {
         if remove_packet_from_buffer(buffer, total_size, stats).is_some() {
             // Packet removed from buffer to maintain size limit
@@ -131,7 +132,7 @@ mod tests {
             total_buffer_size,
             &mut last_send_time,
             bandwidth_limit,
-            &mut stats
+            &mut stats,
         );
 
         assert!(packets.len() <= 1);
@@ -159,7 +160,7 @@ mod tests {
             &mut total_buffer_size,
             &mut last_send_time,
             bandwidth_limit,
-            &mut stats
+            &mut stats,
         );
 
         let actual_total_size: usize = buffer.iter().map(|p| p.packet.data.len()).sum();
@@ -184,7 +185,7 @@ mod tests {
             &mut total_buffer_size,
             &mut last_send_time,
             bandwidth_limit,
-            &mut stats
+            &mut stats,
         );
 
         assert_eq!(packets.len(), 2);
@@ -208,7 +209,7 @@ mod tests {
             &mut total_buffer_size,
             &mut last_send_time,
             bandwidth_limit,
-            &mut stats
+            &mut stats,
         );
 
         assert!(packets.is_empty());
@@ -230,7 +231,7 @@ mod tests {
             &mut total_buffer_size,
             &mut last_send_time,
             bandwidth_limit,
-            &mut stats
+            &mut stats,
         );
 
         // Since the packets vector was empty, buffer should remain empty and nothing should be sent

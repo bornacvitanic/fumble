@@ -1,5 +1,5 @@
-use std::time::{Duration, Instant};
 use crate::network::modules::stats::util::ewma::Ewma;
+use std::time::{Duration, Instant};
 
 pub struct BandwidthStats {
     pub(crate) storage_packet_count: usize,
@@ -26,7 +26,9 @@ impl BandwidthStats {
         self.total_byte_count += bytes_sent;
         self.recent_byte_sent += bytes_sent;
         if self.recent_timer.elapsed() >= self.update_interval {
-            self.ewma.update((self.recent_byte_sent as f64 / 1024f64) / self.update_interval.as_secs_f64());
+            self.ewma.update(
+                (self.recent_byte_sent as f64 / 1024f64) / self.update_interval.as_secs_f64(),
+            );
             self.recent_byte_sent = 0;
             self.recent_timer = Instant::now();
         }

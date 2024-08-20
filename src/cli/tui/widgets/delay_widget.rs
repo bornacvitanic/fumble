@@ -1,15 +1,15 @@
+use crate::cli::tui::traits::{DisplayName, HandleInput, IsActive, KeyBindings};
+use crate::cli::tui::widgets::utils::block_ext::RoundedBlockExt;
+use crate::cli::tui::widgets::utils::style_textarea_based_on_validation;
+use crate::cli::tui::widgets::utils::textarea_ext::TextAreaExt;
+use crate::cli::tui::widgets::utils::textarea_parsing::ParseFromTextArea;
+use crate::network::modules::stats::delay_stats::DelayStats;
 use ratatui::buffer::Buffer;
 use ratatui::crossterm::event::{KeyCode, KeyEvent, KeyEventKind};
 use ratatui::layout::{Constraint, Layout, Margin, Rect};
 use ratatui::style::Style;
 use ratatui::widgets::{Block, Paragraph, Widget};
 use tui_textarea::TextArea;
-use crate::cli::tui::traits::{DisplayName, HandleInput, IsActive, KeyBindings};
-use crate::cli::tui::widgets::utils::style_textarea_based_on_validation;
-use crate::cli::tui::widgets::utils::block_ext::RoundedBlockExt;
-use crate::cli::tui::widgets::utils::textarea_ext::{TextAreaExt};
-use crate::cli::tui::widgets::utils::textarea_parsing::ParseFromTextArea;
-use crate::network::modules::stats::delay_stats::DelayStats;
 
 pub struct DelayWidget<'a> {
     title: String,
@@ -94,24 +94,30 @@ impl IsActive for DelayWidget<'_> {
 impl Widget for &mut DelayWidget<'_> {
     fn render(self, area: Rect, buf: &mut Buffer)
     where
-        Self: Sized
+        Self: Sized,
     {
-        let [delay_duration_area, info_area] = Layout::horizontal([
-            Constraint::Max(10),
-            Constraint::Min(25),
-        ]).areas(area.inner(Margin { horizontal: 1, vertical: 1 }));
+        let [delay_duration_area, info_area] =
+            Layout::horizontal([Constraint::Max(10), Constraint::Min(25)]).areas(area.inner(
+                Margin {
+                    horizontal: 1,
+                    vertical: 1,
+                },
+            ));
 
         self.delay_duration.set_cursor_visibility(self.interacting);
         self.delay_duration.set_placeholder_text("500");
         self.delay_duration.set_cursor_line_style(Style::default());
-        self.delay_duration.set_block(Block::roundedt("Duration").highlight_if(self.interacting));
-        if !self.delay_duration.lines()[0].is_empty() { style_textarea_based_on_validation(&mut self.delay_duration, &self.delay); }
+        self.delay_duration
+            .set_block(Block::roundedt("Duration").highlight_if(self.interacting));
+        if !self.delay_duration.lines()[0].is_empty() {
+            style_textarea_based_on_validation(&mut self.delay_duration, &self.delay);
+        }
         self.delay_duration.render(delay_duration_area, buf);
 
-        let [delay_count_info, _excess_info] = Layout::horizontal([
-            Constraint::Max(30),
-            Constraint::Fill(1)
-        ]).areas(info_area);
-        Paragraph::new(format!("{} packets", self.delayed_packet_count)).block(Block::bordered().title("Delayed packets")).render(delay_count_info, buf);
+        let [delay_count_info, _excess_info] =
+            Layout::horizontal([Constraint::Max(30), Constraint::Fill(1)]).areas(info_area);
+        Paragraph::new(format!("{} packets", self.delayed_packet_count))
+            .block(Block::bordered().title("Delayed packets"))
+            .render(delay_count_info, buf);
     }
 }

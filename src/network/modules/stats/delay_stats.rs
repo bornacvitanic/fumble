@@ -1,5 +1,5 @@
 pub struct DelayStats {
-    pub(crate) delayed_package_count: usize
+    pub(crate) delayed_package_count: usize,
 }
 
 impl Default for DelayStats {
@@ -11,7 +11,7 @@ impl Default for DelayStats {
 impl DelayStats {
     pub fn new() -> Self {
         DelayStats {
-            delayed_package_count: 0
+            delayed_package_count: 0,
         }
     }
 

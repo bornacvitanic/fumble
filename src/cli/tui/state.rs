@@ -13,11 +13,11 @@ use crate::cli::tui::widgets::throttle_widget::ThrottleWidget;
 pub struct TuiState<'a> {
     pub processing: bool,
     pub filter_widget: FilterWidget<'a>,
-    pub sections:  Vec<CustomWidget<'a>>,
+    pub sections: Vec<CustomWidget<'a>>,
     pub logs_widget: LogsWidget,
     pub selected: usize,
     pub interacting: Option<usize>,
-    pub focused: LayoutSection
+    pub focused: LayoutSection,
 }
 
 impl<'a> Default for TuiState<'a> {
@@ -43,7 +43,7 @@ impl<'a> TuiState<'a> {
             selected: 0,
             interacting: None,
             logs_widget: LogsWidget::new(),
-            focused: LayoutSection::Main
+            focused: LayoutSection::Main,
         }
     }
 }

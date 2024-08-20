@@ -1,3 +1,10 @@
+use crate::cli::tui::traits::{DisplayName, HandleInput, IsActive, KeyBindings};
+use crate::cli::tui::widgets::utils::block_ext::RoundedBlockExt;
+use crate::cli::tui::widgets::utils::style_textarea_based_on_validation;
+use crate::cli::tui::widgets::utils::textarea_ext::TextAreaExt;
+use crate::cli::tui::widgets::utils::textarea_parsing::ParseFromTextArea;
+use crate::network::modules::stats::tamper_stats::TamperStats;
+use crate::network::types::probability::Probability;
 use ratatui::buffer::Buffer;
 use ratatui::crossterm::event::{KeyCode, KeyEvent, KeyEventKind};
 use ratatui::layout::{Constraint, Layout, Margin, Rect};
@@ -6,13 +13,6 @@ use ratatui::style::{Color, Style, Stylize};
 use ratatui::text::Line;
 use ratatui::widgets::{Block, Paragraph, Widget};
 use tui_textarea::TextArea;
-use crate::cli::tui::traits::{DisplayName, HandleInput, IsActive, KeyBindings};
-use crate::cli::tui::widgets::utils::style_textarea_based_on_validation;
-use crate::cli::tui::widgets::utils::block_ext::RoundedBlockExt;
-use crate::cli::tui::widgets::utils::textarea_ext::{TextAreaExt};
-use crate::cli::tui::widgets::utils::textarea_parsing::ParseFromTextArea;
-use crate::network::modules::stats::tamper_stats::TamperStats;
-use crate::network::types::probability::Probability;
 
 pub struct TamperWidget<'a> {
     title: String,
@@ -26,7 +26,7 @@ pub struct TamperWidget<'a> {
     pub tamper_amount: Result<Probability, String>,
     data: Vec<u8>,
     tamper_flags: Vec<bool>,
-    checksum_valid: bool
+    checksum_valid: bool,
 }
 
 impl Default for TamperWidget<'_> {
@@ -54,12 +54,14 @@ impl TamperWidget<'_> {
     }
 
     pub fn set_tamper_amount(&mut self, tamper_amount: Probability) {
-        self.tamper_amount_text_area.set_text(&tamper_amount.to_string());
+        self.tamper_amount_text_area
+            .set_text(&tamper_amount.to_string());
         self.tamper_amount = Ok(tamper_amount);
     }
 
     pub fn set_probability(&mut self, probability: Probability) {
-        self.probability_text_area.set_text(&probability.to_string());
+        self.probability_text_area
+            .set_text(&probability.to_string());
         self.probability = Ok(probability);
     }
 
@@ -91,12 +93,14 @@ impl HandleInput for TamperWidget<'_> {
             match self.selected {
                 0 => {
                     if self.probability_text_area.input(key) {
-                        self.probability = Probability::parse_from_text_area(&self.probability_text_area);
+                        self.probability =
+                            Probability::parse_from_text_area(&self.probability_text_area);
                     }
                 }
                 1 => {
                     if self.tamper_amount_text_area.input(key) {
-                        self.tamper_amount = Probability::parse_from_text_area(&self.tamper_amount_text_area);
+                        self.tamper_amount =
+                            Probability::parse_from_text_area(&self.tamper_amount_text_area);
                     }
                 }
                 2 => {
@@ -138,39 +142,67 @@ impl IsActive for TamperWidget<'_> {
 impl Widget for &mut TamperWidget<'_> {
     fn render(self, area: Rect, buf: &mut Buffer)
     where
-        Self: Sized
+        Self: Sized,
     {
         let [probability_area, duration_area, checksum_area, info_area] = Layout::horizontal([
             Constraint::Max(10),
             Constraint::Max(10),
             Constraint::Max(25),
             Constraint::Min(25),
-        ]).areas(area.inner(Margin { horizontal: 1, vertical: 1 }));
+        ])
+        .areas(area.inner(Margin {
+            horizontal: 1,
+            vertical: 1,
+        }));
 
-        self.probability_text_area.set_cursor_visibility(self.interacting && self.selected == 0);
+        self.probability_text_area
+            .set_cursor_visibility(self.interacting && self.selected == 0);
         self.probability_text_area.set_placeholder_text("0.1");
-        self.probability_text_area.set_cursor_line_style(Style::default());
-        self.probability_text_area.set_block(Block::roundedt("Probability").highlight_if(self.interacting && self.selected == 0));
-        if !self.probability_text_area.lines()[0].is_empty() { style_textarea_based_on_validation(&mut self.probability_text_area, &self.probability); }
+        self.probability_text_area
+            .set_cursor_line_style(Style::default());
+        self.probability_text_area.set_block(
+            Block::roundedt("Probability").highlight_if(self.interacting && self.selected == 0),
+        );
+        if !self.probability_text_area.lines()[0].is_empty() {
+            style_textarea_based_on_validation(&mut self.probability_text_area, &self.probability);
+        }
         self.probability_text_area.render(probability_area, buf);
 
-        self.tamper_amount_text_area.set_cursor_visibility(self.interacting && self.selected == 1);
+        self.tamper_amount_text_area
+            .set_cursor_visibility(self.interacting && self.selected == 1);
         self.tamper_amount_text_area.set_placeholder_text("0.1");
-        self.tamper_amount_text_area.set_cursor_line_style(Style::default());
-        self.tamper_amount_text_area.set_block(Block::roundedt("Amount").highlight_if(self.interacting && self.selected == 1));
-        if !self.tamper_amount_text_area.lines()[0].is_empty() { style_textarea_based_on_validation(&mut self.probability_text_area, &self.tamper_amount); }
+        self.tamper_amount_text_area
+            .set_cursor_line_style(Style::default());
+        self.tamper_amount_text_area.set_block(
+            Block::roundedt("Amount").highlight_if(self.interacting && self.selected == 1),
+        );
+        if !self.tamper_amount_text_area.lines()[0].is_empty() {
+            style_textarea_based_on_validation(
+                &mut self.probability_text_area,
+                &self.tamper_amount,
+            );
+        }
         self.tamper_amount_text_area.render(duration_area, buf);
 
         let mut checksum_span = Span::from(self.recalculate_checksums.to_string());
         if self.selected == 2 && self.interacting {
             checksum_span = checksum_span.add_modifier(Modifier::RAPID_BLINK);
         }
-        let checksum_paragraph = Paragraph::new(checksum_span).block(Block::roundedt("Recalculate Checksums"));
+        let checksum_paragraph =
+            Paragraph::new(checksum_span).block(Block::roundedt("Recalculate Checksums"));
         checksum_paragraph.render(checksum_area, buf);
 
         let mut info_block = Block::bordered();
-        if !self.checksum_valid { info_block = info_block.border_style(Style::new().fg(Color::LightRed))};
-        Paragraph::new(Line::from(highlight_tampered_data(self.data.clone(), info_area.width, self.tamper_flags.clone()))).block(info_block).render(info_area, buf);
+        if !self.checksum_valid {
+            info_block = info_block.border_style(Style::new().fg(Color::LightRed))
+        };
+        Paragraph::new(Line::from(highlight_tampered_data(
+            self.data.clone(),
+            info_area.width,
+            self.tamper_flags.clone(),
+        )))
+        .block(info_block)
+        .render(info_area, buf);
     }
 }
 
@@ -181,7 +213,12 @@ fn highlight_tampered_data(data: Vec<u8>, width: u16, flags: Vec<bool>) -> Vec<S
         .map(|(byte, is_tampered)| {
             let symbol = char::try_from(byte);
             let symbol = match symbol {
-                Ok(c) if c.is_ascii_alphanumeric() || [' ', '.', ',', '!', '?', ':', ';', '-'].contains(&c) => c,
+                Ok(c)
+                    if c.is_ascii_alphanumeric()
+                        || [' ', '.', ',', '!', '?', ':', ';', '-'].contains(&c) =>
+                {
+                    c
+                }
                 _ => '�',
             };
             if is_tampered {

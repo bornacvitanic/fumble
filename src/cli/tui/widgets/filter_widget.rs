@@ -1,14 +1,14 @@
+use crate::cli::tui::traits::KeyBindings;
+use crate::cli::tui::widgets::utils::block_ext::RoundedBlockExt;
+use crate::cli::tui::widgets::utils::style_textarea_based_on_validation;
+use crate::cli::tui::widgets::utils::textarea_ext::TextAreaExt;
+use crate::network::utils::filter::{validate_filter, FilterError};
 use ratatui::buffer::Buffer;
 use ratatui::crossterm::event::{KeyCode, KeyEvent};
 use ratatui::layout::Rect;
-use ratatui::style::{Style};
+use ratatui::style::Style;
 use ratatui::widgets::{Block, Widget};
 use tui_textarea::TextArea;
-use crate::cli::tui::traits::KeyBindings;
-use crate::cli::tui::widgets::utils::style_textarea_based_on_validation;
-use crate::cli::tui::widgets::utils::block_ext::RoundedBlockExt;
-use crate::cli::tui::widgets::utils::textarea_ext::{TextAreaExt};
-use crate::network::utils::filter::{FilterError, validate_filter};
 
 pub struct FilterWidget<'a> {
     textarea: TextArea<'a>,
@@ -43,7 +43,7 @@ impl FilterWidget<'_> {
 
     pub fn input(&mut self, key: KeyEvent) {
         if !self.inputting {
-            if key.code == KeyCode::Char('f'){
+            if key.code == KeyCode::Char('f') {
                 self.inputting = true;
             }
         } else {
@@ -81,7 +81,7 @@ impl KeyBindings for FilterWidget<'_> {
 impl Widget for &mut FilterWidget<'_> {
     fn render(self, area: Rect, buf: &mut Buffer)
     where
-        Self: Sized
+        Self: Sized,
     {
         self.textarea.set_cursor_visibility(self.inputting);
         self.textarea.set_cursor_line_style(Style::default());

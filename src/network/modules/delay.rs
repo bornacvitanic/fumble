@@ -1,13 +1,13 @@
 use crate::network::core::packet_data::PacketData;
+use crate::network::modules::stats::delay_stats::DelayStats;
 use std::collections::VecDeque;
 use std::time::Duration;
-use crate::network::modules::stats::delay_stats::DelayStats;
 
 pub fn delay_packets<'a>(
     packets: &mut Vec<PacketData<'a>>,
     storage: &mut VecDeque<PacketData<'a>>,
     delay: Duration,
-    stats: &mut DelayStats
+    stats: &mut DelayStats,
 ) {
     storage.extend(packets.drain(..));
 

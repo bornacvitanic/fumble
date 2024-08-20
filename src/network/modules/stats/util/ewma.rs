@@ -1,13 +1,13 @@
 /// A structure that computes the Exponentially Weighted Moving Average (EWMA) of a sequence of values.
 ///
-/// EWMA is a type of infinite impulse response filter that applies weighting factors which 
+/// EWMA is a type of infinite impulse response filter that applies weighting factors which
 /// decrease exponentially. The weighting for each older datum decreases exponentially, never reaching zero.
 /// This is useful for smoothing out time series data and giving more weight to recent observations.
 ///
 /// # Fields
 ///
 /// * `alpha` - The smoothing factor, between 0 and 1. A higher value discounts older observations faster.
-/// * `current_value` - The current value of the EWMA after processing the latest input. 
+/// * `current_value` - The current value of the EWMA after processing the latest input.
 ///                     Initially, this will be `None` until the first value is processed.
 ///
 /// # Example
@@ -44,7 +44,10 @@ impl Ewma {
     /// let ewma = Ewma::new(0.3);
     /// ```
     pub fn new(alpha: f64) -> Self {
-        assert!(alpha > 0.0 && alpha <= 1.0, "Alpha should be between 0 and 1");
+        assert!(
+            alpha > 0.0 && alpha <= 1.0,
+            "Alpha should be between 0 and 1"
+        );
         Ewma {
             alpha,
             current_value: None,
@@ -83,7 +86,7 @@ impl Ewma {
     ///
     /// # Returns
     ///
-    /// An `Option<f64>` representing the current EWMA value. 
+    /// An `Option<f64>` representing the current EWMA value.
     /// This will be `None` if `update` has not yet been called.
     ///
     /// # Example

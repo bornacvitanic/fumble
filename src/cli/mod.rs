@@ -5,8 +5,8 @@ use clap::Parser;
 
 pub mod config;
 pub mod settings;
-pub mod utils;
 pub mod tui;
+pub mod utils;
 
 #[derive(Parser, Debug)]
 #[command(

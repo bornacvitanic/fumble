@@ -1,7 +1,7 @@
-use log::{Record, Level, Metadata, LevelFilter, SetLoggerError};
+use lazy_static::lazy_static;
+use log::{Level, LevelFilter, Metadata, Record, SetLoggerError};
 use std::sync::Mutex;
 use std::time::{SystemTime, UNIX_EPOCH};
-use lazy_static::lazy_static;
 
 #[derive(Clone)]
 pub struct LogEntry {
@@ -25,11 +25,11 @@ impl LogEntry {
 
     fn colored_level(&self) -> String {
         match self.level {
-            Level::Error => format!("\x1b[31m{}\x1b[0m", self.level),  // Red
-            Level::Warn => format!("\x1b[33m{}\x1b[0m", self.level),   // Yellow
-            Level::Info => format!("\x1b[32m{}\x1b[0m", self.level),   // Green
-            Level::Debug => format!("\x1b[34m{}\x1b[0m", self.level),  // Blue
-            Level::Trace => format!("\x1b[35m{}\x1b[0m", self.level),  // Magenta
+            Level::Error => format!("\x1b[31m{}\x1b[0m", self.level), // Red
+            Level::Warn => format!("\x1b[33m{}\x1b[0m", self.level),  // Yellow
+            Level::Info => format!("\x1b[32m{}\x1b[0m", self.level),  // Green
+            Level::Debug => format!("\x1b[34m{}\x1b[0m", self.level), // Blue
+            Level::Trace => format!("\x1b[35m{}\x1b[0m", self.level), // Magenta
         }
     }
 
@@ -68,7 +68,15 @@ fn seconds_to_datetime(seconds: u64) -> String {
     let year = 1970 + days / 365;
     let day_of_year = days % 365;
 
-    format!("{:04}-{:02}-{:02}T{:02}:{:02}:{:02}", year, day_of_year / 30 + 1, day_of_year % 30 + 1, hours, minutes, seconds)
+    format!(
+        "{:04}-{:02}-{:02}T{:02}:{:02}:{:02}",
+        year,
+        day_of_year / 30 + 1,
+        day_of_year % 30 + 1,
+        hours,
+        minutes,
+        seconds
+    )
 }
 
 pub struct LogBuffer {
@@ -125,7 +133,8 @@ impl log::Log for SimpleLogger {
 static LOGGER: SimpleLogger = SimpleLogger;
 
 pub fn init_logger() -> Result<(), SetLoggerError> {
-    let env_logger = env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).build();
+    let env_logger =
+        env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).build();
 
     // Set our custom logger, which also uses env_logger under the hood
     log::set_logger(&LOGGER).map(|()| {

@@ -1,16 +1,16 @@
+use crate::cli::tui::traits::{DisplayName, HandleInput, IsActive, KeyBindings};
+use crate::cli::tui::widgets::utils::block_ext::RoundedBlockExt;
+use crate::cli::tui::widgets::utils::style_textarea_based_on_validation;
+use crate::cli::tui::widgets::utils::textarea_ext::TextAreaExt;
+use crate::cli::tui::widgets::utils::textarea_parsing::ParseFromTextArea;
+use crate::network::modules::stats::duplicate_stats::DuplicateStats;
+use crate::network::types::probability::Probability;
 use ratatui::buffer::Buffer;
 use ratatui::crossterm::event::{KeyCode, KeyEvent, KeyEventKind};
 use ratatui::layout::{Constraint, Layout, Margin, Rect};
 use ratatui::style::Style;
 use ratatui::widgets::{Block, Paragraph, Widget};
 use tui_textarea::TextArea;
-use crate::cli::tui::traits::{DisplayName, HandleInput, IsActive, KeyBindings};
-use crate::cli::tui::widgets::utils::style_textarea_based_on_validation;
-use crate::cli::tui::widgets::utils::block_ext::RoundedBlockExt;
-use crate::cli::tui::widgets::utils::textarea_ext::{TextAreaExt};
-use crate::cli::tui::widgets::utils::textarea_parsing::ParseFromTextArea;
-use crate::network::modules::stats::duplicate_stats::DuplicateStats;
-use crate::network::types::probability::Probability;
 
 pub struct DuplicateWidget<'a> {
     title: String,
@@ -21,7 +21,7 @@ pub struct DuplicateWidget<'a> {
     pub probability: Result<Probability, String>,
     pub duplicate_count: Result<usize, String>,
     selected: usize,
-    duplication_multiplier: f64
+    duplication_multiplier: f64,
 }
 
 impl Default for DuplicateWidget<'_> {
@@ -46,12 +46,14 @@ impl DuplicateWidget<'_> {
     }
 
     pub fn set_probability(&mut self, probability: Probability) {
-        self.probability_text_area.set_text(&probability.to_string());
+        self.probability_text_area
+            .set_text(&probability.to_string());
         self.probability = Ok(probability);
     }
 
     pub fn set_duplicate_count(&mut self, duplicate_count: usize) {
-        self.duplicate_count_text_area.set_text(&duplicate_count.to_string());
+        self.duplicate_count_text_area
+            .set_text(&duplicate_count.to_string());
         self.duplicate_count = Ok(duplicate_count);
     }
 
@@ -81,12 +83,14 @@ impl HandleInput for DuplicateWidget<'_> {
             match self.selected {
                 0 => {
                     if self.probability_text_area.input(key) {
-                        self.probability = Probability::parse_from_text_area(&self.probability_text_area);
+                        self.probability =
+                            Probability::parse_from_text_area(&self.probability_text_area);
                     }
                 }
                 1 => {
                     if self.duplicate_count_text_area.input(key) {
-                        self.duplicate_count = usize::parse_from_text_area(&self.duplicate_count_text_area);
+                        self.duplicate_count =
+                            usize::parse_from_text_area(&self.duplicate_count_text_area);
                     }
                 }
                 _ => {}
@@ -123,32 +127,51 @@ impl IsActive for DuplicateWidget<'_> {
 impl Widget for &mut DuplicateWidget<'_> {
     fn render(self, area: Rect, buf: &mut Buffer)
     where
-        Self: Sized
+        Self: Sized,
     {
         let [probability_area, duration_area, info_area] = Layout::horizontal([
             Constraint::Max(10),
             Constraint::Max(10),
             Constraint::Min(25),
-        ]).areas(area.inner(Margin { horizontal: 1, vertical: 1 }));
+        ])
+        .areas(area.inner(Margin {
+            horizontal: 1,
+            vertical: 1,
+        }));
 
-        self.probability_text_area.set_cursor_visibility(self.interacting && self.selected == 0);
+        self.probability_text_area
+            .set_cursor_visibility(self.interacting && self.selected == 0);
         self.probability_text_area.set_placeholder_text("0.1");
-        self.probability_text_area.set_cursor_line_style(Style::default());
-        self.probability_text_area.set_block(Block::roundedt("Probability").highlight_if(self.interacting && self.selected == 0));
-        if !self.probability_text_area.lines()[0].is_empty() { style_textarea_based_on_validation(&mut self.probability_text_area, &self.probability); }
+        self.probability_text_area
+            .set_cursor_line_style(Style::default());
+        self.probability_text_area.set_block(
+            Block::roundedt("Probability").highlight_if(self.interacting && self.selected == 0),
+        );
+        if !self.probability_text_area.lines()[0].is_empty() {
+            style_textarea_based_on_validation(&mut self.probability_text_area, &self.probability);
+        }
         self.probability_text_area.render(probability_area, buf);
 
-        self.duplicate_count_text_area.set_cursor_visibility(self.interacting && self.selected == 1);
+        self.duplicate_count_text_area
+            .set_cursor_visibility(self.interacting && self.selected == 1);
         self.duplicate_count_text_area.set_placeholder_text("1");
-        self.duplicate_count_text_area.set_cursor_line_style(Style::default());
-        self.duplicate_count_text_area.set_block(Block::roundedt("Count").highlight_if(self.interacting && self.selected == 1));
-        if !self.duplicate_count_text_area.lines()[0].is_empty() { style_textarea_based_on_validation(&mut self.duplicate_count_text_area, &self.duplicate_count); }
+        self.duplicate_count_text_area
+            .set_cursor_line_style(Style::default());
+        self.duplicate_count_text_area.set_block(
+            Block::roundedt("Count").highlight_if(self.interacting && self.selected == 1),
+        );
+        if !self.duplicate_count_text_area.lines()[0].is_empty() {
+            style_textarea_based_on_validation(
+                &mut self.duplicate_count_text_area,
+                &self.duplicate_count,
+            );
+        }
         self.duplicate_count_text_area.render(duration_area, buf);
 
-        let [duplication_multiplier_info, _excess_info] = Layout::horizontal([
-            Constraint::Max(20),
-            Constraint::Fill(1)
-        ]).areas(info_area);
-        Paragraph::new(format!("{:.2}x", self.duplication_multiplier)).block(Block::bordered().title("I/O Multiplier")).render(duplication_multiplier_info, buf);
+        let [duplication_multiplier_info, _excess_info] =
+            Layout::horizontal([Constraint::Max(20), Constraint::Fill(1)]).areas(info_area);
+        Paragraph::new(format!("{:.2}x", self.duplication_multiplier))
+            .block(Block::bordered().title("I/O Multiplier"))
+            .render(duplication_multiplier_info, buf);
     }
 }

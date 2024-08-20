@@ -1,9 +1,9 @@
-use std::io;
-use ratatui::crossterm::event;
-use ratatui::crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind};
 use crate::cli::tui::state::TuiState;
 use crate::cli::tui::traits::{HandleInput, IsActive};
 use crate::cli::tui::ui::LayoutSection;
+use ratatui::crossterm::event;
+use ratatui::crossterm::event::{Event, KeyCode, KeyEvent, KeyEventKind};
+use std::io;
 
 // Main input handler function
 pub fn handle_input(state: &mut TuiState) -> io::Result<bool> {

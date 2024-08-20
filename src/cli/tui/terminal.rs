@@ -1,10 +1,10 @@
-use std::io::{self, stdout};
 use ratatui::backend::CrosstermBackend;
 use ratatui::crossterm::{
+    terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
     ExecutableCommand,
-    terminal::{enable_raw_mode, disable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
 use ratatui::{CompletedFrame, Frame, Terminal};
+use std::io::{self, stdout};
 
 pub struct TerminalManager {
     terminal: Terminal<CrosstermBackend<io::Stdout>>,

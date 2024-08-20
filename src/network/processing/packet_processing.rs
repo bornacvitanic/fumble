@@ -1,14 +1,15 @@
 use crate::cli::settings::packet_manipulation::PacketManipulationSettings;
 use crate::cli::Cli;
 use crate::network::core::packet_data::PacketData;
-use crate::network::modules::drop::drop_packets;
-use crate::network::modules::delay::delay_packets;
-use crate::network::modules::throttle::throttle_packages;
-use crate::network::modules::reorder::reorder_packets;
-use crate::network::modules::tamper::tamper_packets;
-use crate::network::modules::duplicate::duplicate_packets;
 use crate::network::modules::bandwidth::bandwidth_limiter;
-use crate::network::processing::packet_processing_state::{PacketProcessingState};
+use crate::network::modules::delay::delay_packets;
+use crate::network::modules::drop::drop_packets;
+use crate::network::modules::duplicate::duplicate_packets;
+use crate::network::modules::reorder::reorder_packets;
+use crate::network::modules::stats::PacketProcessingStatistics;
+use crate::network::modules::tamper::tamper_packets;
+use crate::network::modules::throttle::throttle_packages;
+use crate::network::processing::packet_processing_state::PacketProcessingState;
 use crate::utils::log_statistics;
 use log::{error, info};
 use std::collections::{BinaryHeap, VecDeque};
@@ -20,7 +21,6 @@ use windivert::error::WinDivertError;
 use windivert::layer::NetworkLayer;
 use windivert::WinDivert;
 use windivert_sys::WinDivertFlags;
-use crate::network::modules::stats::PacketProcessingStatistics;
 
 pub fn start_packet_processing(
     cli: Arc<Mutex<Cli>>,
@@ -33,10 +33,10 @@ pub fn start_packet_processing(
         0,
         WinDivertFlags::set_send_only(WinDivertFlags::new()),
     )
-        .map_err(|e| {
-            error!("Failed to initialize WinDiver: {}", e);
-            e
-        })?;
+    .map_err(|e| {
+        error!("Failed to initialize WinDiver: {}", e);
+        e
+    })?;
 
     let log_interval = Duration::from_secs(2);
     let mut last_log_time = Instant::now();
@@ -64,7 +64,12 @@ pub fn start_packet_processing(
         }
 
         if let Ok(cli) = cli.lock() {
-            process_packets(&cli.packet_manipulation_settings, &mut packets, &mut state, &statistics);
+            process_packets(
+                &cli.packet_manipulation_settings,
+                &mut packets,
+                &mut state,
+                &statistics,
+            );
         }
 
         for packet_data in &packets {
@@ -94,7 +99,11 @@ pub fn process_packets<'a>(
     statistics: &Arc<RwLock<PacketProcessingStatistics>>,
 ) {
     if let Some(drop) = &settings.drop {
-        drop_packets(packets, drop.probability, &mut statistics.write().unwrap().drop_stats);
+        drop_packets(
+            packets,
+            drop.probability,
+            &mut statistics.write().unwrap().drop_stats,
+        );
     }
 
     if let Some(delay) = &settings.delay {
@@ -102,7 +111,7 @@ pub fn process_packets<'a>(
             packets,
             &mut state.delay_storage,
             Duration::from_millis(delay.duration),
-            &mut statistics.write().unwrap().delay_stats
+            &mut statistics.write().unwrap().delay_stats,
         );
     }
 
@@ -114,7 +123,7 @@ pub fn process_packets<'a>(
             throttle.probability,
             Duration::from_millis(throttle.duration),
             throttle.drop,
-            &mut statistics.write().unwrap().throttle_stats
+            &mut statistics.write().unwrap().throttle_stats,
         );
     }
 
@@ -124,7 +133,7 @@ pub fn process_packets<'a>(
             &mut state.reorder_storage,
             reorder.probability,
             Duration::from_millis(reorder.max_delay),
-            &mut statistics.write().unwrap().reorder_stats
+            &mut statistics.write().unwrap().reorder_stats,
         );
     }
 
@@ -134,19 +143,17 @@ pub fn process_packets<'a>(
             tamper.probability,
             tamper.amount,
             tamper.recalculate_checksums.unwrap_or(true),
-            &mut statistics.write().unwrap().tamper_stats
+            &mut statistics.write().unwrap().tamper_stats,
         );
     }
 
     if let Some(duplicate) = &settings.duplicate {
-        if duplicate.count > 1
-            && duplicate.probability.value() > 0.0
-        {
+        if duplicate.count > 1 && duplicate.probability.value() > 0.0 {
             duplicate_packets(
                 packets,
                 duplicate.count,
                 duplicate.probability,
-                &mut statistics.write().unwrap().duplicate_stats
+                &mut statistics.write().unwrap().duplicate_stats,
             );
         }
     }
@@ -158,7 +165,7 @@ pub fn process_packets<'a>(
             &mut state.bandwidth_storage_total_size,
             &mut state.last_sent_package_time,
             bandwidth.limit,
-            &mut statistics.write().unwrap().bandwidth_stats
+            &mut statistics.write().unwrap().bandwidth_stats,
         );
     }
 }

@@ -1,6 +1,6 @@
+use crate::network::types::probability::Probability;
 use clap::Parser;
 use serde::{Deserialize, Serialize};
-use crate::network::types::probability::Probability;
 
 #[derive(Parser, Debug, Serialize, Deserialize)]
 pub struct ReorderOptions {
@@ -9,7 +9,11 @@ pub struct ReorderOptions {
     #[serde(default)]
     pub probability: Probability,
     /// Maximum random delay in milliseconds to apply when reordering packets
-    #[arg(long = "reorder-max-delay", id = "reorder-max-delay", default_value_t = 100)]
+    #[arg(
+        long = "reorder-max-delay",
+        id = "reorder-max-delay",
+        default_value_t = 100
+    )]
     #[serde(default)]
     pub max_delay: u64,
 }

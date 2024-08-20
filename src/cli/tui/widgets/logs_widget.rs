@@ -1,13 +1,13 @@
-use log::{debug, error, info, Level, LevelFilter, trace, warn};
+use crate::cli::tui::custom_logger::{set_logger_level_filter, LogEntry, LOG_BUFFER};
+use crate::cli::tui::traits::KeyBindings;
+use crate::cli::tui::widgets::utils::block_ext::RoundedBlockExt;
+use log::{debug, error, info, trace, warn, Level, LevelFilter};
 use ratatui::buffer::Buffer;
 use ratatui::crossterm::event::{KeyCode, KeyEvent};
 use ratatui::layout::Rect;
 use ratatui::prelude::{Line, Span, Style};
 use ratatui::style::{Color, Modifier, Stylize};
 use ratatui::widgets::{Block, Borders, List, ListItem, Widget};
-use crate::cli::tui::custom_logger::{LOG_BUFFER, LogEntry, set_logger_level_filter};
-use crate::cli::tui::traits::KeyBindings;
-use crate::cli::tui::widgets::utils::block_ext::RoundedBlockExt;
 
 pub struct LogsWidget {
     pub(crate) open: bool,
@@ -83,7 +83,7 @@ impl KeyBindings for LogsWidget {
 impl Widget for &mut LogsWidget {
     fn render(self, area: Rect, buf: &mut Buffer)
     where
-        Self: Sized
+        Self: Sized,
     {
         if self.open {
             let log_display_height = area.height.saturating_sub(2) as usize;
@@ -93,10 +93,15 @@ impl Widget for &mut LogsWidget {
             let items: Vec<ListItem> = format_logs_for_tui(recent_logs);
             let mut logging_area_block = Block::bordered().title("[L]-Logs");
             logging_area_block = logging_area_block.highlight_if(self.focused);
-            let list = List::new(items).add_modifier(Modifier::ITALIC).block(logging_area_block);
+            let list = List::new(items)
+                .add_modifier(Modifier::ITALIC)
+                .block(logging_area_block);
             list.render(area, buf);
         } else {
-            Block::bordered().borders(Borders::TOP).title("[L]-Logs").render(area, buf)
+            Block::bordered()
+                .borders(Borders::TOP)
+                .title("[L]-Logs")
+                .render(area, buf)
         }
     }
 }
@@ -112,21 +117,29 @@ fn format_logs_for_tui(logs: &[LogEntry]) -> Vec<ListItem> {
                 Level::Trace => Color::Cyan,
             };
 
-            let timestamp_span = if matches!(log::max_level(), LevelFilter::Debug | LevelFilter::Trace) {
-                Span::styled(format!("[{} ", log.timestamp), Style::default().fg(Color::DarkGray))
-            } else {
-                Span::raw(String::new())
-            };
+            let timestamp_span =
+                if matches!(log::max_level(), LevelFilter::Debug | LevelFilter::Trace) {
+                    Span::styled(
+                        format!("[{} ", log.timestamp),
+                        Style::default().fg(Color::DarkGray),
+                    )
+                } else {
+                    Span::raw(String::new())
+                };
 
             let level_span = Span::styled(format!("{}", log.level), Style::default().fg(color));
 
-            let module_path_span = if matches!(log::max_level(), LevelFilter::Debug | LevelFilter::Trace) {
-                log.module_path.as_ref().map_or(Span::raw(" "), |module| {
-                    Span::styled(format!(" {}] ", module), Style::default().fg(Color::DarkGray))
-                })
-            } else {
-                Span::raw(String::new())
-            };
+            let module_path_span =
+                if matches!(log::max_level(), LevelFilter::Debug | LevelFilter::Trace) {
+                    log.module_path.as_ref().map_or(Span::raw(" "), |module| {
+                        Span::styled(
+                            format!(" {}] ", module),
+                            Style::default().fg(Color::DarkGray),
+                        )
+                    })
+                } else {
+                    Span::raw(String::new())
+                };
 
             let message_span = Span::raw(&log.message);
 

@@ -1,10 +1,10 @@
 use crate::network::core::packet_data::PacketData;
+use crate::network::modules::stats::tamper_stats::TamperStats;
 use crate::network::types::probability::Probability;
 use log::error;
-use std::collections::HashSet;
 use rand::Rng;
+use std::collections::HashSet;
 use windivert_sys::ChecksumFlags;
-use crate::network::modules::stats::tamper_stats::TamperStats;
 
 pub fn tamper_packets(
     packets: &mut [PacketData],
@@ -145,7 +145,12 @@ fn parse_tcp_header(data: &[u8], ip_header_len: usize) -> usize {
     ip_header_len + tcp_data_offset as usize
 }
 
-fn bit_manipulation(data: &mut [u8], byte_index: usize, bit_position: usize, new_bit: bool) -> Vec<usize> {
+fn bit_manipulation(
+    data: &mut [u8],
+    byte_index: usize,
+    bit_position: usize,
+    new_bit: bool,
+) -> Vec<usize> {
     if byte_index < data.len() && bit_position < 8 {
         if new_bit {
             data[byte_index] |= 1 << bit_position; // Set the bit

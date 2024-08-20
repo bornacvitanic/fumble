@@ -1,8 +1,4 @@
-use ratatui::buffer::Buffer;
-use ratatui::crossterm::event::KeyEvent;
-use ratatui::layout::Rect;
-use ratatui::widgets::{Widget};
-use crate::cli::tui::traits::{HandleInput, DisplayName, KeyBindings, IsActive};
+use crate::cli::tui::traits::{DisplayName, HandleInput, IsActive, KeyBindings};
 use crate::cli::tui::widgets::bandwidth_widget::BandwidthWidget;
 use crate::cli::tui::widgets::delay_widget::DelayWidget;
 use crate::cli::tui::widgets::drop_widget::DropWidget;
@@ -10,6 +6,10 @@ use crate::cli::tui::widgets::duplicate_widget::DuplicateWidget;
 use crate::cli::tui::widgets::reorder_widget::ReorderWidget;
 use crate::cli::tui::widgets::tamper_widget::TamperWidget;
 use crate::cli::tui::widgets::throttle_widget::ThrottleWidget;
+use ratatui::buffer::Buffer;
+use ratatui::crossterm::event::KeyEvent;
+use ratatui::layout::Rect;
+use ratatui::widgets::Widget;
 
 pub enum CustomWidget<'a> {
     Drop(DropWidget<'a>),
@@ -71,4 +71,13 @@ macro_rules! impl_widget_traits_for_enum {
     };
 }
 
-impl_widget_traits_for_enum!(CustomWidget, Drop, Delay, Throttle, Reorder, Tamper, Duplicate, Bandwidth);
+impl_widget_traits_for_enum!(
+    CustomWidget,
+    Drop,
+    Delay,
+    Throttle,
+    Reorder,
+    Tamper,
+    Duplicate,
+    Bandwidth
+);

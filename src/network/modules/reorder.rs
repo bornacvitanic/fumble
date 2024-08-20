@@ -1,10 +1,10 @@
 use crate::network::core::packet_data::PacketData;
-use log::{error, warn};
-use std::collections::BinaryHeap;
-use std::time::{Duration, Instant};
 use crate::network::modules::stats::reorder_stats::ReorderStats;
 use crate::network::types::delayed_packet::DelayedPacket;
 use crate::network::types::probability::Probability;
+use log::{error, warn};
+use std::collections::BinaryHeap;
+use std::time::{Duration, Instant};
 
 pub fn reorder_packets<'a>(
     packets: &mut Vec<PacketData<'a>>,

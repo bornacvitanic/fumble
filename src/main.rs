@@ -1,23 +1,23 @@
 use clap::Parser;
 use env_logger::Env;
 use fumble::cli::config::config_options::ConfigOptions;
+use fumble::cli::tui::cli_ext::{CliExt, TuiStateExt};
+use fumble::cli::tui::custom_logger::{init_logger, set_logger_console_state};
+use fumble::cli::tui::state::TuiState;
+use fumble::cli::tui::terminal::TerminalManager;
+use fumble::cli::tui::{input, ui};
 use fumble::cli::utils::logging::log_initialization_info;
 use fumble::cli::Cli;
+use fumble::network::modules::stats::{initialize_statistics, PacketProcessingStatistics};
 use fumble::network::processing::packet_processing::start_packet_processing;
 use fumble::network::processing::packet_receiving::receive_packets;
 use log::{debug, error, info};
 use std::process::exit;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::{Arc, mpsc, Mutex, RwLock};
+use std::sync::{mpsc, Arc, Mutex, RwLock};
 use std::thread;
 use std::thread::JoinHandle;
 use windivert::error::WinDivertError;
-use fumble::cli::tui::custom_logger::{init_logger, set_logger_console_state};
-use fumble::cli::tui::state::TuiState;
-use fumble::cli::tui::terminal::TerminalManager;
-use fumble::cli::tui::{input, ui};
-use fumble::cli::tui::cli_ext::{CliExt, TuiStateExt};
-use fumble::network::modules::stats::{initialize_statistics, PacketProcessingStatistics};
 
 fn main() -> Result<(), WinDivertError> {
     let mut cli = Cli::parse();
@@ -26,7 +26,6 @@ fn main() -> Result<(), WinDivertError> {
     if let Some(_tui) = &cli.tui {
         should_start_tui = true;
         init_logger().expect("Failed to init logger.")
-
     } else {
         initialize_logging();
     }
@@ -83,13 +82,19 @@ fn main() -> Result<(), WinDivertError> {
     // Start packet processing thread
     let statistics = initialize_statistics();
 
-
     // Clone the Arc for the packet processing thread
     let cli_for_processing = cli_thread_safe.clone();
     let statistics_for_processing = statistics.clone();
     let packet_sender_handle = thread::spawn({
         let running = running.clone();
-        move || start_packet_processing(cli_for_processing, packet_receiver, running, statistics_for_processing)
+        move || {
+            start_packet_processing(
+                cli_for_processing,
+                packet_receiver,
+                running,
+                statistics_for_processing,
+            )
+        }
     });
 
     if should_start_tui {
@@ -104,7 +109,12 @@ fn main() -> Result<(), WinDivertError> {
     Ok(())
 }
 
-fn tui(cli: Arc<Mutex<Cli>>, statistics: Arc<RwLock<PacketProcessingStatistics>>, running: Arc<AtomicBool>, shutdown_triggered: Arc<AtomicBool>) -> Result<(), WinDivertError> {
+fn tui(
+    cli: Arc<Mutex<Cli>>,
+    statistics: Arc<RwLock<PacketProcessingStatistics>>,
+    running: Arc<AtomicBool>,
+    shutdown_triggered: Arc<AtomicBool>,
+) -> Result<(), WinDivertError> {
     {
         let mut terminal_manager = TerminalManager::new()?;
 
@@ -146,7 +156,6 @@ fn wait_for_thread(thread_handle: JoinHandle<Result<(), WinDivertError>>, thread
 
 fn setup_ctrlc_handler(running: Arc<AtomicBool>, shutdown_triggered: Arc<AtomicBool>) {
     ctrlc::set_handler(move || {
-
         if !shutdown_triggered.load(Ordering::SeqCst) {
             shutdown_triggered.store(true, Ordering::SeqCst);
             info!("Ctrl+C pressed; initiating shutdown...");

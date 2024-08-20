@@ -1,5 +1,5 @@
-use ratatui::widgets::{Block, BorderType};
 use ratatui::prelude::{Color, Style};
+use ratatui::widgets::{Block, BorderType};
 
 pub trait RoundedBlockExt<'a> {
     fn rounded() -> Block<'a>;
@@ -27,7 +27,7 @@ impl<'a> RoundedBlockExt<'a> for Block<'a> {
     fn highlight_if(self, condition: bool) -> Self {
         if condition {
             self.border_style(Style::default().fg(Color::Yellow))
-        }else {
+        } else {
             self
         }
     }

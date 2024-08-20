@@ -1,13 +1,16 @@
+pub mod block_ext;
 pub mod textarea_ext;
 pub mod textarea_parsing;
-pub mod block_ext;
 
-use std::fmt::Display;
-use tui_textarea::TextArea;
 use ratatui::prelude::{Color, Style};
 use ratatui::widgets::{Block, Borders};
+use std::fmt::Display;
+use tui_textarea::TextArea;
 
-pub(crate) fn style_textarea_based_on_validation<T, E>(textarea: &mut TextArea, res: &Result<T, E>) -> bool
+pub(crate) fn style_textarea_based_on_validation<T, E>(
+    textarea: &mut TextArea,
+    res: &Result<T, E>,
+) -> bool
 where
     E: Display,
 {
