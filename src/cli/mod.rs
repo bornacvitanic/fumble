@@ -30,6 +30,6 @@ pub struct Cli {
     #[command(flatten)]
     pub packet_manipulation_settings: PacketManipulationSettings,
 
-    #[arg(short, long)]
-    pub tui: Option<bool>,
+    #[arg(short, long, default_value_t = false)]
+    pub tui: bool,
 }

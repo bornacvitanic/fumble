@@ -23,7 +23,7 @@ fn main() -> Result<(), WinDivertError> {
     let mut cli = Cli::parse();
 
     let mut should_start_tui = false;
-    if let Some(_tui) = &cli.tui {
+    if cli.tui {
         should_start_tui = true;
         init_logger().expect("Failed to init logger.")
     } else {
