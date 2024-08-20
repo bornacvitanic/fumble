@@ -10,6 +10,8 @@ fumble is an oxidized (Rust-based) implementation of the original clumsy tool, d
 
 Just like its predecessor, fumble offers a user-friendly and interactive way to degrade network performance intentionally, making it easier to diagnose issues and improve the robustness of network-dependent applications. Whether you're a developer needing to simulate a flaky connection or a QA engineer stress-testing an application, fumble provides a versatile and reliable solution.
 
+![image](https://github.com/user-attachments/assets/857b528f-8b0d-4c51-a777-c7fe84e9e4cb)
+
 ## Features
 ### Packet Manipulation Features
 - **Packet Filtering**: Use filter expressions to capture specific packets.
