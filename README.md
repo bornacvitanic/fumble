@@ -108,22 +108,31 @@ To see more detailed logs, set the `RUST_LOG` environment variable before runnin
 ### Command-Line Options
 
 - `-f, --filter <FILTER>`: Filter expression for capturing packets.
-- `--drop-probability <PROBABILITY>`: Probability of dropping packets in the range 0.0 to 1.0.
-- `--delay-duration <DELAY>`: Delay to introduce for each packet in milliseconds.
-- `--throttle-probability <PROBABILITY>`: Probability of triggering a throttle event, must be between 0.0 and 1.0.
-- `--throttle-duration <DURATION>`: Duration in milliseconds for which throttling is applied during a throttle event.
-- `--throttle-drop`: Makes throttled packets be dropped instead of delayed.
-- `--reorder-probability <reorder-probability>`: Probability of reordering packets, ranging from 0.0 to 1.0
-- `--reorder-max-delay <DELAY>`: Maximum random delay in milliseconds to apply when reordering packets
-- `--tamper-probability <PROBABILITY>`: Probability of tampering packets, ranging from 0.0 to 1.0.
-- `--tamper-amount <AMOUNT>`: Amount of tampering that should be applied, ranging from 0.0 to 1.0.
-- `--tamper-recalculate-checksums [true/false]`: Whether tampered packets should have their checksums recalculated to mask the tampering and avoid the packets getting automatically dropped.
-- `--duplicate-probability <PROBABILITY>`: Probability of duplicating packets, must be between 0.0 and 1.0.
-- `--duplicate-count <COUNT>`: Number of times to duplicate packets.
-- `--bandwidth-limit <KB/s>`: Limit the bandwidth in KB/s to simulate a constrained network environment.
-- `-t, --tui`: Launch fumble in Text User Interface (TUI) mode.
+- `--drop-probability <drop-probability>`: Probability of dropping packets, ranging from 0.0 to 1.0.
+- `--delay-duration <delay-duration>`: Delay in milliseconds to introduce for each packet.
+- `--throttle-probability <throttle-probability>`: Probability of triggering a throttle event, ranging from 0.0 to 1.0.
+- `--throttle-duration <throttle-duration>`: Duration in milliseconds for which throttling should be applied.
+  - **Default**: `30`
+- `--throttle-drop`: Indicates whether throttled packets should be dropped.
+- `--reorder-probability <reorder-probability>`: Probability of reordering packets, ranging from 0.0 to 1.0.
+- `--reorder-max-delay <reorder-max-delay>`: Maximum random delay in milliseconds to apply when reordering packets.
+  - **Default**: `100`
+- `--tamper-probability <tamper-probability>`: Probability of tampering packets, ranging from 0.0 to 1.0.
+- `--tamper-amount <tamper-amount>`: Amount of tampering that should be applied, ranging from 0.0 to 1.0.
+  - **Default**: `0.1`
+- `--tamper-recalculate-checksums <tamper-recalculate-checksums>`: Whether tampered packets should have their checksums recalculated to mask the tampering and avoid the packets getting automatically dropped.
+  - **Possible values**: `true`, `false`
+- `--duplicate-probability <duplicate-probability>`: Probability of duplicating packets, ranging from 0.0 to 1.0.
+- `--duplicate-count <duplicate-count>`: Number of times to duplicate each packet.
+  - **Default**: `1`
+- `--bandwidth-limit <bandwidth-limit>`: Maximum bandwidth limit in KB/s.
+- `-t, --tui`: Launch the Text User Interface (TUI).
+- `-h, --help`: Print help (see a summary with `-h`).
+
+**Configuration Management:**
+
 - `--create-default <CREATE_DEFAULT>`: Command to create a default configuration file with the specified name.
-- `--use-config <USE_CONFIG>`: Command to use an existing configuration file based on specified name.
+- `--use-config <USE_CONFIG>`: Command to use an existing configuration file based on the specified name.
 - `--list-configs`: Command to list all available configuration files.
 
 ## Examples
