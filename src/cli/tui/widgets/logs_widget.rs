@@ -106,10 +106,33 @@ fn format_logs_for_tui(logs: &[LogEntry]) -> Vec<ListItem> {
                 Level::Trace => Color::Cyan,
             };
 
-            let level_span = Span::styled(format!("{}: ", log.level), Style::default().fg(color));
+            let timestamp_span = if matches!(log::max_level(), LevelFilter::Debug | LevelFilter::Trace) {
+                Span::styled(format!("[{} ", log.timestamp), Style::default().fg(Color::DarkGray))
+            } else {
+                Span::raw(String::new())
+            };
+
+            let level_span = Span::styled(format!("{}", log.level), Style::default().fg(color));
+
+            let module_path_span = if matches!(log::max_level(), LevelFilter::Debug | LevelFilter::Trace) {
+                log.module_path.as_ref().map_or(Span::raw(" "), |module| {
+                    Span::styled(format!(" {}] ", module), Style::default().fg(Color::DarkGray))
+                })
+            } else {
+                Span::raw(String::new())
+            };
+
             let message_span = Span::raw(&log.message);
 
-            ListItem::new(Line::default().spans(vec![level_span, message_span]))
+            let separator_span = Span::raw(" ");
+
+            ListItem::new(Line::default().spans(vec![
+                timestamp_span,
+                level_span,
+                module_path_span,
+                separator_span,
+                message_span,
+            ]))
         })
         .collect()
 }

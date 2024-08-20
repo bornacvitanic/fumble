@@ -12,7 +12,7 @@ use std::sync::{Arc, mpsc, Mutex, RwLock};
 use std::thread;
 use std::thread::JoinHandle;
 use windivert::error::WinDivertError;
-use fumble::cli::tui::custom_logger::init_logger;
+use fumble::cli::tui::custom_logger::{init_logger, set_logger_console_state};
 use fumble::cli::tui::state::TuiState;
 use fumble::cli::tui::terminal::TerminalManager;
 use fumble::cli::tui::{input, ui};
@@ -25,7 +25,8 @@ fn main() -> Result<(), WinDivertError> {
     let mut should_start_tui = false;
     if let Some(_tui) = &cli.tui {
         should_start_tui = true;
-        init_logger();
+        init_logger().expect("Failed to init logger.")
+
     } else {
         initialize_logging();
     }
@@ -65,7 +66,7 @@ fn main() -> Result<(), WinDivertError> {
     log_initialization_info(&cli.filter, &cli.packet_manipulation_settings);
 
     let running = Arc::new(AtomicBool::new(true));
-    let shutdown_triggered = Arc::new(Mutex::new(false));
+    let shutdown_triggered = Arc::new(AtomicBool::new(false));
     setup_ctrlc_handler(running.clone(), shutdown_triggered.clone());
 
     let (packet_sender, packet_receiver) = mpsc::channel();
@@ -92,7 +93,7 @@ fn main() -> Result<(), WinDivertError> {
     });
 
     if should_start_tui {
-        tui(running, cli_thread_safe, statistics)?;
+        tui(cli_thread_safe, statistics, running, shutdown_triggered)?;
     }
 
     wait_for_thread(packet_sender_handle, "Packet sending");
@@ -103,18 +104,27 @@ fn main() -> Result<(), WinDivertError> {
     Ok(())
 }
 
-fn tui(running: Arc<AtomicBool>, cli: Arc<Mutex<Cli>>, statistics: Arc<RwLock<PacketProcessingStatistics>>) -> Result<(), WinDivertError> {
-    let mut terminal_manager = TerminalManager::new()?;
+fn tui(cli: Arc<Mutex<Cli>>, statistics: Arc<RwLock<PacketProcessingStatistics>>, running: Arc<AtomicBool>, shutdown_triggered: Arc<AtomicBool>) -> Result<(), WinDivertError> {
+    {
+        let mut terminal_manager = TerminalManager::new()?;
 
-    let mut tui_state = TuiState::from_cli(&cli);
+        let mut tui_state = TuiState::from_cli(&cli);
 
-    while running.load(Ordering::SeqCst) {
-        terminal_manager.draw(|f| ui::ui(f, &mut tui_state))?;
-        let should_quit = input::handle_input(&mut tui_state)?;
-        if should_quit { running.store(false, Ordering::SeqCst); }
-        cli.update_from(&mut tui_state);
-        tui_state.update_from(&statistics);
+        while running.load(Ordering::SeqCst) {
+            terminal_manager.draw(|f| ui::ui(f, &mut tui_state))?;
+            let should_quit = input::handle_input(&mut tui_state)?;
+            if should_quit {
+                shutdown_triggered.store(true, Ordering::SeqCst);
+                break;
+            } else {
+                cli.update_from(&mut tui_state);
+                tui_state.update_from(&statistics);
+            }
+        }
     }
+    set_logger_console_state(true);
+    running.store(false, Ordering::SeqCst);
+    info!("Initiating shutdown...");
     Ok(())
 }
 
@@ -132,11 +142,11 @@ fn wait_for_thread(thread_handle: JoinHandle<Result<(), WinDivertError>>, thread
     }
 }
 
-fn setup_ctrlc_handler(running: Arc<AtomicBool>, shutdown_triggered: Arc<Mutex<bool>>) {
+fn setup_ctrlc_handler(running: Arc<AtomicBool>, shutdown_triggered: Arc<AtomicBool>) {
     ctrlc::set_handler(move || {
-        let mut shutdown_initiated = shutdown_triggered.lock().unwrap();
-        if !*shutdown_initiated {
-            *shutdown_initiated = true;
+
+        if !shutdown_triggered.load(Ordering::SeqCst) {
+            shutdown_triggered.store(true, Ordering::SeqCst);
             info!("Ctrl+C pressed; initiating shutdown...");
             running.store(false, Ordering::SeqCst);
         } else {
