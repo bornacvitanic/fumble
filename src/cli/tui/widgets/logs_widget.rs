@@ -14,6 +14,12 @@ pub struct LogsWidget {
     pub(crate) focused: bool,
 }
 
+impl Default for LogsWidget {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl LogsWidget {
     pub fn new() -> Self {
         LogsWidget {

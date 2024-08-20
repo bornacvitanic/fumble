@@ -29,6 +29,12 @@ pub struct TamperWidget<'a> {
     checksum_valid: bool
 }
 
+impl Default for TamperWidget<'_> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl TamperWidget<'_> {
     pub fn new() -> Self {
         TamperWidget {
@@ -76,15 +82,11 @@ impl HandleInput for TamperWidget<'_> {
                 self.interacting = false;
                 return false;
             }
-            if key.code == KeyCode::Down {
-                if self.selected < 2 {
-                    self.selected += 1;
-                }
+            if key.code == KeyCode::Down && self.selected < 2 {
+                self.selected += 1;
             }
-            if key.code == KeyCode::Up {
-                if self.selected > 0 {
-                    self.selected -= 1;
-                }
+            if key.code == KeyCode::Up && self.selected > 0 {
+                self.selected -= 1;
             }
             match self.selected {
                 0 => {
@@ -107,7 +109,7 @@ impl HandleInput for TamperWidget<'_> {
 
             return true;
         }
-        return false;
+        false
     }
 }
 
@@ -174,7 +176,7 @@ impl Widget for &mut TamperWidget<'_> {
 
 fn highlight_tampered_data(data: Vec<u8>, width: u16, flags: Vec<bool>) -> Vec<Span<'static>> {
     data.into_iter()
-        .zip(flags.into_iter())
+        .zip(flags)
         .take(width as usize)
         .map(|(byte, is_tampered)| {
             let symbol = char::try_from(byte);

@@ -26,7 +26,7 @@ pub trait TuiStateExt {
 impl TuiStateExt for TuiState<'_> {
     fn from_cli(cli: &Arc<Mutex<Cli>>) -> Self {
         let mut state = TuiState::new();
-        init_tui_state_from_cli(&mut state, &cli);
+        init_tui_state_from_cli(&mut state, cli);
         state
     }
 
@@ -45,7 +45,7 @@ pub trait CliExt {
 
 impl CliExt for Arc<Mutex<Cli>> {
     fn update_from(&self, state: &mut TuiState) {
-        update_cli_from_tui_state(state, &self);
+        update_cli_from_tui_state(state, self);
     }
 
     fn clear_state(&self) {
@@ -175,8 +175,8 @@ fn update_cli_from_tui_state(state: &mut TuiState, cli: &Arc<Mutex<Cli>>) {
                         .and_then(|probability| {
                             throttle_widget.throttle_duration.as_ref().ok()
                                 .map(|duration| ThrottleOptions {
-                                    probability: probability.clone(),
-                                    duration: duration.clone(),
+                                    probability: *probability,
+                                    duration: *duration,
                                     drop: throttle_widget.drop,
                                 })
                         })
@@ -190,8 +190,8 @@ fn update_cli_from_tui_state(state: &mut TuiState, cli: &Arc<Mutex<Cli>>) {
                         .and_then(|probability| {
                             reorder_widget.delay_duration.as_ref().ok()
                                 .map(|max_delay| ReorderOptions {
-                                    probability: probability.clone(),
-                                    max_delay: max_delay.clone(),
+                                    probability: *probability,
+                                    max_delay: *max_delay,
                                 })
                         })
                 }
@@ -204,8 +204,8 @@ fn update_cli_from_tui_state(state: &mut TuiState, cli: &Arc<Mutex<Cli>>) {
                         .and_then(|probability| {
                             tamper_widget.tamper_amount.as_ref().ok()
                                 .map(|amount| TamperOptions {
-                                    probability: probability.clone(),
-                                    amount: amount.clone(),
+                                    probability: *probability,
+                                    amount: *amount,
                                     recalculate_checksums: Some(tamper_widget.recalculate_checksums),
                                 })
                         })
@@ -218,8 +218,8 @@ fn update_cli_from_tui_state(state: &mut TuiState, cli: &Arc<Mutex<Cli>>) {
                         .and_then(|probability| {
                             duplicate_widget.duplicate_count.as_ref().ok()
                                 .map(|count| DuplicateOptions {
-                                    probability: probability.clone(),
-                                    count: count.clone(),
+                                    probability: *probability,
+                                    count: *count,
                                 })
                         })
                 }

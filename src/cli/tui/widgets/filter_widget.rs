@@ -17,6 +17,12 @@ pub struct FilterWidget<'a> {
     validation_filter: Result<String, FilterError>,
 }
 
+impl Default for FilterWidget<'_> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl FilterWidget<'_> {
     pub fn new() -> Self {
         FilterWidget {

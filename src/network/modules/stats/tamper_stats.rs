@@ -21,11 +21,7 @@ impl TamperStats {
     }
 
     pub fn should_update(&mut self) -> bool {
-        if self.last_update.elapsed() >= self.update_interval {
-            true
-        } else {
-            false
-        }
+        self.last_update.elapsed() >= self.update_interval
     }
 
     pub fn updated(&mut self) {

@@ -116,13 +116,11 @@ fn tui(cli: Arc<Mutex<Cli>>, statistics: Arc<RwLock<PacketProcessingStatistics>>
             if should_quit {
                 shutdown_triggered.store(true, Ordering::SeqCst);
                 break;
+            } else if tui_state.processing {
+                cli.update_from(&mut tui_state);
+                tui_state.update_from(&statistics);
             } else {
-                if tui_state.processing {
-                    cli.update_from(&mut tui_state);
-                    tui_state.update_from(&statistics);
-                } else {
-                    cli.clear_state();
-                }
+                cli.clear_state();
             }
         }
     }

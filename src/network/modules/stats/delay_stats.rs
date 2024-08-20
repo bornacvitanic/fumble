@@ -2,6 +2,12 @@ pub struct DelayStats {
     pub(crate) delayed_package_count: usize
 }
 
+impl Default for DelayStats {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl DelayStats {
     pub fn new() -> Self {
         DelayStats {

@@ -24,6 +24,12 @@ pub struct DuplicateWidget<'a> {
     duplication_multiplier: f64
 }
 
+impl Default for DuplicateWidget<'_> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl DuplicateWidget<'_> {
     pub fn new() -> Self {
         DuplicateWidget {
@@ -66,15 +72,11 @@ impl HandleInput for DuplicateWidget<'_> {
                 self.interacting = false;
                 return false;
             }
-            if key.code == KeyCode::Down {
-                if self.selected < 1 {
-                    self.selected += 1;
-                }
+            if key.code == KeyCode::Down && self.selected < 1 {
+                self.selected += 1;
             }
-            if key.code == KeyCode::Up {
-                if self.selected > 0 {
-                    self.selected -= 1;
-                }
+            if key.code == KeyCode::Up && self.selected > 0 {
+                self.selected -= 1;
             }
             match self.selected {
                 0 => {
@@ -92,7 +94,7 @@ impl HandleInput for DuplicateWidget<'_> {
 
             return true;
         }
-        return false;
+        false
     }
 }
 

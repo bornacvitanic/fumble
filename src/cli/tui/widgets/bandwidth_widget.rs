@@ -21,6 +21,12 @@ pub struct BandwidthWidget<'a> {
     stored_packet_count: usize,
 }
 
+impl Default for BandwidthWidget<'_> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl BandwidthWidget<'_> {
     pub fn new() -> Self {
         BandwidthWidget {
@@ -62,7 +68,7 @@ impl HandleInput for BandwidthWidget<'_> {
             }
             return true;
         }
-        return false;
+        false
     }
 }
 

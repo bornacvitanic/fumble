@@ -2,6 +2,7 @@ use clap::Parser;
 use serde::{Deserialize, Serialize};
 
 #[derive(Parser, Debug, Serialize, Deserialize)]
+#[derive(Default)]
 pub struct DelayOptions {
     /// Delay in milliseconds to introduce for each packet
     #[arg(long = "delay-duration", id = "delay-duration", default_value_t = 0)]
@@ -9,8 +10,3 @@ pub struct DelayOptions {
     pub duration: u64,
 }
 
-impl Default for DelayOptions {
-    fn default() -> Self {
-        DelayOptions { duration: 0 }
-    }
-}

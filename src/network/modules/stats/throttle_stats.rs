@@ -3,6 +3,12 @@ pub struct ThrottleStats {
     pub(crate) dropped_count: usize,
 }
 
+impl Default for ThrottleStats {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ThrottleStats {
     pub fn new() -> Self {
         ThrottleStats {

@@ -25,6 +25,12 @@ pub struct ReorderWidget<'a> {
     delayed_packets: usize,
 }
 
+impl Default for ReorderWidget<'_> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ReorderWidget<'_> {
     pub fn new() -> Self {
         ReorderWidget {
@@ -69,15 +75,11 @@ impl HandleInput for ReorderWidget<'_> {
                 self.interacting = false;
                 return false;
             }
-            if key.code == KeyCode::Down {
-                if self.selected < 1 {
-                    self.selected += 1;
-                }
+            if key.code == KeyCode::Down && self.selected < 1 {
+                self.selected += 1;
             }
-            if key.code == KeyCode::Up {
-                if self.selected > 0 {
-                    self.selected -= 1;
-                }
+            if key.code == KeyCode::Up && self.selected > 0 {
+                self.selected -= 1;
             }
             match self.selected {
                 0 => {
@@ -95,7 +97,7 @@ impl HandleInput for ReorderWidget<'_> {
 
             return true;
         }
-        return false;
+        false
     }
 }
 

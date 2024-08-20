@@ -23,6 +23,12 @@ pub struct DropWidget<'a> {
     total_packets: usize,
 }
 
+impl Default for DropWidget<'_> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl DropWidget<'_> {
     pub fn new() -> Self {
         DropWidget {
@@ -66,7 +72,7 @@ impl HandleInput for DropWidget<'_> {
             }
             return true;
         }
-        return false;
+        false
     }
 }
 

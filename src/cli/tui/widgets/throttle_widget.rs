@@ -27,6 +27,12 @@ pub struct ThrottleWidget<'a> {
     dropped_count: usize,
 }
 
+impl Default for ThrottleWidget<'_> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ThrottleWidget<'_> {
     pub fn new() -> Self {
         ThrottleWidget {
@@ -72,15 +78,11 @@ impl HandleInput for ThrottleWidget<'_> {
                 self.interacting = false;
                 return false;
             }
-            if key.code == KeyCode::Down {
-                if self.selected < 2 {
-                    self.selected += 1;
-                }
+            if key.code == KeyCode::Down && self.selected < 2 {
+                self.selected += 1;
             }
-            if key.code == KeyCode::Up {
-                if self.selected > 0 {
-                    self.selected -= 1;
-                }
+            if key.code == KeyCode::Up && self.selected > 0 {
+                self.selected -= 1;
             }
             match self.selected {
                 0 => {
@@ -103,7 +105,7 @@ impl HandleInput for ThrottleWidget<'_> {
 
             return true;
         }
-        return false;
+        false
     }
 }
 

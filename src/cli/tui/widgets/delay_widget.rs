@@ -20,6 +20,12 @@ pub struct DelayWidget<'a> {
     delayed_packet_count: usize,
 }
 
+impl Default for DelayWidget<'_> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl DelayWidget<'_> {
     pub fn new() -> Self {
         DelayWidget {
@@ -59,7 +65,7 @@ impl HandleInput for DelayWidget<'_> {
             }
             return true;
         }
-        return false;
+        false
     }
 }
 

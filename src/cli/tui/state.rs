@@ -20,6 +20,12 @@ pub struct TuiState<'a> {
     pub focused: LayoutSection
 }
 
+impl<'a> Default for TuiState<'a> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<'a> TuiState<'a> {
     pub fn new() -> Self {
         TuiState {
