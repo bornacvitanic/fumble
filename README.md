@@ -23,15 +23,11 @@ Just like its predecessor, fumble offers a user-friendly and interactive way to 
 ### Binary Features
 - **General CLI Usage:** Utilize a comprehensive command-line interface for flexible and detailed control over network manipulation settings. Easily specify parameters for packet filtering, dropping, delaying, throttling, reordering, tampering, duplicating, and bandwidth limiting.
 - **Configuration Support:** Easily manage your settings through configuration files. Create, list, and use configuration files to save and load your preferred settings, simplifying the setup and ensuring consistent behavior across different runs.
-
-## Known Issues
-
-There is a known issue where the packet receiving thread, which operates in a blocking manner, may not terminate correctly if no packets match the specified filter criteria. This situation can arise when no network traffic is present that meets the filter's conditions. As a result, the thread may remain active, potentially causing subsequent runs with the same filter to fail in receiving packets because the previous instance of the thread continues to intercept and discard them. It is recommended to ensure proper shutdown of the application and verify the termination of the receiving thread to avoid this issue.
+- **Text User Interface (TUI) Mode:** a Text User Interface (TUI) for users who prefer an interactive and visual interface over the command line. The TUI provides a more user-friendly way to configure and manage network manipulation settings in real-time.
 
 ## Roadmap
 
-- **Enhanced Receiver Thread Handling:** Improve robustness and reliability of the packet receiving process.
-- **TUI/CLI Enhancements:** Develop a Text User Interface (TUI) or enhance command-line interface for more user-friendly interactions.
+- **TUI/CLI Enhancements:** Enhance the Text User Interface (TUI) to offer a graph visualization of the network traffic and all the modifications being applied by fumble.
 - **Graphical User Interface (GUI):** Implement a GUI to cater to users who prefer not to use the command line.
 
 ## Requirements
@@ -63,7 +59,7 @@ To include `fumble` as a dependency in your Rust project, add the following to y
 
 ```toml
 [dependencies]
-fumble = "0.5.0"
+fumble = "0.6.0"
 ```
 
 Run cargo build to download and compile the crate.
@@ -86,6 +82,19 @@ Run the `fumble` executable with the desired options:
 fumble --filter "inbound and tcp" --delay 500 --drop 0.1
 ```
 
+## TUI Mode
+
+fumble offers a Text User Interface (TUI) mode for those who prefer a more interactive experience. The TUI allows you to view, configure, and manage network manipulation settings in a visual interface, making it easier to adjust settings on the fly. You can initialise the TUI via either a config or normal cli commands.
+
+### Launching the TUI
+
+To start `fumble` in TUI mode, use the following command:
+
+```sh
+fumble --tui
+```
+Once in the TUI, you can navigate through different settings using your keyboard. The TUI provides real-time feedback and allows for quick adjustments to your configurations.
+
 ## Logging
 
 The tool uses the env_logger crate for logging. By default, informational messages are shown.
@@ -97,18 +106,20 @@ To see more detailed logs, set the `RUST_LOG` environment variable before runnin
 ### Command-Line Options
 
 - `-f, --filter <FILTER>`: Filter expression for capturing packets.
-- `--drop <DROP>`: Probability of dropping packets in the range 0.0 to 1.0.
-- `--delay <DELAY>`: Delay to introduce for each packet in milliseconds.
+- `--drop-probability <PROBABILITY>`: Probability of dropping packets in the range 0.0 to 1.0.
+- `--delay-duration <DELAY>`: Delay to introduce for each packet in milliseconds.
 - `--throttle-probability <PROBABILITY>`: Probability of triggering a throttle event, must be between 0.0 and 1.0.
 - `--throttle-duration <DURATION>`: Duration in milliseconds for which throttling is applied during a throttle event.
 - `--throttle-drop`: Makes throttled packets be dropped instead of delayed.
-- `--reorder <DELAY>`: Apply a random delay to reorder packets, simulating out-of-order delivery.
+- `--reorder-probability <reorder-probability>`: Probability of reordering packets, ranging from 0.0 to 1.0
+- `--reorder-max-delay <DELAY>`: Maximum random delay in milliseconds to apply when reordering packets
 - `--tamper-probability <PROBABILITY>`: Probability of tampering packets, ranging from 0.0 to 1.0.
 - `--tamper-amount <AMOUNT>`: Amount of tampering that should be applied, ranging from 0.0 to 1.0.
 - `--tamper-recalculate-checksums [true/false]`: Whether tampered packets should have their checksums recalculated to mask the tampering and avoid the packets getting automatically dropped.
-- `--duplicate-count <COUNT>`: Number of times to duplicate packets.
 - `--duplicate-probability <PROBABILITY>`: Probability of duplicating packets, must be between 0.0 and 1.0.
+- `--duplicate-count <COUNT>`: Number of times to duplicate packets.
 - `--bandwidth-limit <KB/s>`: Limit the bandwidth in KB/s to simulate a constrained network environment.
+- `-t, --tui`: Launch fumble in Text User Interface (TUI) mode.
 - `--create-default <CREATE_DEFAULT>`: Command to create a default configuration file with the specified name.
 - `--use-config <USE_CONFIG>`: Command to use an existing configuration file based on specified name.
 - `--list-configs`: Command to list all available configuration files.
@@ -182,6 +193,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE.md) f
 - [clap](https://crates.io/crates/clap) - A command-line argument parser for Rust that provides a simple and powerful API for defining complex CLI interfaces.
 - [windivert](https://crates.io/crates/windivert) - A Rust binding for the WinDivert library, used for network packet interception and manipulation.
 - [rand](https://crates.io/crates/rand) - A Rust library for generating random numbers, used for implementing random packet dropping and duplication.
+- [ratatui](https://crates.io/crates/ratatui) - A Rust library for building terminal user interfaces with an emphasis on simplicity and ease of use.
+- [tui-textarea](https://crates.io/crates/tui-textarea) - A Rust crate for managing text input within terminal user interfaces.
+- [lazy_static](https://crates.io/crates/lazy_static) - A Rust macro for defining statically initialized variables that are computed lazily.
 - [ctrlc](https://crates.io/crates/ctrlc) - A Rust library for handling Ctrl-C signals, enabling graceful shutdowns and clean thread termination.
 - [regex](https://crates.io/crates/regex) - A Rust library for regular expressions, used for string matching operations.
 - [env_logger](https://crates.io/crates/env_logger) - A simple logger for Rust applications that can be configured via environment variables.
