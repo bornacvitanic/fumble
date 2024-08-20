@@ -13,6 +13,10 @@ pub fn handle_input(state: &mut TuiState) -> io::Result<bool> {
                 return Ok(false);
             }
 
+            if key.code == KeyCode::Char('p') {
+                state.processing = !state.processing;
+            }
+
             match state.focused {
                 LayoutSection::Filter | LayoutSection::Logging => {
                     if handle_widget_input(state, key) {

@@ -1,13 +1,13 @@
 use std::sync::{Arc, Mutex, RwLock};
 use log::error;
 use crate::cli::Cli;
-use crate::cli::settings::bandwidth::BandwidthOptions;
-use crate::cli::settings::delay::DelayOptions;
 use crate::cli::settings::drop::DropOptions;
-use crate::cli::settings::duplicate::DuplicateOptions;
+use crate::cli::settings::delay::DelayOptions;
+use crate::cli::settings::throttle::ThrottleOptions;
 use crate::cli::settings::reorder::ReorderOptions;
 use crate::cli::settings::tamper::TamperOptions;
-use crate::cli::settings::throttle::ThrottleOptions;
+use crate::cli::settings::duplicate::DuplicateOptions;
+use crate::cli::settings::bandwidth::BandwidthOptions;
 use crate::cli::tui::state::TuiState;
 use crate::cli::tui::traits::IsActive;
 use crate::cli::tui::widgets::custom_widget::CustomWidget;
@@ -39,11 +39,31 @@ pub trait CliExt {
     /// Updates the `Cli` object based on the current state of the `TuiState`.
     /// This function applies the user inputs from the TUI to the `Cli`, synchronizing its settings with the interface state.
     fn update_from(&self, state: &mut TuiState);
+
+    fn clear_state(&self);
 }
 
 impl CliExt for Arc<Mutex<Cli>> {
     fn update_from(&self, state: &mut TuiState) {
         update_cli_from_tui_state(state, &self);
+    }
+
+    fn clear_state(&self) {
+        let mut cli = match self.lock() {
+            Ok(cli) => cli,
+            Err(e) => {
+                error!("Failed to lock CLI mutex. {}", e);
+                return;
+            }
+        };
+
+        cli.packet_manipulation_settings.drop = None;
+        cli.packet_manipulation_settings.delay = None;
+        cli.packet_manipulation_settings.throttle = None;
+        cli.packet_manipulation_settings.reorder = None;
+        cli.packet_manipulation_settings.tamper = None;
+        cli.packet_manipulation_settings.duplicate = None;
+        cli.packet_manipulation_settings.bandwidth = None;
     }
 }
 

@@ -3,19 +3,24 @@ use ratatui::Frame;
 use ratatui::layout::{Constraint, Layout, Margin, Rect};
 use ratatui::widgets::{Block, Paragraph, Scrollbar, ScrollbarOrientation, ScrollbarState};
 use ratatui::prelude::{Color, Line, Style, Stylize};
+use ratatui::style::Styled;
 use crate::cli::tui::state::TuiState;
 use crate::cli::tui::traits::{DisplayName, IsActive, KeyBindings};
 use crate::cli::tui::widgets::utils::block_ext::RoundedBlockExt;
 
 pub fn ui(frame: &mut Frame, state: &mut TuiState) {
     update_focus(state);
-    let (filter_area, middle_area, key_bind_area) = setup_layout(frame);
+    let (header_area, middle_area, footer_area) = setup_layout(frame);
     let (main_area, log_area) = arrange_middle_area(state, middle_area);
 
-    frame.render_widget(&mut state.filter_widget, filter_area);
+    let [filter_area, start_stop_toggle_area] = Layout::horizontal([
+        Constraint::Fill(1),
+        Constraint::Max(8)
+    ]).areas(header_area);
+    render_start_stop_toggle(frame, state, filter_area, start_stop_toggle_area);
     render_sections(frame, state, main_area);
     frame.render_widget(&mut state.logs_widget, log_area);
-    render_keybindings(frame, state, key_bind_area);
+    render_keybindings(frame, state, footer_area);
 }
 
 #[derive(PartialEq)]
@@ -36,12 +41,12 @@ fn update_focus(state: &mut TuiState) {
 }
 
 fn setup_layout(frame: &mut Frame) -> (Rect, Rect, Rect) {
-    let [filter_area, middle_area, key_bind_area] = Layout::vertical([
+    let [header_area, middle_area, footer_area] = Layout::vertical([
         Constraint::Max(3),
         Constraint::Min(0),
         Constraint::Length(1)
     ]).areas(frame.area());
-    (filter_area, middle_area, key_bind_area)
+    (header_area, middle_area, footer_area)
 }
 
 fn arrange_middle_area(state: &mut TuiState, middle_area: Rect) -> (Rect, Rect) {
@@ -57,6 +62,12 @@ fn arrange_middle_area(state: &mut TuiState, middle_area: Rect) -> (Rect, Rect) 
         ]).areas(middle_area)
     };
     (main_area, log_area)
+}
+
+fn render_start_stop_toggle(frame: &mut Frame, state: &mut TuiState, filter_area: Rect, start_stop_toggle_area: Rect) {
+    frame.render_widget(&mut state.filter_widget, filter_area);
+    frame.render_widget(Paragraph::new(if state.processing { "Stop".to_string() } else { "Start".to_string() })
+                            .block(Block::roundedt("[P]").set_style(if state.processing {Style::new().fg(Color::LightRed)} else {Style::new().fg(Color::LightGreen)})), start_stop_toggle_area);
 }
 
 fn render_sections(frame: &mut Frame, state: &mut TuiState, main_area: Rect) {
@@ -110,7 +121,7 @@ fn render_sections(frame: &mut Frame, state: &mut TuiState, main_area: Rect) {
             area_block = area_block.fg(Color::DarkGray);
         }
         if state.selected == i {
-            area_block = area_block.border_style(Style::default().fg(Color::Green));
+            area_block = area_block.border_style(Style::default().fg(Color::Cyan));
         }
         area_block = area_block.highlight_if(state.interacting == Some(i));
         frame.render_widget(area_block, section_areas[i]);
