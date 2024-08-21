@@ -1,6 +1,6 @@
 use crate::cli::config::config_options::ConfigOptions;
 use crate::cli::settings::packet_manipulation::PacketManipulationSettings;
-use crate::network::utils::filter::validate_filter;
+use crate::network::utils::filter::validate_filter_with_docs;
 use clap::Parser;
 
 pub mod config;
@@ -21,7 +21,7 @@ pub mod utils;
 #[derive(Default)]
 pub struct Cli {
     /// Filter expression for capturing packets
-    #[arg(short, long, value_parser = validate_filter)]
+    #[arg(short, long, value_parser = validate_filter_with_docs)]
     pub filter: Option<String>,
 
     #[command(flatten)]
