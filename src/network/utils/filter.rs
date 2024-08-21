@@ -14,7 +14,7 @@ pub enum FilterError {
 
 pub fn validate_filter(filter: &str) -> Result<String, FilterError> {
     // Attempt to open a handle to validate the filter string syntax
-    let mut win_divert = WinDivert::<NetworkLayer>::network(filter, 0, WinDivertFlags::new())
+    let mut win_divert = WinDivert::<NetworkLayer>::network(filter, 0, WinDivertFlags::new().set_sniff())
         .map_err(|e| FilterError::InvalidSyntax(format!(
             "{}\n\nFor more details about filter the filter syntax, see the filter language documentation: https://reqrypt.org/windivert-doc.html#filter_language",
             e.to_string()
