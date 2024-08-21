@@ -2,6 +2,43 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.1] - 2024-08-21
+
+### Bug Fixes
+
+- Fix bandwidth remove packet method statistics tracking not saturating subtraction
+
+
+### Documentation
+
+- Update README.md to be up to date and more comprehensive
+
+- Update filter validation to make a wrapper method which adds the documentation url only for CLI use
+
+- Update filter validation logic to link to the filter docs
+
+- Update README.md to be up to date
+
+- Update README.md to add screenshot
+
+### Features
+
+- Add text area extension method to draw dimmed placeholder text
+
+
+### Updates
+
+- Update tui initialization logic to initialize values of fields if they weren't specified in the cli
+
+- Update packet processing to not log if there is no filter
+
+- Update filter validation to open the wd handle in packet sniffing mode
+
+- Update packet_receiving to only log the missing WinDivert hanld error once as to not freeze up the TUI
+
+- Update style_textarea_based_on_validation to not override the existing title
+
+
 ## [0.6.0] - 2024-08-20
 
 ### Bug Fixes
@@ -93,6 +130,8 @@ reducing redundancy and improving clarity.
 
 
 ### Updates
+
+- Update project to 0.6.0
 
 - Update TUI cli command to default to false
 

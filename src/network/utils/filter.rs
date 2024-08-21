@@ -12,10 +12,23 @@ pub enum FilterError {
     InvalidPort(String),
 }
 
+pub fn validate_filter_with_docs(filter: &str) -> Result<String, FilterError> {
+    match validate_filter(filter) {
+        Err(FilterError::InvalidSyntax(msg)) => {
+            let detailed_msg = format!(
+                "{}\n\nFor more details about the filter syntax, see the filter language documentation: https://reqrypt.org/windivert-doc.html#filter_language",
+                msg
+            );
+            Err(FilterError::InvalidSyntax(detailed_msg))
+        }
+        other => other,
+    }
+}
+
 pub fn validate_filter(filter: &str) -> Result<String, FilterError> {
     // Attempt to open a handle to validate the filter string syntax
-    let mut win_divert = WinDivert::<NetworkLayer>::network(filter, 0, WinDivertFlags::new())
-        .map_err(|e| FilterError::InvalidSyntax(e.to_string()))?;
+    let mut win_divert = WinDivert::<NetworkLayer>::network(filter, 0, WinDivertFlags::new().set_sniff())
+        .map_err(|e| FilterError::InvalidSyntax(format!("{}", e.to_string())))?;
 
     win_divert
         .close(CloseAction::Nothing)

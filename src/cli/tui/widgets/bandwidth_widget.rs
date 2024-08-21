@@ -108,7 +108,7 @@ impl Widget for &mut BandwidthWidget<'_> {
             ));
 
         self.limit_text_area.set_cursor_visibility(self.interacting);
-        self.limit_text_area.set_placeholder_text("No limit");
+        self.limit_text_area.set_dim_placeholder("No limit");
         self.limit_text_area.set_cursor_line_style(Style::default());
         self.limit_text_area
             .set_block(Block::roundedt("KBps Limit").highlight_if(self.interacting));

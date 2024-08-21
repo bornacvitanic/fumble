@@ -105,7 +105,7 @@ impl Widget for &mut DelayWidget<'_> {
             ));
 
         self.delay_duration.set_cursor_visibility(self.interacting);
-        self.delay_duration.set_placeholder_text("500");
+        self.delay_duration.set_dim_placeholder("50");
         self.delay_duration.set_cursor_line_style(Style::default());
         self.delay_duration
             .set_block(Block::roundedt("Duration").highlight_if(self.interacting));

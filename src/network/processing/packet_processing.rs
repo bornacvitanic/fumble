@@ -81,7 +81,7 @@ pub fn start_packet_processing(
         }
 
         // Periodically log the statistics
-        if last_log_time.elapsed() >= log_interval {
+        if last_log_time.elapsed() >= log_interval && cli.lock().unwrap().filter.is_some() {
             log_statistics(received_packet_count, sent_packet_count);
             received_packet_count = 0;
             sent_packet_count = 0;

@@ -12,6 +12,7 @@ use crate::cli::Cli;
 use crate::network::modules::stats::PacketProcessingStatistics;
 use log::error;
 use std::sync::{Arc, Mutex, RwLock};
+use crate::network::types::probability::Probability;
 
 pub trait TuiStateExt {
     /// Creates a `TuiState` instance from the current state of the `Cli` object.
@@ -85,12 +86,16 @@ fn init_tui_state_from_cli(state: &mut TuiState, cli: &Arc<Mutex<Cli>>) {
                 if let Some(drop) = &cli.packet_manipulation_settings.drop {
                     drop_widget.set_probability(drop.probability);
                     drop_widget.set_active(true);
+                } else {
+                    drop_widget.set_probability(Probability::new(0.1).unwrap());
                 }
             }
             CustomWidget::Delay(ref mut delay_widget) => {
                 if let Some(delay) = &cli.packet_manipulation_settings.delay {
                     delay_widget.set_delay(delay.duration);
                     delay_widget.set_active(true);
+                } else {
+                    delay_widget.set_delay(50);
                 }
             }
             CustomWidget::Throttle(ref mut throttle_widget) => {
@@ -99,6 +104,9 @@ fn init_tui_state_from_cli(state: &mut TuiState, cli: &Arc<Mutex<Cli>>) {
                     throttle_widget.set_throttle_duration(throttle.duration);
                     throttle_widget.drop = throttle.drop;
                     throttle_widget.set_active(true);
+                } else {
+                    throttle_widget.set_probability(Probability::new(0.1).unwrap());
+                    throttle_widget.set_throttle_duration(30);
                 }
             }
             CustomWidget::Reorder(ref mut reorder_widget) => {
@@ -106,6 +114,9 @@ fn init_tui_state_from_cli(state: &mut TuiState, cli: &Arc<Mutex<Cli>>) {
                     reorder_widget.set_probability(reorder.probability);
                     reorder_widget.set_delay_duration(reorder.max_delay);
                     reorder_widget.set_active(true);
+                } else {
+                    reorder_widget.set_probability(Probability::new(0.1).unwrap());
+                    reorder_widget.set_delay_duration(30);
                 }
             }
             CustomWidget::Tamper(ref mut tamper_widget) => {
@@ -116,6 +127,9 @@ fn init_tui_state_from_cli(state: &mut TuiState, cli: &Arc<Mutex<Cli>>) {
                         tamper_widget.recalculate_checksums = recalculate_checksums;
                     }
                     tamper_widget.set_active(true);
+                } else {
+                    tamper_widget.set_probability(Probability::new(0.1).unwrap());
+                    tamper_widget.set_tamper_amount(Probability::new(0.1).unwrap());
                 }
             }
             CustomWidget::Duplicate(ref mut duplicate_widget) => {
@@ -123,6 +137,9 @@ fn init_tui_state_from_cli(state: &mut TuiState, cli: &Arc<Mutex<Cli>>) {
                     duplicate_widget.set_probability(duplicate.probability);
                     duplicate_widget.set_duplicate_count(duplicate.count);
                     duplicate_widget.set_active(true);
+                } else {
+                    duplicate_widget.set_probability(Probability::new(0.1).unwrap());
+                    duplicate_widget.set_duplicate_count(1);
                 }
             }
             CustomWidget::Bandwidth(ref mut bandwidth_widget) => {

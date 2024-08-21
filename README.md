@@ -34,19 +34,19 @@ Just like its predecessor, fumble offers a user-friendly and interactive way to 
 
 ## Requirements
 
-`fumble` requires `WinDivert.dll` to function properly. You can download it from the [official WinDivert releases page](https://github.com/basil00/Divert/releases).
+**Important:** `fumble` requires `WinDivert.dll` and `WinDivert64.sys` to function properly. You can download them from the [official WinDivert releases page](https://github.com/basil00/Divert/releases).
 
-### Installing WinDivert
+<details>
+<summary><strong>Installing WinDivert</strong></summary>
 
-1. Download the appropriate version of `WinDivert.dll` for your system (32-bit or 64-bit).
-2. Place `WinDivert.dll` in the same directory as the `fumble` executable, or add its directory to your system's `PATH`.
+1. Download the latest version of `WinDivert.dll` and `WinDivert64.sys`.
+2. Place `WinDivert.dll` and `WinDivert64.sys` in the same directory as the `fumble` binary executable, or add the directory containing these files to your system's `PATH` environment variable.
+
+</details>
 
 ## Installation
-
-To build `fumble`, ensure you have Rust and Cargo installed.
-
 ### From Source
-
+To build `fumble`, ensure you have Rust and Cargo installed.\
 Clone the repository and build the project using Cargo:
 
 ```sh
@@ -54,17 +54,15 @@ git clone https://github.com/bornacvitanic/fumble.git
 cd fumble
 cargo build --release
 ```
+To ensure proper functionality, place WinDivert.dll and WinDivert64.sys in the same directory as the fumble binary (typically `./target/debug` or `./target/release`). Alternatively, you can add the directory containing these files to your system's `PATH` environment variable.
 
-### Using fumble as a Library
+### From GitHub Releases
+You can download pre-built binaries from the  [GitHub Releases](https://github.com/bornacvitanic/fumble/releases) page:
 
-To include `fumble` as a dependency in your Rust project, add the following to your `Cargo.toml`:
+1. Download the appropriate release for your platform.
+2. Extract the files from the release archive.
 
-```toml
-[dependencies]
-fumble = "0.6.0"
-```
-
-Run cargo build to download and compile the crate.
+The release archive already contains a copy of the `WinDivert.dll` and `WinDivert64.sys` files.
 
 ### From crates.io as a CLI
 
@@ -75,13 +73,26 @@ cargo install fumble
 ```
 
 This installs the fumble binary, enabling you to use the CLI tool globally.
+After installation, ensure that `WinDivert.dll` and `WinDivert64.sys` are placed in the same directory as the fumble binary (typically located at `C:\Users\username\.cargo\bin` on Windows). Alternatively, you can add the directory containing these files to your system's `PATH` environment variable.
+
+### Using fumble as a Library
+
+To include `fumble` as a dependency in your Rust project, add the following to your `Cargo.toml`:
+
+```toml
+[dependencies]
+fumble = "0.6.0"
+```
+
+Run cargo build to download and compile the crate.\
+To ensure proper functionality, place WinDivert.dll and WinDivert64.sys in the same directory as the fumble binary (typically `./target/debug` or `./target/release`). Alternatively, you can add the directory containing these files to your system's `PATH` environment variable.
 
 ## Usage
 
 Run the `fumble` executable with the desired options:
 
 ```sh
-fumble --filter "inbound and tcp" --delay 500 --drop 0.1
+fumble --filter "inbound and tcp" --delay-duration 500 --drop-probability 0.1
 ```
 
 ## TUI Mode
@@ -93,19 +104,23 @@ fumble offers a Text User Interface (TUI) mode for those who prefer a more inter
 To start `fumble` in TUI mode, use the following command:
 
 ```sh
-fumble --tui
+fumble  -t
 ```
 Once in the TUI, you can navigate through different settings using your keyboard. The TUI provides real-time feedback and allows for quick adjustments to your configurations.
 
-## Logging
+You can initialize the TUI with default values from either individual commands of a config. You can also specify a initial filter:
+```sh
+fumble --filter "outbound and udp"  -t
+```
+```sh
+fumble --filter "outbound and udp" --delay-duration 500  -t
+```
+```sh
+fumble --filter "inbound and udp" --use-config config_name  -t
+```
 
-The tool uses the env_logger crate for logging. By default, informational messages are shown.
-
-### Enabling Detailed Logs
-
-To see more detailed logs, set the `RUST_LOG` environment variable before running `fumble`.
-
-### Command-Line Options
+<details>
+  <summary>Command-Line Options</summary>
 
 - `-f, --filter <FILTER>`: Filter expression for capturing packets.
 - `--drop-probability <drop-probability>`: Probability of dropping packets, ranging from 0.0 to 1.0.
@@ -134,19 +149,20 @@ To see more detailed logs, set the `RUST_LOG` environment variable before runnin
 - `--create-default <CREATE_DEFAULT>`: Command to create a default configuration file with the specified name.
 - `--use-config <USE_CONFIG>`: Command to use an existing configuration file based on the specified name.
 - `--list-configs`: Command to list all available configuration files.
-
-## Examples
+</details>
+<details>
+  <summary>Examples</summary>
 
 - Drop 10% of incoming TCP packets:
 
   ```sh
-  fumble --filter "inbound and tcp" --drop 0.1
+  fumble --filter "inbound and tcp" --drop-probability 0.1
   ```
 
 - Delay packets by 500 milliseconds:
 
   ```sh
-  fumble --filter "inbound and tcp" --delay 500
+  fumble --filter "inbound and tcp" --delay-duration 500
   ```
 
 - Throttle packets with a 10% probability for 30 milliseconds and drop them:
@@ -161,10 +177,10 @@ To see more detailed logs, set the `RUST_LOG` environment variable before runnin
   fumble --filter "inbound and tcp" --throttle-probability 0.2 --throttle-duration 50
   ```
 
-- Reorder packets with a maximum delay of 100 milliseconds:
+- Reorder packets with a 10% probability and a maximum delay of 100 milliseconds:
 
   ```sh
-  fumble --filter "inbound and tcp" --reorder 100
+  fumble --filter "inbound and tcp" --reorder-probability 0.1 --reorder-max-delay 100
   ```
 
 - Tamper packets with a 25% probability and a tamper amount of 0.2, recalculating checksums:
@@ -182,7 +198,7 @@ To see more detailed logs, set the `RUST_LOG` environment variable before runnin
 - Duplicate packets with a 50% chance:
 
   ```sh
-  fumble --filter "inbound and tcp" --duplicate-count 2 --duplicate-probability 0.5
+  fumble --filter "inbound and tcp" --duplicate-probability 0.5 --duplicate-count 2
   ```
 
 - Limit bandwidth to 100 KB/s:
@@ -190,6 +206,15 @@ To see more detailed logs, set the `RUST_LOG` environment variable before runnin
   ```sh
   fumble --filter "inbound and tcp" --bandwidth-limit 100
   ```
+</details>
+
+## Logging
+
+The tool uses the env_logger crate for logging. By default, informational messages are shown.
+
+### Enabling Detailed Logs
+
+To see more detailed logs, set the `RUST_LOG` environment variable before running `fumble`.
 
 ## Contributing
 
