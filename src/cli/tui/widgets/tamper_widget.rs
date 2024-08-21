@@ -157,7 +157,7 @@ impl Widget for &mut TamperWidget<'_> {
 
         self.probability_text_area
             .set_cursor_visibility(self.interacting && self.selected == 0);
-        self.probability_text_area.set_placeholder_text("0.1");
+        self.probability_text_area.set_dim_placeholder("0.1");
         self.probability_text_area
             .set_cursor_line_style(Style::default());
         self.probability_text_area.set_block(
@@ -170,7 +170,7 @@ impl Widget for &mut TamperWidget<'_> {
 
         self.tamper_amount_text_area
             .set_cursor_visibility(self.interacting && self.selected == 1);
-        self.tamper_amount_text_area.set_placeholder_text("0.1");
+        self.tamper_amount_text_area.set_dim_placeholder("0.1");
         self.tamper_amount_text_area
             .set_cursor_line_style(Style::default());
         self.tamper_amount_text_area.set_block(

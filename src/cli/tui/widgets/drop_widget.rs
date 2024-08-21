@@ -114,7 +114,7 @@ impl Widget for &mut DropWidget<'_> {
 
         self.probability_text_area
             .set_cursor_visibility(self.interacting);
-        self.probability_text_area.set_placeholder_text("0.1");
+        self.probability_text_area.set_dim_placeholder("0.1");
         self.probability_text_area
             .set_cursor_line_style(Style::default());
         self.probability_text_area
