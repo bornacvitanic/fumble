@@ -16,6 +16,7 @@ pub fn receive_packets(
     let mut buffer = vec![0u8; 1500];
     let mut last_filter = String::new();
     let mut wd: Option<WinDivert<NetworkLayer>> = None;
+    let mut logged_missing_handle = false;
 
     while running.load(Ordering::SeqCst) {
         // Check for filter updates
@@ -59,6 +60,7 @@ pub fn receive_packets(
         }
 
         if let Some(ref wd_handle) = wd {
+            logged_missing_handle = false;
             match wd_handle.recv(Some(&mut buffer)) {
                 Ok(packet) => {
                     let packet_data = PacketData::from(packet.into_owned());
@@ -78,7 +80,10 @@ pub fn receive_packets(
                 }
             }
         } else {
-            error!("WinDivert handle is not initialized. Skipping packet reception.");
+            if !logged_missing_handle {
+                error!("WinDivert handle is not initialized. Skipping packet reception.");
+                logged_missing_handle = true;
+            }
         }
     }
 
